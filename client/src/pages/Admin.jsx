@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button'; // Importar botón Shadcn
+import { Input } from '@/components/ui/input';   // Importar input Shadcn
+import { Label } from '@/components/ui/label';   // Importar label Shadcn
+import { Textarea } from '@/components/ui/textarea'; // Importar textarea Shadcn
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Importar Select Shadcn
 
 function Admin() {
     // --- Estado para el formulario de CREAR ---
@@ -9,6 +14,7 @@ function Admin() {
     const [fecha, setFecha] = useState('');
     const [tipo, setTipo] = useState('B2C');
     const [precio, setPrecio] = useState('');
+    const [lugar, setLugar] = useState(''); // <-- CAMBIO: Estado añadido
     const [imagen, setImagen] = useState(null);
     const [crearMensaje, setCrearMensaje] = useState('');
 
@@ -16,13 +22,11 @@ function Admin() {
     const [talleres, setTalleres] = useState([]);
     const [listaMensaje, setListaMensaje] = useState('');
 
-    // --- 1. OBTENER EL TOKEN DE AUTORIZACIÓN ---
     const token = localStorage.getItem('tmm_token');
     const authHeaders = { headers: { 'Authorization': `Bearer ${token}` } };
 
     // Función para cargar la lista de talleres
     const fetchTalleres = () => {
-        // --- 2. USAR EL TOKEN AL PEDIR LA LISTA ---
         axios.get('http://localhost:5000/api/talleres/todos', authHeaders)
             .then(response => {
                 setTalleres(response.data);
@@ -30,14 +34,14 @@ function Admin() {
             .catch(error => console.error("Error al cargar talleres:", error.response?.data?.message));
     };
 
-    // Cargar la lista de talleres cuando el componente se monta
     useEffect(() => {
         fetchTalleres();
     }, []);
 
-    // --- Manejador para CREAR taller (con FormData para imagen) ---
+    // --- Manejador para CREAR taller ---
     const handleSubmit = (e) => {
         e.preventDefault();
+        setCrearMensaje('Creando...');
 
         const formData = new FormData();
         formData.append('nombre', nombre);
@@ -45,26 +49,27 @@ function Admin() {
         formData.append('fecha', fecha ? new Date(fecha).toISOString() : '');
         formData.append('tipo', tipo);
         formData.append('precio', parseInt(precio) || 0);
+        formData.append('lugar', lugar); // <-- CAMBIO: Añadido
         if (imagen) {
             formData.append('imagen', imagen);
         }
         
-        // --- 3. USAR EL TOKEN AL CREAR UN TALLER ---
         axios.post('http://localhost:5000/api/talleres', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}` // <--- ¡LA LÍNEA CLAVE!
+                'Authorization': `Bearer ${token}` 
             }
         })
         .then(response => {
             setCrearMensaje(`¡Éxito! Taller "${nombre}" creado.`);
-            fetchTalleres(); // Recargar la lista de talleres
+            fetchTalleres(); 
             // Limpiar formulario
             setNombre(''); 
             setDescripcion(''); 
             setFecha(''); 
             setTipo('B2C'); 
             setPrecio(''); 
+            setLugar(''); // <-- CAMBIO: Limpiar
             setImagen(null);
             const fileInput = document.getElementById('file-input');
             if (fileInput) {
@@ -80,11 +85,10 @@ function Admin() {
     // --- Manejador para ELIMINAR taller ---
     const handleEliminar = (id, nombreTaller) => {
         if (window.confirm(`¿Estás segura de que quieres eliminar el taller "${nombreTaller}"?`)) {
-            // --- 4. USAR EL TOKEN AL ELIMINAR ---
             axios.delete(`http://localhost:5000/api/talleres/${id}`, authHeaders)
                 .then(response => {
                     setListaMensaje(`Taller "${nombreTaller}" eliminado.`);
-                    fetchTalleres(); // Recargar la lista
+                    fetchTalleres(); 
                 })
                 .catch(error => {
                     setListaMensaje(error.response?.data?.message || 'Error al eliminar.');
@@ -94,54 +98,65 @@ function Admin() {
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen p-8">
+        <div className="bg-background text-foreground min-h-screen p-8">
             {/* --- SECCIÓN 1: CREAR TALLER --- */}
-            <h1 className="text-3xl font-bold text-tmm-dark mb-6">Panel de Administración</h1>
-            <div className="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-md mb-12">
+            <h1 className="text-3xl font-bold text-foreground mb-6">Panel de Administración</h1>
+            <div className="max-w-xl mx-auto bg-card p-8 rounded-lg shadow-md mb-12 border">
                 <h2 className="text-2xl font-bold mb-4">Crear Nuevo Taller</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Nombre del Taller</label>
-                        <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="w-full p-2 border rounded" required />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <Label htmlFor="nombre">Nombre del Taller</Label>
+                        <Input id="nombre" value={nombre} onChange={e => setNombre(e.target.value)} required />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Descripción</label>
-                        <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} className="w-full p-2 border rounded"></textarea>
+                    <div>
+                        <Label htmlFor="descripcion">Descripción</Label>
+                        <Textarea id="descripcion" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Fecha (YYYY-MM-DDTHH:MM)</label>
-                        <input type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} className="w-full p-2 border rounded" />
+                    <div>
+                        <Label htmlFor="fecha">Fecha</Label>
+                        <Input id="fecha" type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Tipo</label>
-                        <select value={tipo} onChange={e => setTipo(e.target.value)} className="w-full p-2 border rounded">
-                            <option value="B2C">Taller Público (B2C)</option>
-                            <option value="B2B">Taller Empresa (B2B)</option>
-                            <option value="KIT">Kit de Insumos</option>
-                        </select>
+                    <div>
+                        <Label>Tipo</Label>
+                        <Select value={tipo} onValueChange={setTipo}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="B2C">Taller Público (B2C)</SelectItem>
+                                <SelectItem value="B2B">Taller Empresa (B2B)</SelectItem>
+                                <SelectItem value="KIT">Kit de Insumos</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Precio (CLP)</label>
-                        <input type="number" value={precio} onChange={e => setPrecio(e.target.value)} className="w-full p-2 border rounded" required />
+                    
+                    {/* --- CAMBIO: CAMPO LUGAR AÑADIDO --- */}
+                    <div>
+                        <Label htmlFor="lugar">Lugar del Taller</Label>
+                        <Input id="lugar" value={lugar} onChange={e => setLugar(e.target.value)} placeholder="Ej: Online, Mi taller en Valparaíso..." />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-bold mb-2">Imagen del Taller</label>
-                        <input 
+
+                    <div>
+                        <Label htmlFor="precio">Precio (CLP)</Label>
+                        <Input id="precio" type="number" value={precio} onChange={e => setPrecio(e.target.value)} required />
+                    </div>
+                    <div>
+                        <Label htmlFor="file-input">Imagen del Taller</Label>
+                        <Input 
                             id="file-input"
                             type="file" 
-                            onChange={e => setImagen(e.target.files[0])} // Guardar el archivo en el estado
-                            className="w-full p-2 border rounded" 
+                            onChange={e => setImagen(e.target.files[0])}
                         />
                     </div>
-                    <button type="submit" className="w-full bg-tmm-pink text-white font-bold py-3 rounded-lg hover:opacity-90">
+                    <Button type="submit" className="w-full text-lg h-11">
                         Guardar Taller
-                    </button>
+                    </Button>
                     {crearMensaje && <p className="mt-4 text-center">{crearMensaje}</p>}
                 </form>
             </div>
 
             {/* --- SECCIÓN 2: GESTIONAR TALLERES --- */}
-            <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <div className="max-w-4xl mx-auto bg-card p-8 rounded-lg shadow-md border">
                 <h2 className="text-2xl font-bold mb-4">Gestionar Talleres Existentes</h2>
                 {listaMensaje && <p className="text-center mb-4">{listaMensaje}</p>}
                 <div className="space-y-4">
@@ -149,35 +164,32 @@ function Admin() {
                         <div key={taller.id} className="flex flex-col md:flex-row justify-between items-center p-4 border rounded-lg">
                             <div className='flex items-center gap-4'>
                                 <img 
-                                    src={`http://localhost:5000${taller.imageUrl || '/placeholder.png'}`} 
+                                    src={taller.imageUrl ? `http://localhost:5000${taller.imageUrl}` : '/placeholder.png'} 
                                     alt={taller.nombre} 
-                                    className="w-16 h-16 object-cover rounded-md bg-gray-100" 
+                                    className="w-16 h-16 object-cover rounded-md bg-muted" 
                                 />
                                 <div>
                                     <h3 className="text-lg font-bold">{taller.nombre}</h3>
-                                    <p className="text-sm text-gray-600">{taller.tipo} - ${taller.precio ? taller.precio.toLocaleString('es-CL') : '0'}</p>
+                                    <p className="text-sm text-muted-foreground">{taller.tipo} - ${taller.precio ? taller.precio.toLocaleString('es-CL') : '0'}</p>
                                     <p className={`text-sm font-bold ${taller.activo ? 'text-green-600' : 'text-red-600'}`}>
                                         {taller.activo ? 'Activo' : 'Inactivo'}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex gap-4 mt-4 md:mt-0">
-                                <Link 
-                                    to={`/admin/editar/${taller.id}`}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                                >
-                                    Editar
-                                </Link>
-                                <button 
+                                <Button asChild variant="secondary" size="sm">
+                                    <Link to={`/admin/editar/${taller.id}`}>Editar</Link>
+                                </Button>
+                                <Button 
+                                    variant="destructive" size="sm"
                                     onClick={() => handleEliminar(taller.id, taller.nombre)}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
                                 >
                                     Eliminar
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )) : (
-                        <p className="text-gray-500 text-center">Aún no has creado ningún taller.</p>
+                        <p className="text-muted-foreground text-center">Aún no has creado ningún taller.</p>
                     )}
                 </div>
             </div>
