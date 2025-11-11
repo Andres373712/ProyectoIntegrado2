@@ -1,6 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
-import bcrypt from 'bcryptjs'; // Asegúrate de que esta línea esté
+import bcrypt from 'bcryptjs';
 
 export async function connectDb() {
   return open({
@@ -23,7 +23,8 @@ export async function initDb() {
       tipo TEXT,
       precio INTEGER,
       activo BOOLEAN DEFAULT true,
-      imageUrl TEXT 
+      imageUrl TEXT,
+      lugar TEXT
     );
     CREATE TABLE IF NOT EXISTS clientes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +39,7 @@ export async function initDb() {
       cliente_id INTEGER,
       taller_id INTEGER,
       fecha_inscripcion DATETIME DEFAULT CURRENT_TIMESTAMP,
-      token_cancelacion TEXT UNIQE,
+      token_cancelacion TEXT UNIQUE,
       FOREIGN KEY (cliente_id) REFERENCES clientes(id),
       FOREIGN KEY (taller_id) REFERENCES talleres(id)
     );
@@ -56,29 +57,20 @@ export async function initDb() {
     );
   `);
 
-  // 2. AÑADIR COLUMNA (con try/catch)
-  try {
-    await db.exec('ALTER TABLE talleres ADD COLUMN imageUrl TEXT');
-  } catch (e) {
-    if (!e.message.includes('duplicate column name')) {
-      console.error('Error al alterar la tabla "talleres":', e.message);
-    }
-  }
-
-  // 3. CREAR ADMIN POR DEFECTO (LA PARTE QUE FALTABA)
+  // 2. CREAR ADMIN POR DEFECTO
   console.log('Buscando admin por defecto...');
   try {
     const admin = await db.get('SELECT * FROM admin WHERE email = ?', 'carolina@tmm.cl');
     
     if (!admin) {
         console.log('>>> ADMIN NO ENCONTRADO. Creando uno nuevo...');
-        const pass = 'tmm.admin.2025'; // La contraseña
-        const passHash = await bcrypt.hash(pass, 10); // Encriptarla
+        const pass = 'tmm.admin.2025';
+        const passHash = await bcrypt.hash(pass, 10);
         
         await db.run(
             'INSERT INTO admin (email, password_hash) VALUES (?, ?)',
             'carolina@tmm.cl',
-            passHash // Guardar la versión encriptada
+            passHash
         );
         console.log('=============================================');
         console.log('Administrador por defecto creado:');
