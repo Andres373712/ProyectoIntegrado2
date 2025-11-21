@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button'; // Importar botón Shadcn
-import { Input } from '@/components/ui/input';   // Importar input Shadcn
-import { Label } from '@/components/ui/label';   // Importar label Shadcn
-import { Textarea } from '@/components/ui/textarea'; // Importar textarea Shadcn
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Importar Select Shadcn
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function Admin() {
     // --- Estado para el formulario de CREAR ---
@@ -14,7 +14,8 @@ function Admin() {
     const [fecha, setFecha] = useState('');
     const [tipo, setTipo] = useState('B2C');
     const [precio, setPrecio] = useState('');
-    const [lugar, setLugar] = useState(''); // <-- CAMBIO: Estado añadido
+    const [lugar, setLugar] = useState('');
+    const [cupos, setCupos] = useState(10); // <-- NUEVO ESTADO: Por defecto 10
     const [imagen, setImagen] = useState(null);
     const [crearMensaje, setCrearMensaje] = useState('');
 
@@ -25,7 +26,6 @@ function Admin() {
     const token = localStorage.getItem('tmm_token');
     const authHeaders = { headers: { 'Authorization': `Bearer ${token}` } };
 
-    // Función para cargar la lista de talleres
     const fetchTalleres = () => {
         axios.get('http://localhost:5000/api/talleres/todos', authHeaders)
             .then(response => {
@@ -49,7 +49,8 @@ function Admin() {
         formData.append('fecha', fecha ? new Date(fecha).toISOString() : '');
         formData.append('tipo', tipo);
         formData.append('precio', parseInt(precio) || 0);
-        formData.append('lugar', lugar); // <-- CAMBIO: Añadido
+        formData.append('lugar', lugar);
+        formData.append('cupos_totales', parseInt(cupos) || 10); // <-- NUEVO: Enviamos cupos
         if (imagen) {
             formData.append('imagen', imagen);
         }
@@ -64,17 +65,12 @@ function Admin() {
             setCrearMensaje(`¡Éxito! Taller "${nombre}" creado.`);
             fetchTalleres(); 
             // Limpiar formulario
-            setNombre(''); 
-            setDescripcion(''); 
-            setFecha(''); 
-            setTipo('B2C'); 
-            setPrecio(''); 
-            setLugar(''); // <-- CAMBIO: Limpiar
+            setNombre(''); setDescripcion(''); setFecha(''); 
+            setTipo('B2C'); setPrecio(''); setLugar(''); 
+            setCupos(10); // <-- Resetear cupos
             setImagen(null);
             const fileInput = document.getElementById('file-input');
-            if (fileInput) {
-                fileInput.value = null;
-            }
+            if (fileInput) fileInput.value = null;
         })
         .catch(error => {
             setCrearMensaje('Error al crear el taller.');
@@ -82,7 +78,6 @@ function Admin() {
         });
     };
 
-    // --- Manejador para ELIMINAR taller ---
     const handleEliminar = (id, nombreTaller) => {
         if (window.confirm(`¿Estás segura de que quieres eliminar el taller "${nombreTaller}"?`)) {
             axios.delete(`http://localhost:5000/api/talleres/${id}`, authHeaders)
@@ -92,14 +87,12 @@ function Admin() {
                 })
                 .catch(error => {
                     setListaMensaje(error.response?.data?.message || 'Error al eliminar.');
-                    console.error(error);
                 });
         }
     };
 
     return (
         <div className="bg-background text-foreground min-h-screen p-8">
-            {/* --- SECCIÓN 1: CREAR TALLER --- */}
             <h1 className="text-3xl font-bold text-foreground mb-6">Panel de Administración</h1>
             <div className="max-w-xl mx-auto bg-card p-8 rounded-lg shadow-md mb-12 border">
                 <h2 className="text-2xl font-bold mb-4">Crear Nuevo Taller</h2>
@@ -112,28 +105,43 @@ function Admin() {
                         <Label htmlFor="descripcion">Descripción</Label>
                         <Textarea id="descripcion" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
                     </div>
-                    <div>
-                        <Label htmlFor="fecha">Fecha</Label>
-                        <Input id="fecha" type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} />
-                    </div>
-                    <div>
-                        <Label>Tipo</Label>
-                        <Select value={tipo} onValueChange={setTipo}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un tipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="B2C">Taller Público (B2C)</SelectItem>
-                                <SelectItem value="B2B">Taller Empresa (B2B)</SelectItem>
-                                <SelectItem value="KIT">Kit de Insumos</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="fecha">Fecha</Label>
+                            <Input id="fecha" type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} />
+                        </div>
+                        <div>
+                            <Label>Tipo</Label>
+                            <Select value={tipo} onValueChange={setTipo}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="B2C">Taller Público (B2C)</SelectItem>
+                                    <SelectItem value="B2B">Taller Empresa (B2B)</SelectItem>
+                                    <SelectItem value="KIT">Kit de Insumos</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     
-                    {/* --- CAMBIO: CAMPO LUGAR AÑADIDO --- */}
-                    <div>
-                        <Label htmlFor="lugar">Lugar del Taller</Label>
-                        <Input id="lugar" value={lugar} onChange={e => setLugar(e.target.value)} placeholder="Ej: Online, Mi taller en Valparaíso..." />
+                    <div className="grid grid-cols-2 gap-4">
+                         <div>
+                            <Label htmlFor="lugar">Lugar</Label>
+                            <Input id="lugar" value={lugar} onChange={e => setLugar(e.target.value)} placeholder="Ej: Online..." />
+                        </div>
+                        {/* --- NUEVO CAMPO CUPOS --- */}
+                        <div>
+                            <Label htmlFor="cupos">Cupos Totales</Label>
+                            <Input 
+                                id="cupos" 
+                                type="number" 
+                                min="1"
+                                value={cupos} 
+                                onChange={e => setCupos(e.target.value)} 
+                                required 
+                            />
+                        </div>
                     </div>
 
                     <div>
@@ -155,7 +163,6 @@ function Admin() {
                 </form>
             </div>
 
-            {/* --- SECCIÓN 2: GESTIONAR TALLERES --- */}
             <div className="max-w-4xl mx-auto bg-card p-8 rounded-lg shadow-md border">
                 <h2 className="text-2xl font-bold mb-4">Gestionar Talleres Existentes</h2>
                 {listaMensaje && <p className="text-center mb-4">{listaMensaje}</p>}
@@ -171,8 +178,8 @@ function Admin() {
                                 <div>
                                     <h3 className="text-lg font-bold">{taller.nombre}</h3>
                                     <p className="text-sm text-muted-foreground">{taller.tipo} - ${taller.precio ? taller.precio.toLocaleString('es-CL') : '0'}</p>
-                                    <p className={`text-sm font-bold ${taller.activo ? 'text-green-600' : 'text-red-600'}`}>
-                                        {taller.activo ? 'Activo' : 'Inactivo'}
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Cupos: {taller.cupos_inscritos} / {taller.cupos_totales} {/* Mostramos el estado de cupos */}
                                     </p>
                                 </div>
                             </div>
@@ -180,10 +187,7 @@ function Admin() {
                                 <Button asChild variant="secondary" size="sm">
                                     <Link to={`/admin/editar/${taller.id}`}>Editar</Link>
                                 </Button>
-                                <Button 
-                                    variant="destructive" size="sm"
-                                    onClick={() => handleEliminar(taller.id, taller.nombre)}
-                                >
+                                <Button variant="destructive" size="sm" onClick={() => handleEliminar(taller.id, taller.nombre)}>
                                     Eliminar
                                 </Button>
                             </div>
@@ -196,5 +200,4 @@ function Admin() {
         </div>
     );
 }
-
 export default Admin;

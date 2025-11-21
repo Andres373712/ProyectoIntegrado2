@@ -11,32 +11,39 @@ import {
     CardDescription
 } from '@/components/ui/card';
 
-// --- IMPORTACIONES PARA EL HERO Y EL CARRUSEL ---
+// --- IMPORTACIONES DE CARRUSEL E ICONOS ---
 import Slider from "react-slick";
-// 1. Tu imagen de fondo estática
-import HeroBackground from '../assets/image.png'; // <-- Tu imagen de fondo
-// 2. Imágenes para el carrusel (asegúrate de que existan)
+import { ShoppingCart, Ban } from 'lucide-react';
+import { useCart } from '../context/CartContext.jsx'; 
+
+// --- IMPORTACIONES DE ASSETS (AJUSTAR EXTENSIONES Y NOMBRES) ---
+import HeroBackground from '../assets/nuevo-fondo.jpg'; 
 import CarouselImg1 from '../assets/carousel-1.jpeg';
 import CarouselImg2 from '../assets/carousel-2.jpeg';
 import CarouselImg3 from '../assets/carousel-3.jpeg';
+import FotoCarolina from '../assets/carolina.jpg'; 
+// --- FIN ASSETS ---
 
 function Homepage() {
-    const [talleres, setTalleres] = useState([]);
+    const [productos, setProductos] = useState([]);
     const [cargando, setCargando] = useState(true);
+    const { addToCart } = useCart(); 
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/talleres/activos')
+        // Cargar productos activos para la vitrina
+        axios.get('http://localhost:5000/api/productos/activos')
             .then(response => {
-                setTalleres(response.data.slice(0, 3)); 
+                // Tomamos solo los 3 primeros productos para mostrar
+                setProductos(response.data.slice(0, 3)); 
                 setCargando(false);
             })
             .catch(error => {
-                console.error("Error al cargar talleres:", error);
+                console.error("Error al cargar productos:", error);
                 setCargando(false);
             });
     }, []);
 
-    // --- Configuración para el Carrusel del Hero ---
+    // Configuración del Carrusel (Hero)
     const sliderSettings = {
         dots: true,
         infinite: true,
@@ -47,112 +54,174 @@ function Homepage() {
         slidesToScroll: 1,
         fade: true,
         cssEase: 'linear',
-        arrows: false 
+        arrows: false
     };
 
     return (
         <div className="bg-background text-foreground min-h-screen">
             
-            {/* --- 1. Sección Hero (Fondo Estático + Layout Dividido) --- */}
+            {/* --- 1. SECCIÓN HERO (Dividida con Fondo Estático) --- */}
             <div 
-                className="relative w-full p-8 md:p-12 min-h-[500px] flex items-center justify-center overflow-hidden" 
+                className="relative w-full p-8 md:p-12 min-h-[600px] flex items-center overflow-hidden" 
                 style={{ 
-                    // Usamos tu image.png como fondo
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${HeroBackground})`,
+                    // Fondo estático con capa oscura suave (0.4) para que el texto blanco se lea bien
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${HeroBackground})`,
                     backgroundSize: 'cover', 
                     backgroundPosition: 'center' 
                 }}
             >
-                {/* Contenedor de 2 columnas (Texto + Carrusel) */}
-                <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                {/* Contenedor Principal (Centrado y con ancho máximo) */}
+                <div className="relative z-10 container mx-auto px-6 md:px-12 h-full py-12">
                     
-                    {/* --- Columna 1: Texto --- */}
-                    <div className="text-center md:text-left text-white">
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                            TMM Bienestar y Conexión
-                        </h1>
-                        <p className="text-lg md:text-xl text-white/90">
-                            Un espacio de bienestar para ti. Descubre el poder sanador de la artesanía y conecta contigo misma.
-                        </p>
-                        <Button asChild className="mt-8 text-lg px-8 py-6">
-                            <Link to="/catalogo">Explorar Talleres</Link>
-                        </Button>
-                    </div>
+                    {/* Grid de 2 Columnas */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center h-full">
+                        
+                        {/* Columna 1: Texto (Izquierda) */}
+                        <div className="text-center lg:text-left text-white space-y-6 animate-in fade-in slide-in-from-left duration-700">
+                            <h1 className="text-4xl md:text-6xl font-bold leading-tight drop-shadow-lg">
+                                TMM Bienestar y Conexión
+                            </h1>
+                            <p className="text-lg md:text-xl text-white/90 max-w-lg mx-auto lg:mx-0 drop-shadow-md">
+                                Un espacio de bienestar para ti. Descubre el poder sanador de la artesanía y conecta contigo misma.
+                            </p>
+                            <div className="pt-4">
+                                <Button asChild className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 shadow-lg hover:scale-105 transition-transform border-none text-white">
+                                    <Link to="/catalogo">Explorar Talleres</Link>
+                                </Button>
+                            </div>
+                        </div>
 
-                    {/* --- Columna 2: Carrusel --- */}
-                    <div className="w-full rounded-lg overflow-hidden shadow-xl">
-                        <Slider {...sliderSettings}>
-                            <div>
-                                <img src={CarouselImg1} alt="Taller de Bienestar 1" className="w-full h-80 md:h-96 object-cover" />
-                            </div>
-                            <div>
-                                <img src={CarouselImg2} alt="Taller de Bienestar 2" className="w-full h-80 md:h-96 object-cover" />
-                            </div>
-                            <div>
-                                <img src={CarouselImg3} alt="Taller de Bienestar 3" className="w-full h-80 md:h-96 object-cover" />
-                            </div>
-                        </Slider>
-                    </div>
+                        {/* Columna 2: Carrusel (Derecha) */}
+                        <div className="w-full max-w-md mx-auto lg:max-w-full rounded-xl overflow-hidden shadow-2xl border-4 border-white/20 animate-in fade-in slide-in-from-right duration-700 delay-200">
+                            <Slider {...sliderSettings}>
+                                <div><img src={CarouselImg1} alt="Taller 1" className="w-full h-64 md:h-96 object-cover" /></div>
+                                <div><img src={CarouselImg2} alt="Taller 2" className="w-full h-64 md:h-96 object-cover" /></div>
+                                <div><img src={CarouselImg3} alt="Taller 3" className="w-full h-64 md:h-96 object-cover" /></div>
+                            </Slider>
+                        </div>
 
+                    </div>
                 </div>
+
+                {/* Degradado inferior para suavizar la transición al fondo blanco */}
+                <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
             </div>
 
-            {/* --- 2. Sección Talleres Destacados (Sin cambios) --- */}
-            <div className="max-w-6xl mx-auto p-8 md:p-12">
-                <h2 className="text-3xl font-bold text-center mb-8">Talleres Destacados</h2>
+            {/* --- 2. SECCIÓN PRODUCTOS DISPONIBLES --- */}
+            <div className="max-w-6xl mx-auto p-8 md:p-20">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">Nuestros Productos y Kits</h2>
+                    <p className="text-muted-foreground max-w-2xl mx-auto">
+                        Lleva la experiencia creativa a tu hogar con nuestros kits preparados con cariño.
+                    </p>
+                </div>
                 
                 {cargando ? (
-                    <p className="text-center">Cargando talleres...</p>
+                    <p className="text-center text-muted-foreground">Cargando productos...</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {talleres.map(taller => (
-                            <Card key={taller.id} className="flex flex-col justify-between overflow-hidden">
-                                <CardHeader>
-                                    <CardTitle className="text-2xl">{taller.nombre}</CardTitle>
-                                    <CardDescription>
-                                        {taller.fecha ? new Date(taller.fecha).toLocaleDateString('es-CL', { month: 'long', day: 'numeric' }) : 'Próximamente'}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <img 
-                                        src={`http://localhost:5000${taller.imageUrl || '/placeholder.png'}`} 
-                                        alt={taller.nombre} 
-                                        className="w-full h-48 object-cover rounded-md mb-4" 
-                                    />
-                                    <p className="text-2xl font-bold mt-4">${taller.precio ? taller.precio.toLocaleString('es-CL') : 'N/A'}</p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button asChild variant="secondary" className="w-full">
-                                        <Link to={`/inscribir/${taller.id}`}>Ver Detalles</Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
+                        {productos.length > 0 ? productos.map(prod => {
+                            const sinStock = prod.stock <= 0;
+                            
+                            return (
+                                <Card key={prod.id} className="flex flex-col justify-between overflow-hidden hover:shadow-xl transition-shadow duration-300 border-none shadow-md">
+                                    <CardHeader className="p-0">
+                                        <div className="relative">
+                                            <img 
+                                                src={prod.imageUrl ? `http://localhost:5000${prod.imageUrl}` : '/placeholder.png'} 
+                                                alt={prod.nombre} 
+                                                className={`w-full h-56 object-cover transition-transform duration-500 hover:scale-105 ${sinStock ? 'grayscale opacity-60' : ''}`} 
+                                            />
+                                            {sinStock && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                                                    <span className="bg-destructive text-white font-bold px-4 py-2 rounded text-lg transform -rotate-12 shadow-lg">
+                                                        AGOTADO
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardHeader>
+                                    
+                                    <CardContent className="p-6">
+                                        <CardTitle className="text-xl mb-2">{prod.nombre}</CardTitle>
+                                        <CardDescription className="line-clamp-2 text-sm mb-4">
+                                            {prod.descripcion}
+                                        </CardDescription>
+                                        <div className="flex justify-between items-end">
+                                            <p className="text-2xl font-bold text-primary">${prod.precio.toLocaleString('es-CL')}</p>
+                                            <p className="text-xs text-muted-foreground font-medium">
+                                                {sinStock ? 'Sin stock' : `Disponibles: ${prod.stock}`}
+                                            </p>
+                                        </div>
+                                    </CardContent>
+
+                                    <CardFooter className="p-6 pt-0">
+                                        <Button 
+                                            className="w-full gap-2 font-semibold" 
+                                            disabled={sinStock}
+                                            variant={sinStock ? "secondary" : "default"}
+                                            onClick={() => {
+                                                addToCart({
+                                                    id: prod.id,
+                                                    nombre: prod.nombre,
+                                                    precio: prod.precio,
+                                                    imageUrl: prod.imageUrl,
+                                                    stock: prod.stock,
+                                                    tipo: 'producto' 
+                                                });
+                                                alert(`¡${prod.nombre} añadido al carrito!`);
+                                            }}
+                                        >
+                                            {sinStock ? (
+                                                <><Ban className="w-4 h-4" /> No Disponible</>
+                                            ) : (
+                                                <><ShoppingCart className="w-4 h-4" /> Añadir al Carrito</>
+                                            )}
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            );
+                        }) : (
+                            <div className="col-span-3 text-center py-12 bg-secondary/30 rounded-lg">
+                                <p className="text-lg text-muted-foreground">Pronto tendremos productos disponibles.</p>
+                            </div>
+                        )}
                     </div>
                 )}
+                
                  <div className="text-center mt-12">
-                    <Button asChild variant="outline" size="lg">
-                        <Link to="/catalogo">Ver Todos los Talleres</Link>
+                    <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-white transition-colors">
+                        <Link to="/catalogo">Ver Todo el Catálogo</Link>
                     </Button>
                 </div>
             </div>
 
-            {/* --- 3. Sección "Quienes Somos" (Con Placeholder) --- */}
-            <div className="bg-white p-12 md:p-20">
-                <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <h2 className="text-3xl font-bold mb-4">Conoce a Carolina</h2>
-                        <p className="text-lg text-foreground/80 mb-4">
+            {/* --- 3. SECCIÓN QUIENES SOMOS --- */}
+            <div className="bg-secondary/30 p-12 md:p-24">
+                <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+                    <div className="order-2 md:order-1">
+                        <h2 className="text-3xl font-bold mb-6 text-foreground">Conoce a Carolina</h2>
+                        <div className="w-16 h-1 bg-primary mb-6"></div>
+                        <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
                             ¡Hola! Soy Carolina López, fundadora de TMM. Mi misión es crear un refugio donde puedas desconectarte del estrés diario y reconectarte contigo misma a través de la creatividad y la artesanía.
                         </p>
-                        <Button asChild variant="link" className="text-lg text-primary p-0">
-                            <Link to="/quienes-somos">Leer más sobre nuestra historia</Link>
+                        <Button asChild variant="link" className="text-lg text-primary p-0 font-bold hover:underline">
+                            <Link to="/quienes-somos">Leer nuestra historia completa →</Link>
                         </Button>
                     </div>
-                    <div>
-                        {/* Dejamos el placeholder aquí */}
-                        <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-500">Imagen de Carolina</span>
+                    <div className="order-1 md:order-2 flex justify-center">
+                        <div className="relative w-64 h-64 md:w-80 md:h-80">
+                            {/* Círculo decorativo detrás */}
+                            <div className="absolute inset-0 bg-primary/10 rounded-full transform translate-x-4 translate-y-4"></div>
+                            {/* Imagen de Carolina */}
+                            <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-xl overflow-hidden border-4 border-white">
+                                <img 
+                                    src={FotoCarolina} 
+                                    alt="Carolina López" 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {e.target.style.display='none'; e.target.parentNode.style.backgroundColor='#e5e7eb'}} 
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
