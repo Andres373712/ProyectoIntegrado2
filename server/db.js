@@ -24,16 +24,34 @@ export async function initDb() {
       precio INTEGER,
       activo BOOLEAN DEFAULT true,
       imageUrl TEXT,
-      lugar TEXT
+      lugar TEXT,
+      cupos_totales INTEGER DEFAULT 10,
+      cupos_inscritos INTEGER DEFAULT 0
     );
+    
+    CREATE TABLE IF NOT EXISTS productos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      descripcion TEXT,
+      precio INTEGER,
+      stock INTEGER DEFAULT 0,
+      activo BOOLEAN DEFAULT true,
+      imageUrl TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS clientes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nombre TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       telefono TEXT,
       intereses TEXT,
-      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+      password_hash TEXT,
+      rol TEXT DEFAULT 'cliente',
+      verificado BOOLEAN DEFAULT false,    -- <-- NUEVO: Estado de verificación
+      token_verificacion TEXT UNIQUE -- <-- NUEVO: Token para el enlace
     );
+    
     CREATE TABLE IF NOT EXISTS inscripciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente_id INTEGER,
@@ -43,6 +61,7 @@ export async function initDb() {
       FOREIGN KEY (cliente_id) REFERENCES clientes(id),
       FOREIGN KEY (taller_id) REFERENCES talleres(id)
     );
+    
     CREATE TABLE IF NOT EXISTS notas_fidelizacion (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cliente_id INTEGER NOT NULL,
@@ -50,6 +69,7 @@ export async function initDb() {
         fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (cliente_id) REFERENCES clientes(id)
     );
+    
     CREATE TABLE IF NOT EXISTS admin (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
@@ -73,12 +93,8 @@ export async function initDb() {
             passHash
         );
         console.log('=============================================');
-        console.log('Administrador por defecto creado:');
-        console.log('Usuario: carolina@tmm.cl');
-        console.log('Clave: tmm.admin.2025');
+        console.log('Administrador por defecto creado.');
         console.log('=============================================');
-    } else {
-        console.log('>>> ADMIN SÍ FUE ENCONTRADO. No se crea uno nuevo.');
     }
   } catch (e) {
     console.error('>>> ERROR GRAVE al intentar buscar o crear admin:', e.message);

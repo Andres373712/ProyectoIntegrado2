@@ -5,14 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin } from 'lucide-react'; // Icono para "Lugar"
+import { MapPin, Users } from 'lucide-react';
 
 function Inscripcion() {
     const [taller, setTaller] = useState(null);
     const [cargando, setCargando] = useState(true);
     const { id } = useParams();
 
-    // --- Estado para el formulario ---
     const [nombre, setNombre] = useState('');
     const [email, setEmail] = useState('');
     const [telefono, setTelefono] = useState('');
@@ -33,13 +32,10 @@ function Inscripcion() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setMensaje(''); // Limpiar mensajes
+        setMensaje('');
         const datosInscripcion = {
             tallerId: id,
-            nombre,
-            email,
-            telefono,
-            intereses: taller.tipo
+            nombre, email, telefono, intereses: taller.tipo
         };
 
         axios.post('http://localhost:5000/api/inscripcion', datosInscripcion)
@@ -56,19 +52,21 @@ function Inscripcion() {
     if (cargando) return <p className="text-center p-10">Cargando taller...</p>;
     if (!taller) return <p className="text-center p-10">Taller no encontrado.</p>;
 
+    // CÁLCULO DE CUPOS
+    const cuposDisponibles = (taller.cupos_totales || 10) - (taller.cupos_inscritos || 0);
+    const agotado = cuposDisponibles <= 0;
+
     return (
         <div className="bg-background min-h-screen p-4 md:p-8">
             <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
                 
-                {/* --- Columna 1: Detalles del Taller (con Imagen y Lugar) --- */}
-                <Card className="shadow-lg border-none">
+                <Card className="shadow-lg border-none h-fit">
                     <CardHeader>
-                        {/* --- MOSTRAR LA IMAGEN --- */}
                         {taller.imageUrl ? (
                             <img 
                                 src={`http://localhost:5000${taller.imageUrl}`} 
                                 alt={taller.nombre}
-                                className="w-full h-64 object-cover rounded-md mb-4"
+                                className={`w-full h-64 object-cover rounded-md mb-4 ${agotado ? 'grayscale' : ''}`}
                             />
                         ) : (
                             <div className="w-full h-64 bg-muted rounded-md mb-4 flex items-center justify-center">
@@ -87,23 +85,41 @@ function Inscripcion() {
                         <div className="flex items-center text-md text-foreground/90">
                             <strong>Fecha:</strong>&nbsp; {new Date(taller.fecha).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </div>
-                        {/* --- MOSTRAR EL LUGAR --- */}
                         {taller.lugar && (
                             <div className="flex items-center text-md text-foreground/90">
                                 <MapPin className="w-4 h-4 mr-2 text-primary" />
                                 En: {taller.lugar}
                             </div>
                         )}
+
+                        {/* --- AVISO DE CUPOS (MODIFICADO) --- */}
+                        <div className={`flex items-center p-3 rounded-lg border ${agotado ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                            <Users className="w-5 h-5 mr-2" />
+                            {agotado ? (
+                                <span className="font-bold">¡Lo sentimos! Cupos Agotados.</span>
+                            ) : (
+                                <span className="font-bold">¡Aún quedan cupos disponibles!</span> // <-- CAMBIO AQUÍ
+                            )}
+                        </div>
+
                     </CardContent>
                 </Card>
 
-                {/* --- Columna 2: Formulario de Inscripción --- */}
-                <Card className="shadow-lg border-none">
+                <Card className="shadow-lg border-none h-fit">
                     <CardHeader>
-                        <CardTitle className="text-3xl">Inscríbete Aquí</CardTitle>
+                        <CardTitle className="text-3xl">{agotado ? 'Inscripción Cerrada' : 'Inscríbete Aquí'}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {exito ? (
+                        {agotado ? (
+                            <div className="text-center p-8">
+                                <p className="text-lg text-gray-600 mb-6">
+                                    Lo sentimos, este taller ya alcanzó su capacidad máxima.
+                                </p>
+                                <Button asChild variant="outline" className="w-full">
+                                    <Link to="/catalogo">Ver otros talleres disponibles</Link>
+                                </Button>
+                            </div>
+                        ) : exito ? (
                             <div className="text-center p-8">
                                 <h2 className="text-2xl font-bold text-green-600 mb-4">¡Inscripción Exitosa!</h2>
                                 <p className="mb-6">{mensaje}</p>
