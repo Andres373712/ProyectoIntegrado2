@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 // --- IMPORTACIÓN DE PÁGINAS (Desde la carpeta pages) ---
 import Homepage from './pages/Homepage.jsx';
@@ -11,7 +12,7 @@ import LoginCliente from './pages/LoginCliente.jsx';
 import Registro from './pages/Registro.jsx'; 
 import RecuperarPassword from './pages/RecuperarPassword.jsx';
 import NuevaPassword from './pages/NuevaPassword.jsx';
-import Carrito from './pages/Carrito.jsx'; 
+import Carrito from './pages/Carrito.jsx';
 
 // --- PÁGINAS DE ADMINISTRACIÓN ---
 import AdminDashboard from './pages/AdminDashboard.jsx';
@@ -119,21 +120,36 @@ function Navegacion() {
                             )}
                         </Link>
 
-                        {token ? (
-                            <>
-                                <Link to="/admin" className="text-[10px] text-gray-300 hover:text-white uppercase tracking-wide font-semibold border border-gray-600 px-3 py-1 rounded-full">Admin</Link>
-                                <button onClick={handleLogout} className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:underline">
-                                    Salir
-                                </button>
-                            </>
-                        ) : (
-                             <div className="flex items-center space-x-4 border-l border-gray-700 pl-6">
-                                <Link to="/login-cliente" className="text-xs text-gray-300 hover:text-white transition-colors uppercase tracking-wider">Ingresar</Link>
-                                <Link to="/registro-cliente" className="bg-white text-black text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 shadow-md uppercase tracking-wider">
-                                    Registrarse
-                                </Link>
-                            </div>
-                        )}
+                    {token ? (
+                        <>
+                            {(() => {
+                                 try {
+                                    const decoded = jwtDecode(token);
+                                    // Solo mostrar el botón Admin si el usuario es realmente admin
+                                    if (decoded.rol === 'admin') {
+                                        return (
+                                            <Link to="/admin" className="text-[10px] text-gray-300 hover:text-white uppercase tracking-wide font-semibold border border-gray-600 px-3 py-1 rounded-full">
+                                                Admin
+                                            </Link>
+                                        );
+                                    }
+                                } catch (error) {
+                                    console.error('Error decodificando token:', error);
+                                }
+                                return null;
+                            })()}
+                            <button onClick={handleLogout} className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:underline">
+                                Salir
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex items-center space-x-4 border-l border-gray-700 pl-6">
+                            <Link to="/login-cliente" className="text-xs text-gray-300 hover:text-white transition-colors uppercase tracking-wider">Ingresar</Link>
+                            <Link to="/registro-cliente" className="bg-white text-black text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 shadow-md uppercase tracking-wider">
+                                Registrarse
+                            </Link>
+                        </div>
+                    )}
                     </div>
                     
                     {/* --- BOTÓN MÓVIL --- */}
