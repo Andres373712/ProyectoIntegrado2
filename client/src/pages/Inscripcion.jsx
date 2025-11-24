@@ -42,12 +42,17 @@ function Inscripcion() {
             .then(response => {
                 setExito(true);
                 setMensaje(response.data.message);
-            })
-            .catch(error => {
-                setExito(false);
-                setMensaje(error.response?.data?.message || 'Error en la inscripción.');
-            });
-    };
+            // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
+            setTimeout(() => {
+                window.open('https://www.mercadopago.cl/', '_blank');
+                alert('En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago para el taller "' + taller.nombre + '" por $' + taller.precio.toLocaleString('es-CL'));
+            }, 2000);
+        })
+        .catch(error => {
+            setExito(false);
+            setMensaje(error.response?.data?.message || 'Error en la inscripción.');
+        });
+};
 
     if (cargando) return <p className="text-center p-10">Cargando taller...</p>;
     if (!taller) return <p className="text-center p-10">Taller no encontrado.</p>;
@@ -122,7 +127,7 @@ function Inscripcion() {
                         ) : exito ? (
                             <div className="text-center p-8">
                                 <h2 className="text-2xl font-bold text-green-600 mb-4">¡Inscripción Exitosa!</h2>
-                                <p className="mb-6">{mensaje}</p>
+                                <p className="mb-6">Tu cupo ha sido reservado. Recibirás un correo de confirmación con los detalles del taller.</p>
                                 <Button asChild variant="secondary">
                                     <Link to="/catalogo">Volver al Catálogo</Link>
                                 </Button>
@@ -145,7 +150,7 @@ function Inscripcion() {
                                     <p className="text-red-500 text-center">{mensaje}</p>
                                 )}
                                 <Button type="submit" className="w-full text-lg h-12">
-                                    Confirmar mi Cupo
+                                    Proceder al pago
                                 </Button>
                             </form>
                         )}

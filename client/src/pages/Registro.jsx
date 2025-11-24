@@ -13,6 +13,7 @@ function Registro() {
     const [email, setEmail] = useState('');
     const [telefono, setTelefono] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [aceptaTerminos, setAceptaTerminos] = useState(false);
     
     const [error, setError] = useState('');
@@ -28,9 +29,9 @@ function Registro() {
     const hasNumber = /[0-9]/.test(password);
     const hasSymbol = /[@$!%*?&]/.test(password);
     const isPasswordStrong = hasMinLength && hasUpper && hasLower && hasNumber && hasSymbol;
-
-    // Teléfono Chileno (+569...)
-    const isPhoneValid = /^\+569[0-9]{8}$/.test(telefono);
+        
+    // Teléfono Chileno simple (9 dígitos, empieza con 9)
+    const isPhoneValid = /^9[0-9]{8}$/.test(telefono);
     
     // Nombre (Sin números)
     const isNameValid = nombre.length > 0 && !/[0-9]/.test(nombre);
@@ -40,6 +41,13 @@ function Registro() {
         e.preventDefault();
         setError('');
         setCargando(true);
+
+            // --- NUEVA VALIDACIÓN: Las contraseñas deben coincidir ---
+    if (password !== confirmPassword) {
+        setError('Las contraseñas no coinciden.');
+        setCargando(false);
+        return;
+    }
 
         // --- VALIDACIONES ANTES DE ENVIAR ---
         if (!aceptaTerminos) {
@@ -52,11 +60,27 @@ function Registro() {
             setCargando(false);
             return;
         }
-        if (!isPhoneValid) {
-            setError('El teléfono debe tener el formato +56912345678.');
+        if (!telefono.startsWith('9')) {
+            setError('El teléfono debe comenzar con 9.');
             setCargando(false);
             return;
         }
+        if (telefono.length < 9) {
+            setError(`El teléfono es muy corto. Faltan ${9 - telefono.length} dígitos. Debe tener 9 dígitos en total.`);
+            setCargando(false);
+            return;
+        }
+        if (telefono.length > 9) {
+            setError(`El teléfono es muy largo. Sobran ${telefono.length - 9} caracteres. Debe tener 9 dígitos en total.`);
+            setCargando(false);
+            return;
+        }
+        if (!isPhoneValid) {
+            setError('El teléfono debe ser 9 seguido de 8 dígitos.');
+            setCargando(false);
+            return;
+        }
+
         if (!isPasswordStrong) {
             setError('La contraseña no cumple con los requisitos de seguridad.');
             setCargando(false);
@@ -115,18 +139,30 @@ function Registro() {
                                 />
                                 {nombre && !isNameValid && <p className="text-xs text-destructive">No uses números.</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="telefono">WhatsApp</Label>
-                                <Input 
-                                    id="telefono" 
-                                    value={telefono} 
-                                    onChange={e => setTelefono(e.target.value)} 
-                                    required 
-                                    placeholder="+569XXXXXXXX" 
-                                    className={telefono && !isPhoneValid ? "border-destructive focus-visible:ring-destructive" : ""}
-                                />
-                                {telefono && !isPhoneValid && <p className="text-xs text-destructive">Formato: +56912345678</p>}
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="telefono">Teléfono</Label>
+                            <Input 
+                                id="telefono"
+                                type="tel"
+                                value={telefono} 
+                                onChange={e => setTelefono(e.target.value)} 
+                                required 
+                                placeholder="912345678" 
+                                maxLength="9"
+                                className={telefono && !isPhoneValid ? "border-destructive focus-visible:ring-destructive" : ""}
+                            />
+                            {telefono && !telefono.startsWith('9') && (
+                                <p className="text-xs text-destructive">⚠️ Debe comenzar con 9</p>
+                            )}
+                            {telefono && telefono.startsWith('9') && telefono.length !== 9 && (
+                                <p className="text-xs text-destructive">
+                                    ⚠️ {telefono.length < 9 ? `Faltan ${9 - telefono.length} dígitos` : `Sobran ${telefono.length - 9} caracteres`}
+                                </p>
+                            )}
+                            {telefono && isPhoneValid && (
+                                <p className="text-xs text-green-600">✓ Formato correcto</p>
+                            )}
+                        </div>
                         </div>
 
                         {/* Email */}
@@ -144,7 +180,7 @@ function Registro() {
                         
                         {/* Contraseña con Feedback Visual */}
                         <div className="space-y-2 bg-muted/30 p-3 rounded-lg border">
-                            <Label htmlFor="password">Contraseña Segura</Label>
+                            <Label htmlFor="password">Contraseña</Label>
                             <Input 
                                 id="password" 
                                 type="password" 
@@ -160,6 +196,25 @@ function Registro() {
                                 <RequirementItem met={hasSymbol} text="Un símbolo (@$!%*?&)" />
                             </div>
                         </div>
+
+                        {/* NUEVO: Confirmar Contraseña */}
+<div className="space-y-2">
+    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+    <Input 
+        id="confirmPassword" 
+        type="password" 
+        value={confirmPassword} 
+        onChange={e => setConfirmPassword(e.target.value)} 
+        required 
+        className={confirmPassword && password !== confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
+    />
+    {confirmPassword && password !== confirmPassword && (
+        <p className="text-xs text-destructive">Las contraseñas no coinciden</p>
+    )}
+    {confirmPassword && password === confirmPassword && (
+        <p className="text-xs text-green-600">✓ Las contraseñas coinciden</p>
+    )}
+</div>
 
                         {/* Términos y Condiciones */}
                         <div className="flex items-start space-x-2 pt-2">
