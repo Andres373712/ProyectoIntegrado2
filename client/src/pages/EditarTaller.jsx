@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import InputPrecio from '@/components/InputPrecio';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -158,7 +159,12 @@ function EditarTaller() {
 
                 <div>
                     <Label htmlFor="precio">Precio (CLP)</Label>
-                    <Input id="precio" name="precio" type="number" value={taller.precio || 0} onChange={handleChange} required />
+                    <InputPrecio 
+                        id="precio" 
+                        value={taller.precio || 0} 
+                        onChange={(valor) => setTaller(prev => ({ ...prev, precio: valor }))}
+                        required 
+                    />
                 </div>
                 
                 <div className="flex items-center space-x-2 py-2">

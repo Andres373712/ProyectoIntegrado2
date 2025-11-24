@@ -47,7 +47,7 @@ export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
     }
 }
 
-// 3. --- NUEVA FUNCIÓN PARA ENVIAR EL EMAIL DE VERIFICACIÓN ---
+// 3. --- FUNCIÓN PARA ENVIAR EL EMAIL DE VERIFICACIÓN ---
 export async function enviarEmailVerificacion(datosClienta, verificationToken) {
     // Nota: La URL 5000 es la ruta del servidor (backend)
     const verificationURL = `http://localhost:5000/api/auth/verificar/${verificationToken}`; 
@@ -89,7 +89,7 @@ export async function enviarEmailVerificacion(datosClienta, verificationToken) {
     }
 }
 
-// 4. --- NUEVA FUNCIÓN PARA RECUPERAR CONTRASEÑA ---
+// 4. --- FUNCIÓN PARA RECUPERAR CONTRASEÑA ---
 export async function enviarEmailRecuperacion(email, token) {
     // Nota: La URL 5173 es la ruta del frontend donde se ingresa la nueva clave
     const resetURL = `http://localhost:5173/reset-password/${token}`; 
@@ -117,5 +117,57 @@ export async function enviarEmailRecuperacion(email, token) {
         console.log(`Email de recuperación enviado a ${email}`);
     } catch (error) {
         console.error(`Error enviando email de recuperación a ${email}:`, error);
+    }
+}
+
+// 5. --- NUEVA FUNCIÓN PARA CONFIRMACIÓN DE PEDIDOS ---
+export async function enviarEmailPedido(cliente, productos, total, pedidoId) {
+    const listaProductos = productos.map(p => 
+        `<li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+            <strong>${p.nombre}</strong><br>
+            Cantidad: ${p.cantidad} × $${p.precio.toLocaleString('es-CL')} = $${(p.cantidad * p.precio).toLocaleString('es-CL')}
+        </li>`
+    ).join('');
+
+    try {
+        const mailOptions = {
+            from: `"TMM Bienestar y Conexión" <${process.env.EMAIL_USER}>`,
+            to: cliente.email,
+            subject: `✅ Pedido Recibido #${pedidoId} - TMM Bienestar`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                    <h2 style="color: #E4007C;">¡Gracias por tu pedido, ${cliente.nombre}!</h2>
+                    <p>Hemos recibido tu pedido correctamente. A continuación el detalle:</p>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Pedido #${pedidoId}</h3>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            ${listaProductos}
+                        </ul>
+                        <hr style="margin: 20px 0; border: none; border-top: 2px solid #E4007C;">
+                        <p style="font-size: 20px; font-weight: bold; text-align: right; color: #E4007C; margin: 0;">
+                            Total: $${total.toLocaleString('es-CL')}
+                        </p>
+                    </div>
+
+                    <p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; border-radius: 4px;">
+                        📞 <strong>Nos pondremos en contacto contigo pronto</strong> para coordinar el pago y envío.
+                    </p>
+                    
+                    <p>Cualquier consulta, responde a este correo.</p>
+                    
+                    <p style="margin-top: 30px; color: #666;">
+                        Saludos cordiales,<br>
+                        <strong>Carolina López<br>TMM Bienestar y Conexión</strong>
+                    </p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Email de pedido enviado a ${cliente.email}`);
+
+    } catch (error) {
+        console.error(`Error al enviar email de pedido a ${cliente.email}:`, error);
     }
 }

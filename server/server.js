@@ -3,7 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import { initDb, connectDb } from './db.js';
-import { enviarEmailConfirmacion, enviarEmailVerificacion, enviarEmailRecuperacion } from './emailService.js';
+import { enviarEmailConfirmacion, enviarEmailVerificacion, enviarEmailRecuperacion, enviarEmailPedido } from './emailService.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import 'dotenv/config';
@@ -75,7 +75,7 @@ app.post('/api/auth/register-cliente', async (req, res) => {
     
     if (!nombre || !email || !password || !telefono || !aceptaTerminos) return res.status(400).json({ message: 'Faltan campos obligatorios.' });
     if (!validator.isEmail(email)) return res.status(400).json({ message: 'Email inválido.' });
-    if (!telefono.match(/^\+569[0-9]{8}$/)) return res.status(400).json({ message: 'Teléfono inválido (+569XXXXXXXX).' });
+    //if (!telefono.match(/^9[0-9]{8}$/)) return res.status(400).json({ message: 'Teléfono inválido. Debe ser 9 dígitos comenzando con 9.' });
     
     if (!password.match(passwordRegex)) {
         return res.status(400).json({ message: 'Contraseña insegura: Mín 8 car., Mayús, minús, número y símbolo (@$!%*?&.,).' });
@@ -83,12 +83,28 @@ app.post('/api/auth/register-cliente', async (req, res) => {
     
     try {
         const db = await connectDb();
-        const emailExistente = await db.get('SELECT id FROM clientes WHERE email = ?', email);
-        if (emailExistente) return res.status(409).json({ message: 'Email ya registrado.' });
+        const clienteExistente = await db.get('SELECT id, password_hash FROM clientes WHERE email = ?', email);
+        
+        // CASO 1: Email ya registrado CON contraseña (usuario registrado)
+        if (clienteExistente && clienteExistente.password_hash) {
+            return res.status(409).json({ message: 'Ya existe una cuenta con este email. Inicia sesión.' });
+        }
         
         const verificationToken = uuidv4();
         const passwordHash = await bcrypt.hash(password, 10);
         
+        // CASO 2: Email existe pero SIN contraseña (visitante) → ACTUALIZAR
+        if (clienteExistente && !clienteExistente.password_hash) {
+            await db.run(
+                'UPDATE clientes SET nombre = ?, telefono = ?, password_hash = ?, rol = ?, token_verificacion = ?, verificado = 0 WHERE id = ?',
+                nombre, telefono, passwordHash, 'cliente', verificationToken, clienteExistente.id
+            );
+            
+            enviarEmailVerificacion({ nombre, email }, verificationToken).catch(console.error);
+            return res.status(201).json({ message: 'Cuenta creada exitosamente. Revisa tu correo para activarla.' });
+        }
+        
+        // CASO 3: Email NO existe → CREAR NUEVO
         await db.run(
             'INSERT INTO clientes (nombre, email, telefono, password_hash, rol, token_verificacion, verificado) VALUES (?, ?, ?, ?, ?, ?, 0)',
             nombre, email, telefono, passwordHash, 'cliente', verificationToken
@@ -109,11 +125,34 @@ app.post('/api/auth/login-cliente', async (req, res) => {
     try {
         const db = await connectDb();
         const cliente = await db.get('SELECT * FROM clientes WHERE email = ?', email);
-        if (!cliente || !(await bcrypt.compare(password, cliente.password_hash))) return res.status(401).json({ message: 'Credenciales inválidas.' });
-        if (!cliente.verificado) return res.status(403).json({ message: 'Cuenta no verificada.' });
+        
+        // Verificar si el email existe
+        if (!cliente) {
+            return res.status(404).json({ message: 'Este correo no está registrado.' });
+        }
+        
+        // Verificar si tiene contraseña (no es visitante)
+        if (!cliente.password_hash) {
+            return res.status(403).json({ message: 'Esta cuenta no tiene contraseña. Por favor regístrate.' });
+        }
+        
+        // Verificar contraseña
+        if (!(await bcrypt.compare(password, cliente.password_hash))) {
+            return res.status(401).json({ message: 'El correo es válido pero la contraseña es incorrecta.' });
+        }
+        
+        // Verificar si está verificado
+        if (!cliente.verificado) {
+            return res.status(403).json({ message: 'Cuenta no verificada. Revisa tu correo.' });
+        }
+        
+        // Login exitoso
         const token = jwt.sign({ id: cliente.id, email: cliente.email, rol: 'cliente' }, process.env.JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
-    } catch (error) { res.status(500).json({ message: 'Error servidor' }); }
+    } catch (error) { 
+        console.error(error);
+        res.status(500).json({ message: 'Error del servidor' }); 
+    }
 });
 
 // GET: Verificar Email
@@ -335,6 +374,55 @@ app.post('/api/inscripcion', async (req, res) => {
         enviarEmailConfirmacion({ nombre, email }, taller).catch(console.error); 
         res.status(201).json({ message: `¡Inscripción exitosa!` });
     } catch (error) { console.error(error); res.status(500).json({ message: 'Error interno' }); }
+});
+
+// --- ENDPOINT PARA PEDIDOS DEL CARRITO ---
+app.post('/api/pedido', async (req, res) => {
+    const { nombre, email, telefono, productos, total } = req.body;
+    
+    if (!nombre || !email || !productos || productos.length === 0) {
+        return res.status(400).json({ message: 'Datos incompletos' });
+    }
+
+    try {
+        const db = await connectDb();
+        
+        // 1. Buscar o crear cliente
+        let cliente = await db.get('SELECT id FROM clientes WHERE email = ?', email);
+        if (!cliente) {
+            const result = await db.run(
+                'INSERT INTO clientes (nombre, email, telefono) VALUES (?, ?, ?)',
+                nombre, email, telefono
+            );
+            cliente = { id: result.lastID };
+        }
+
+        // 2. Crear pedido
+        const pedidoResult = await db.run(
+            'INSERT INTO pedidos (cliente_id, total, estado) VALUES (?, ?, ?)',
+            cliente.id, total, 'pendiente'
+        );
+        const pedidoId = pedidoResult.lastID;
+
+        // 3. Guardar items del pedido
+        for (const item of productos) {
+            await db.run(
+                'INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                pedidoId, item.id, item.cantidad, item.precio
+            );
+        }
+
+        // 4. Enviar email de confirmación
+        enviarEmailPedido({ nombre, email }, productos, total, pedidoId).catch(console.error);
+
+        res.status(201).json({ 
+            message: `Hemos recibido tu pedido. Te contactaremos pronto al ${telefono} para coordinar el pago y envío.` 
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al procesar el pedido.' });
+    }
 });
 
 // ======================================================

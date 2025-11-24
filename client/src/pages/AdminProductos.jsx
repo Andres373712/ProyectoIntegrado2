@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import InputPrecio from '@/components/InputPrecio';
 
 function AdminProductos() {
     // --- Estado Formulario ---
@@ -94,10 +95,15 @@ function AdminProductos() {
                         <Textarea id="descripcion" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="precio">Precio (CLP)</Label>
-                            <Input id="precio" type="number" value={precio} onChange={e => setPrecio(e.target.value)} required />
-                        </div>
+                    <div>
+                        <Label htmlFor="precio">Precio (CLP)</Label>
+                        <InputPrecio 
+                            id="precio" 
+                            value={precio} 
+                            onChange={setPrecio}
+                            required 
+                        />
+                    </div>
                         <div>
                             <Label htmlFor="stock">Stock Inicial</Label>
                             <Input id="stock" type="number" value={stock} onChange={e => setStock(e.target.value)} required />

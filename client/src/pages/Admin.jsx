@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import InputPrecio from '@/components/InputPrecio';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function Admin() {
@@ -41,6 +42,13 @@ function Admin() {
     // --- Manejador para CREAR taller ---
     const handleSubmit = (e) => {
         e.preventDefault();
+
+            if (!nombre || !descripcion || !fecha || !precio || !lugar || !imagen) {
+        setCrearMensaje('⚠️ Por favor completa todos los campos obligatorios (incluyendo la imagen).');
+        setTimeout(() => setCrearMensaje(''), 4000);
+        return;
+    }
+    
         setCrearMensaje('Creando...');
 
         const formData = new FormData();
@@ -103,12 +111,12 @@ function Admin() {
                     </div>
                     <div>
                         <Label htmlFor="descripcion">Descripción</Label>
-                        <Textarea id="descripcion" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+                        <Textarea id="descripcion" value={descripcion} onChange={e => setDescripcion(e.target.value)} required/>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="fecha">Fecha</Label>
-                            <Input id="fecha" type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} />
+                            <Input id="fecha" type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} required/>
                         </div>
                         <div>
                             <Label>Tipo</Label>
@@ -128,7 +136,7 @@ function Admin() {
                     <div className="grid grid-cols-2 gap-4">
                          <div>
                             <Label htmlFor="lugar">Lugar</Label>
-                            <Input id="lugar" value={lugar} onChange={e => setLugar(e.target.value)} placeholder="Ej: Online..." />
+                            <Input id="lugar" value={lugar} onChange={e => setLugar(e.target.value)} required placeholder="Ej: Online..." />
                         </div>
                         {/* --- NUEVO CAMPO CUPOS --- */}
                         <div>
@@ -146,7 +154,12 @@ function Admin() {
 
                     <div>
                         <Label htmlFor="precio">Precio (CLP)</Label>
-                        <Input id="precio" type="number" value={precio} onChange={e => setPrecio(e.target.value)} required />
+                        <InputPrecio 
+                            id="precio" 
+                            value={precio} 
+                            onChange={setPrecio}
+                            required 
+                        />
                     </div>
                     <div>
                         <Label htmlFor="file-input">Imagen del Taller</Label>
@@ -154,6 +167,7 @@ function Admin() {
                             id="file-input"
                             type="file" 
                             onChange={e => setImagen(e.target.files[0])}
+                            required
                         />
                     </div>
                     <Button type="submit" className="w-full text-lg h-11">
