@@ -139,6 +139,13 @@ function AdminDashboard() {
                             icon={Users}
                             color="bg-orange-600"
                         />
+                         <ActionCard 
+                            title="Mensajes de Contacto" 
+                            description="Revisa los mensajes y preguntas enviadas por los visitantes desde el formulario de contacto."
+                            link="/admin/mensajes"
+                            icon={BookOpenText}
+                            color="bg-blue-600"
+                        />
                     </div>
                 </div>
 

@@ -49,7 +49,8 @@ export async function initDb() {
       password_hash TEXT,
       rol TEXT DEFAULT 'cliente',
       verificado BOOLEAN DEFAULT false,    -- <-- NUEVO: Estado de verificación
-      token_verificacion TEXT UNIQUE -- <-- NUEVO: Token para el enlace
+      token_verificacion TEXT UNIQUE, -- <-- NUEVO: Token para el enlace
+      acepta_terminos BOOLEAN DEFAULT false
     );
     
     CREATE TABLE IF NOT EXISTS inscripciones (
@@ -92,6 +93,15 @@ export async function initDb() {
       precio_unitario INTEGER NOT NULL,
       FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
       FOREIGN KEY (producto_id) REFERENCES productos(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS mensajes_contacto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      email TEXT NOT NULL,
+      telefono TEXT,
+      mensaje TEXT NOT NULL,
+      fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 

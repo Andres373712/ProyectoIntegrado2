@@ -12,7 +12,7 @@ function QuienesSomos() {
     return (
         <div className="bg-background min-h-screen">
             {/* --- Encabezado Hero --- */}
-            <div className="bg-primary/10 py-16 md:py-24">
+            <div className="bg-white py-16 md:py-24">
                 <div className="container mx-auto px-6 text-center">
                     <h1 className="text-4xl md:text-6xl font-bold text-primary mb-6">Nuestra Historia</h1>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

@@ -10,9 +10,11 @@ import QuienesSomos from './pages/QuienesSomos.jsx';
 import Login from './pages/Login.jsx'; 
 import LoginCliente from './pages/LoginCliente.jsx'; 
 import Registro from './pages/Registro.jsx'; 
+import TerminosYCondiciones from './pages/TerminosYCondiciones.jsx'; 
 import RecuperarPassword from './pages/RecuperarPassword.jsx';
 import NuevaPassword from './pages/NuevaPassword.jsx';
 import Carrito from './pages/Carrito.jsx';
+import Contacto from './pages/Contacto.jsx';
 
 // --- PÁGINAS DE ADMINISTRACIÓN ---
 import AdminDashboard from './pages/AdminDashboard.jsx';
@@ -21,6 +23,7 @@ import EditarTaller from './pages/EditarTaller.jsx';
 import AdminProductos from './pages/AdminProductos.jsx'; 
 import AdminClientes from './pages/AdminClientes.jsx';
 import ClienteDetalle from './pages/ClienteDetalle.jsx';
+import AdminMensajes from './pages/AdminMensajes.jsx';
 
 // --- COMPONENTES UTILITARIOS ---
 import ProtectedRoute from './ProtectedRoute.jsx'; 
@@ -28,7 +31,8 @@ import { CartProvider, useCart } from './context/CartContext.jsx';
 import { ShoppingCart, Menu, X } from 'lucide-react'; // Iconos
 
 // --- IMPORTAR ASSETS ---
-import logoTMM from './assets/logo.jpg'; 
+import logoTMM from './assets/logo.jpg';
+import Footer from './components/Footer.jsx'; 
 
 // --- COMPONENTE DE NAVEGACIÓN ---
 function Navegacion() {
@@ -95,7 +99,7 @@ function Navegacion() {
                                 <span className="absolute text-[8px] font-bold text-black/20">LOGO</span>
                             </div>
                             <span className="text-white font-bold text-sm tracking-widest hidden sm:block group-hover:text-gray-200 transition-colors">
-                                TMM
+                                TMM Bienestar y Conexión
                             </span>
                         </Link>
                     </div>
@@ -187,36 +191,50 @@ function Navegacion() {
 
 function App() {
   return (
-    <CartProvider> 
-        <Router>
-          <Navegacion />
-          <div className="pt-0"> 
-            <Routes>
-                <Route path="/" element={<Homepage />} />
-                <Route path="/catalogo" element={<Catalogo />} />
-                <Route path="/carrito" element={<Carrito />} /> 
-                <Route path="/inscribir/:id" element={<Inscripcion />} />
-                
-                <Route path="/quienes-somos" element={<QuienesSomos />} /> 
-                <Route path="/contacto" element={<div className="p-20 text-center pt-32"><h1>Página de Contacto (Próximamente)</h1></div>} />
+    <CartProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Homepage />} />
+            <Route path="/catalogo" element={<Catalogo />} />
+            <Route path="/carrito" element={<Carrito />} />
+            <Route path="/inscribir/:id" element={<Inscripcion />} />
+            
+            <Route path="/quienes-somos" element={<QuienesSomos />} />
+            <Route path="/contacto" element={<Contacto />} />
 
-                <Route path="/login" element={<Login />} />
-                <Route path="/login-cliente" element={<LoginCliente />} />
-                <Route path="/registro-cliente" element={<Registro />} />
-                <Route path="/forgot-password" element={<RecuperarPassword />} />
-                <Route path="/reset-password/:token" element={<NuevaPassword />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/login-cliente" element={<LoginCliente />} />
+            <Route path="/registro-cliente" element={<Registro />} />
+            <Route path="/terminos-y-condiciones" element={<TerminosYCondiciones />} />
+            <Route path="/forgot-password" element={<RecuperarPassword />} />
+            <Route path="/reset-password/:token" element={<NuevaPassword />} />
 
-                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/talleres" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                <Route path="/admin/editar/:id" element={<ProtectedRoute><EditarTaller /></ProtectedRoute>} />
-                <Route path="/admin/productos" element={<ProtectedRoute><AdminProductos /></ProtectedRoute>} />
-                <Route path="/admin/clientes" element={<ProtectedRoute><AdminClientes /></ProtectedRoute>} />
-                <Route path="/admin/cliente/:id" element={<ProtectedRoute><ClienteDetalle /></ProtectedRoute>} />
-            </Routes>
-          </div>
-        </Router>
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/talleres" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/admin/editar/:id" element={<ProtectedRoute><EditarTaller /></ProtectedRoute>} />
+            <Route path="/admin/productos" element={<ProtectedRoute><AdminProductos /></ProtectedRoute>} />
+            <Route path="/admin/clientes" element={<ProtectedRoute><AdminClientes /></ProtectedRoute>} />
+            <Route path="/admin/cliente/:id" element={<ProtectedRoute><ClienteDetalle /></ProtectedRoute>} />
+            <Route path="/admin/mensajes" element={<ProtectedRoute><AdminMensajes /></ProtectedRoute>} />
+          </Routes>
+        </Layout>
+      </Router>
     </CartProvider>
   );
 }
+
+const Layout = ({ children }) => {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/terminos-y-condiciones';
+
+  return (
+    <>
+      {!hideNavbar && <Navegacion />}
+      <div className="pt-0">{children}</div>
+      {!hideNavbar && <Footer />}
+    </>
+  );
+};
 
 export default App;
