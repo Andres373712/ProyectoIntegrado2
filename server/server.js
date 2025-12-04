@@ -73,7 +73,8 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/auth/register-cliente', async (req, res) => {
     const { nombre, email, telefono, password, aceptaTerminos } = req.body;
     
-    if (!nombre || !email || !password || !telefono || !aceptaTerminos) return res.status(400).json({ message: 'Faltan campos obligatorios.' });
+    if (!nombre || !email || !password || !telefono) return res.status(400).json({ message: 'Faltan campos obligatorios.' });
+    if (aceptaTerminos !== true) return res.status(400).json({ message: 'Debes aceptar los términos y condiciones.' });
     if (!validator.isEmail(email)) return res.status(400).json({ message: 'Email inválido.' });
     //if (!telefono.match(/^9[0-9]{8}$/)) return res.status(400).json({ message: 'Teléfono inválido. Debe ser 9 dígitos comenzando con 9.' });
     
@@ -96,8 +97,8 @@ app.post('/api/auth/register-cliente', async (req, res) => {
         // CASO 2: Email existe pero SIN contraseña (visitante) → ACTUALIZAR
         if (clienteExistente && !clienteExistente.password_hash) {
             await db.run(
-                'UPDATE clientes SET nombre = ?, telefono = ?, password_hash = ?, rol = ?, token_verificacion = ?, verificado = 0 WHERE id = ?',
-                nombre, telefono, passwordHash, 'cliente', verificationToken, clienteExistente.id
+                'UPDATE clientes SET nombre = ?, telefono = ?, password_hash = ?, rol = ?, token_verificacion = ?, verificado = 0, acepta_terminos = ? WHERE id = ?',
+                nombre, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos, clienteExistente.id
             );
             
             enviarEmailVerificacion({ nombre, email }, verificationToken).catch(console.error);
@@ -106,8 +107,8 @@ app.post('/api/auth/register-cliente', async (req, res) => {
         
         // CASO 3: Email NO existe → CREAR NUEVO
         await db.run(
-            'INSERT INTO clientes (nombre, email, telefono, password_hash, rol, token_verificacion, verificado) VALUES (?, ?, ?, ?, ?, ?, 0)',
-            nombre, email, telefono, passwordHash, 'cliente', verificationToken
+            'INSERT INTO clientes (nombre, email, telefono, password_hash, rol, token_verificacion, verificado, acepta_terminos) VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
+            nombre, email, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos
         );
 
         enviarEmailVerificacion({ nombre, email }, verificationToken).catch(console.error);
@@ -482,6 +483,46 @@ app.get('/api/dashboard-data', protegerRutas, async (req, res) => {
     const t = await db.get('SELECT COUNT(id) as total FROM talleres WHERE activo=true');
     res.json({eventosCalendario:e, totalClientas:c.total, totalTalleresActivos:t.total});
 });
+
+// ======================================================
+// === API DE MENSAJES DE CONTACTO (NUEVO) ===
+// ======================================================
+
+// POST: Recibir un nuevo mensaje de contacto
+app.post('/api/contacto', async (req, res) => {
+    const { nombre, email, telefono, mensaje } = req.body;
+    if (!nombre || !email || !mensaje) {
+        return res.status(400).json({ message: 'Nombre, email y mensaje son obligatorios.' });
+    }
+    try {
+        const db = await connectDb();
+        await db.run(
+            'INSERT INTO mensajes_contacto (nombre, email, telefono, mensaje) VALUES (?, ?, ?, ?)',
+            nombre, email, telefono, mensaje
+        );
+        res.status(201).json({ message: 'Gracias por tu mensaje. Te contactaremos pronto.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al guardar el mensaje.' });
+    }
+});
+
+// GET: Obtener todos los mensajes de contacto (solo para admin)
+app.get('/api/mensajes-contacto', protegerRutas, async (req, res) => {
+    // Asegurarse de que el rol es admin
+    if (req.user.rol !== 'admin') {
+        return res.status(403).json({ message: 'Acceso no autorizado.' });
+    }
+    try {
+        const db = await connectDb();
+        const mensajes = await db.all('SELECT * FROM mensajes_contacto ORDER BY fecha_creacion DESC');
+        res.json(mensajes);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al obtener los mensajes.' });
+    }
+});
+
 
 // --- INICIAR SERVIDOR ---
 app.listen(PORT, async () => {

@@ -33,6 +33,9 @@ function Registro() {
     // Teléfono Chileno simple (9 dígitos, empieza con 9)
     const isPhoneValid = /^9[0-9]{8}$/.test(telefono);
     
+    // Email (formato básico)
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
     // Nombre (Sin números)
     const isNameValid = nombre.length > 0 && !/[0-9]/.test(nombre);
 
@@ -57,6 +60,11 @@ function Registro() {
         }
         if (!isNameValid) {
             setError('El nombre no debe contener números.');
+            setCargando(false);
+            return;
+        }
+        if (!isEmailValid) {
+            setError('El formato del correo electrónico no es válido.');
             setCargando(false);
             return;
         }
@@ -133,7 +141,7 @@ function Registro() {
                                     id="nombre" 
                                     value={nombre} 
                                     onChange={e => setNombre(e.target.value)} 
-                                    required 
+                                    
                                     placeholder="Ej: Ana Pérez" 
                                     className={nombre && !isNameValid ? "border-destructive focus-visible:ring-destructive" : ""}
                                 />
@@ -146,7 +154,7 @@ function Registro() {
                                 type="tel"
                                 value={telefono} 
                                 onChange={e => setTelefono(e.target.value)} 
-                                required 
+                                
                                 placeholder="912345678" 
                                 maxLength="9"
                                 className={telefono && !isPhoneValid ? "border-destructive focus-visible:ring-destructive" : ""}
@@ -173,9 +181,10 @@ function Registro() {
                                 type="email" 
                                 value={email} 
                                 onChange={e => setEmail(e.target.value)} 
-                                required 
                                 placeholder="nombre@ejemplo.com"
+                                className={email && !isEmailValid ? "border-destructive focus-visible:ring-destructive" : ""}
                             />
+                            {email && !isEmailValid && <p className="text-xs text-destructive">Debe ser un correo válido (ej: ana@correo.com)</p>}
                         </div>
                         
                         {/* Contraseña con Feedback Visual */}
@@ -186,7 +195,7 @@ function Registro() {
                                 type="password" 
                                 value={password} 
                                 onChange={e => setPassword(e.target.value)} 
-                                required 
+                                
                             />
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-2">
                                 <RequirementItem met={hasMinLength} text="Mínimo 8 caracteres" />
@@ -205,7 +214,7 @@ function Registro() {
         type="password" 
         value={confirmPassword} 
         onChange={e => setConfirmPassword(e.target.value)} 
-        required 
+        
         className={confirmPassword && password !== confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
     />
     {confirmPassword && password !== confirmPassword && (
@@ -220,14 +229,14 @@ function Registro() {
                         <div className="flex items-start space-x-2 pt-2">
                             <Checkbox id="terms" checked={aceptaTerminos} onCheckedChange={setAceptaTerminos} />
                             <Label htmlFor="terms" className="text-sm leading-none cursor-pointer">
-                                He leído y acepto los <Link to="#" className="text-primary hover:underline font-semibold">Términos y Condiciones</Link> y la Política de Privacidad.
+                                He leído y acepto los <Link to="/terminos-y-condiciones" className="text-primary hover:underline font-semibold" target="_blank">Términos y Condiciones</Link> y la Política de Privacidad.
                             </Label>
                         </div>
 
                         <Button 
                             type="submit" 
                             className="w-full h-12 text-lg font-semibold shadow-md hover:scale-[1.02] transition-transform duration-200"
-                            disabled={cargando}
+                            disabled={cargando || !aceptaTerminos}
                         >
                             {cargando ? 'Registrando...' : 'Crear mi Cuenta'}
                         </Button>
