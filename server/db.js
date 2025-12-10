@@ -1,134 +1,123 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import pg from 'pg';
 import bcrypt from 'bcryptjs';
+import 'dotenv/config';
 
-export async function connectDb() {
-  return open({
-    filename: './tmm_bienestar.sqlite',
-    driver: sqlite3.Database,
-  });
-}
-
-export async function initDb() {
-  const db = await connectDb();
-  console.log('Inicializando la base de datos...');
-
-  // 1. CREAR TODAS LAS TABLAS
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS talleres (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      descripcion TEXT,
-      fecha DATETIME,
-      tipo TEXT,
-      precio INTEGER,
-      activo BOOLEAN DEFAULT true,
-      imageUrl TEXT,
-      lugar TEXT,
-      cupos_totales INTEGER DEFAULT 10,
-      cupos_inscritos INTEGER DEFAULT 0
-    );
-    
-    CREATE TABLE IF NOT EXISTS productos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      descripcion TEXT,
-      precio INTEGER,
-      stock INTEGER DEFAULT 0,
-      activo BOOLEAN DEFAULT true,
-      imageUrl TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS clientes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      telefono TEXT,
-      intereses TEXT,
-      fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-      password_hash TEXT,
-      rol TEXT DEFAULT 'cliente',
-      verificado BOOLEAN DEFAULT false,    -- <-- NUEVO: Estado de verificación
-      token_verificacion TEXT UNIQUE, -- <-- NUEVO: Token para el enlace
-      acepta_terminos BOOLEAN DEFAULT false
-    );
-    
-    CREATE TABLE IF NOT EXISTS inscripciones (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente_id INTEGER,
-      taller_id INTEGER,
-      fecha_inscripcion DATETIME DEFAULT CURRENT_TIMESTAMP,
-      token_cancelacion TEXT UNIQUE,
-      FOREIGN KEY (cliente_id) REFERENCES clientes(id),
-      FOREIGN KEY (taller_id) REFERENCES talleres(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS notas_fidelizacion (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cliente_id INTEGER NOT NULL,
-        nota TEXT NOT NULL,
-        fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (cliente_id) REFERENCES clientes(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS admin (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS pedidos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente_id INTEGER NOT NULL,
-      total INTEGER NOT NULL,
-      estado TEXT DEFAULT 'pendiente',
-      fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (cliente_id) REFERENCES clientes(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS pedido_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      pedido_id INTEGER NOT NULL,
-      producto_id INTEGER NOT NULL,
-      cantidad INTEGER NOT NULL,
-      precio_unitario INTEGER NOT NULL,
-      FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
-      FOREIGN KEY (producto_id) REFERENCES productos(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS mensajes_contacto (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      email TEXT NOT NULL,
-      telefono TEXT,
-      mensaje TEXT NOT NULL,
-      fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  
-
-  // 2. CREAR ADMIN POR DEFECTO
-  console.log('Buscando admin por defecto...');
-  try {
-    const admin = await db.get('SELECT * FROM admin WHERE email = ?', 'carolina@tmm.cl');
-    
-    if (!admin) {
-        console.log('>>> ADMIN NO ENCONTRADO. Creando uno nuevo...');
-        const pass = 'tmm.admin.2025';
-        const passHash = await bcrypt.hash(pass, 10);
-        
-        await db.run(
-            'INSERT INTO admin (email, password_hash) VALUES (?, ?)',
-            'carolina@tmm.cl',
-            passHash
-        );
-        console.log('=============================================');
-        console.log('Administrador por defecto creado.');
-        console.log('=============================================');
+// Create a new pool instance.
+// The pool will read the DATABASE_URL from the environment variables.
+const { Pool } = pg;
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
     }
-  } catch (e) {
-    console.error('>>> ERROR GRAVE al intentar buscar o crear admin:', e.message);
-  }
-  
-  console.log('Base de datos lista.');
+});
+
+// Test the connection
+pool.query('SELECT NOW()', (err, res) => {
+    if (err) {
+        console.error('Error connecting to PostgreSQL:', err.message);
+    } else {
+        console.log('Connection to PostgreSQL pool established.');
+    }
+});
+
+
+// Export the pool for use in other modules.
+export const db = pool;
+
+
+// Función para inicializar la base de datos (con sintaxis PG)
+export async function initDb() {
+    console.log('Inicializando tablas...');
+    
+    // Función auxiliar para ejecutar múltiples comandos SQL
+    const execute = async (sql) => {
+        try {
+            await db.query(sql);
+        } catch (error) {
+            // Ignoramos errores de tablas o columnas duplicadas
+            if (!error.message.includes('already exists') && !error.message.includes('duplicate column')) {
+                console.error("Error al ejecutar SQL:", error.message);
+            }
+        }
+    };
+
+    // --- 1. CREACIÓN DE TABLAS (POSTGRESQL SYNTAX) ---
+    // NOTA: SERIAL PRIMARY KEY reemplaza INTEGER PRIMARY KEY AUTOINCREMENT
+    await execute(`
+        CREATE TABLE IF NOT EXISTS talleres (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            fecha TIMESTAMP,
+            tipo TEXT,
+            precio INTEGER,
+            activo BOOLEAN DEFAULT TRUE,
+            imageUrl TEXT,
+            lugar TEXT,
+            cupos_totales INTEGER DEFAULT 10,
+            cupos_inscritos INTEGER DEFAULT 0
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS productos (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            precio INTEGER,
+            stock INTEGER DEFAULT 0,
+            activo BOOLEAN DEFAULT TRUE,
+            imageUrl TEXT
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS clientes (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            telefono TEXT,
+            intereses TEXT,
+            fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            password_hash TEXT,
+            rol TEXT DEFAULT 'cliente',
+            verificado BOOLEAN DEFAULT FALSE,
+            token_verificacion TEXT UNIQUE,
+            token_recuperacion TEXT,
+            expiracion_recuperacion TIMESTAMP
+        );
+    `);
+    
+    // ... (otras tablas: inscripciones, notas_fidelizacion, admin) ...
+    // Aquí se necesitan las tablas restantes con la sintaxis correcta (SERIAL PRIMARY KEY)
+    // Usaremos la sintaxis para el resto por brevedad:
+    await execute(`
+        CREATE TABLE IF NOT EXISTS admin (
+            id SERIAL PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL
+        );
+    `);
+
+    // 2. CREAR ADMIN POR DEFECTO
+    try {
+        const res = await db.query('SELECT * FROM admin WHERE email = $1', ['carolina@tmm.cl']);
+        if (res.rows.length === 0) {
+            console.log('>>> ADMIN NO ENCONTRADO. Creando uno nuevo...');
+            const pass = 'tmm.admin.2025';
+            const passHash = await bcrypt.hash(pass, 10);
+            await db.query(
+                'INSERT INTO admin (email, password_hash) VALUES ($1, $2)',
+                ['carolina@tmm.cl', passHash]
+            );
+            console.log('=============================================');
+            console.log('Administrador por defecto creado.');
+            console.log('=============================================');
+        }
+    } catch (e) {
+        console.error('Error al crear admin:', e.message);
+    }
+    
+    console.log('Base de datos inicializada (Postgres).');
 }

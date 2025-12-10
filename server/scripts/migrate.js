@@ -43,17 +43,18 @@ async function runMigration() {
                 }
 
                 try {
-                    const existente = await db.get('SELECT id FROM clientes WHERE email = ?', emailTemporal);
+                    const existenteResult = await db.query('SELECT id FROM clientes WHERE email = $1', [emailTemporal]);
+                    const existente = existenteResult.rows[0];
 
                     if (existente) {
                         filasSaltadas++;
                     } else {
-                        await db.run(
-                            'INSERT INTO clientes (nombre, email, telefono, intereses) VALUES (?, ?, ?, ?)',
-                            clienta.nombre.trim(),
+                        await db.query(
+                            'INSERT INTO clientes (nombre, email, telefono, intereses) VALUES ($1, $2, $3, $4)',
+                            [clienta.nombre.trim(),
                             emailTemporal,
                             clienta.telefono, // null
-                            clienta.intereses // null
+                            clienta.intereses] // null
                         );
                         nuevasClientas++;
                         emailsUnicos.add(emailTemporal); 
@@ -69,6 +70,7 @@ async function runMigration() {
             console.log(`🚫 ${filasSaltadas} filas fueron saltadas (sin nombre, duplicadas o con error).`);
             console.log('IMPORTANTE: Revisa y corrige los emails temporales en el panel de administración.');
             console.log('🎉 ¡Migración completada!');
+            db.end();
         });
 }
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { 
     Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription
 } from '@/components/ui/card';
+import placeholderImage from '../assets/logo.jpg';
 
 function Catalogo() {
   const [talleres, setTalleres] = useState([]);

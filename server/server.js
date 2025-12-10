@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
-import { initDb, connectDb } from './db.js';
+import { initDb, db } from './db.js';
 import { enviarEmailConfirmacion, enviarEmailVerificacion, enviarEmailRecuperacion, enviarEmailPedido } from './emailService.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -59,8 +59,9 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Datos incompletos' });
     try {
-        const db = await connectDb();
-        const admin = await db.get('SELECT * FROM admin WHERE email = ?', email);
+        
+        const result = await db.query('SELECT * FROM admin WHERE email = $1', [email]);
+        const admin = result.rows[0];
         if (!admin || !(await bcrypt.compare(password, admin.password_hash))) {
             return res.status(401).json({ message: 'Credenciales inválidas.' });
         }
@@ -83,8 +84,9 @@ app.post('/api/auth/register-cliente', async (req, res) => {
     }
     
     try {
-        const db = await connectDb();
-        const clienteExistente = await db.get('SELECT id, password_hash FROM clientes WHERE email = ?', email);
+        
+        const result = await db.query('SELECT id, password_hash FROM clientes WHERE email = $1', [email]);
+        const clienteExistente = result.rows[0];
         
         // CASO 1: Email ya registrado CON contraseña (usuario registrado)
         if (clienteExistente && clienteExistente.password_hash) {
@@ -96,9 +98,9 @@ app.post('/api/auth/register-cliente', async (req, res) => {
         
         // CASO 2: Email existe pero SIN contraseña (visitante) → ACTUALIZAR
         if (clienteExistente && !clienteExistente.password_hash) {
-            await db.run(
-                'UPDATE clientes SET nombre = ?, telefono = ?, password_hash = ?, rol = ?, token_verificacion = ?, verificado = 0, acepta_terminos = ? WHERE id = ?',
-                nombre, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos, clienteExistente.id
+            await db.query(
+                'UPDATE clientes SET nombre = $1, telefono = $2, password_hash = $3, rol = $4, token_verificacion = $5, verificado = false, acepta_terminos = $6 WHERE id = $7',
+                [nombre, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos, clienteExistente.id]
             );
             
             enviarEmailVerificacion({ nombre, email }, verificationToken).catch(console.error);
@@ -106,9 +108,9 @@ app.post('/api/auth/register-cliente', async (req, res) => {
         }
         
         // CASO 3: Email NO existe → CREAR NUEVO
-        await db.run(
-            'INSERT INTO clientes (nombre, email, telefono, password_hash, rol, token_verificacion, verificado, acepta_terminos) VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
-            nombre, email, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos
+        await db.query(
+            'INSERT INTO clientes (nombre, email, telefono, password_hash, rol, token_verificacion, verificado, acepta_terminos) VALUES ($1, $2, $3, $4, $5, $6, false, $7)',
+            [nombre, email, telefono, passwordHash, 'cliente', verificationToken, aceptaTerminos]
         );
 
         enviarEmailVerificacion({ nombre, email }, verificationToken).catch(console.error);
@@ -124,8 +126,9 @@ app.post('/api/auth/register-cliente', async (req, res) => {
 app.post('/api/auth/login-cliente', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const db = await connectDb();
-        const cliente = await db.get('SELECT * FROM clientes WHERE email = ?', email);
+        
+        const result = await db.query('SELECT * FROM clientes WHERE email = $1', [email]);
+        const cliente = result.rows[0];
         
         // Verificar si el email existe
         if (!cliente) {
@@ -160,10 +163,11 @@ app.post('/api/auth/login-cliente', async (req, res) => {
 app.get('/api/auth/verificar/:token', async (req, res) => {
     const { token } = req.params;
     try {
-        const db = await connectDb();
-        const clienta = await db.get('SELECT id FROM clientes WHERE token_verificacion = ?', token);
+        
+        const result = await db.query('SELECT id FROM clientes WHERE token_verificacion = $1', [token]);
+        const clienta = result.rows[0];
         if (!clienta) return res.redirect('http://localhost:5173/login-cliente?error=token-invalido');
-        await db.run('UPDATE clientes SET verificado = true, token_verificacion = NULL WHERE id = ?', clienta.id);
+        await db.query('UPDATE clientes SET verificado = true, token_verificacion = NULL WHERE id = $1', [clienta.id]);
         res.redirect('http://localhost:5173/login-cliente?success=verificado');
     } catch (error) { res.status(500).send('Error interno.'); }
 });
@@ -174,17 +178,18 @@ app.get('/api/auth/verificar/:token', async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     try {
-        const db = await connectDb();
-        const cliente = await db.get('SELECT id FROM clientes WHERE email = ?', email);
+        
+        const result = await db.query('SELECT id FROM clientes WHERE email = $1', [email]);
+        const cliente = result.rows[0];
         
         if (!cliente) {
             return res.json({ message: 'Si el correo existe, recibirás un un enlace de recuperación.' });
         }
 
         const token = uuidv4();
-        const expiracion = Date.now() + 3600000; 
+        const expiracion = new Date(Date.now() + 3600000); 
 
-        await db.run('UPDATE clientes SET token_recuperacion = ?, expiracion_recuperacion = ? WHERE id = ?', token, expiracion, cliente.id);
+        await db.query('UPDATE clientes SET token_recuperacion = $1, expiracion_recuperacion = $2 WHERE id = $3', [token, expiracion, cliente.id]);
         
         enviarEmailRecuperacion(email, token).catch(console.error);
         res.json({ message: 'Si el correo existe, recibirás un enlace de recuperación.' });
@@ -204,8 +209,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
 
     try {
-        const db = await connectDb();
-        const cliente = await db.get('SELECT id FROM clientes WHERE token_recuperacion = ? AND expiracion_recuperacion > ?', token, Date.now());
+        
+        const result = await db.query('SELECT id FROM clientes WHERE token_recuperacion = $1 AND expiracion_recuperacion > NOW()', [token]);
+        const cliente = result.rows[0];
 
         if (!cliente) {
             return res.status(400).json({ message: 'Enlace inválido o expirado.' });
@@ -213,7 +219,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
         const passwordHash = await bcrypt.hash(newPassword, 10);
         
-        await db.run('UPDATE clientes SET password_hash = ?, token_recuperacion = NULL, expiracion_recuperacion = NULL WHERE id = ?', passwordHash, cliente.id);
+        await db.query('UPDATE clientes SET password_hash = $1, token_recuperacion = NULL, expiracion_recuperacion = NULL WHERE id = $2', [passwordHash, cliente.id]);
         
         res.json({ message: 'Contraseña restablecida con éxito.' });
 
@@ -229,16 +235,18 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.get('/api/productos/activos', async (req, res) => {
     try {
-        const db = await connectDb();
-        const productos = await db.all('SELECT * FROM productos WHERE activo = true');
+        
+        const result = await db.query('SELECT * FROM productos WHERE activo = true');
+        const productos = result.rows;
         res.json(productos);
     } catch (error) { res.status(500).json({ message: 'Error al obtener productos.' }); }
 });
 
 app.get('/api/productos/todos', protegerRutas, async (req, res) => {
     try {
-        const db = await connectDb();
-        const productos = await db.all('SELECT * FROM productos ORDER BY id DESC');
+        
+        const result = await db.query('SELECT * FROM productos ORDER BY id DESC');
+        const productos = result.rows;
         res.json(productos);
     } catch (error) { res.status(500).json({ message: 'Error al obtener productos.' }); }
 });
@@ -246,8 +254,9 @@ app.get('/api/productos/todos', protegerRutas, async (req, res) => {
 app.get('/api/producto/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const db = await connectDb();
-        const producto = await db.get('SELECT * FROM productos WHERE id = ?', id);
+        
+        const result = await db.query('SELECT * FROM productos WHERE id = $1', [id]);
+        const producto = result.rows[0];
         if (producto) res.json(producto); else res.status(404).json({ message: 'Producto no encontrado' });
     } catch (error) { res.status(500).json({ message: 'Error al obtener producto.' }); }
 });
@@ -257,12 +266,12 @@ app.post('/api/productos', protegerRutas, upload.single('imagen'), async (req, r
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
     if (!nombre || precio === undefined) return res.status(400).json({ message: 'Datos incompletos' });
     try {
-        const db = await connectDb();
-        const result = await db.run(
-            'INSERT INTO productos (nombre, descripcion, precio, stock, activo, imageUrl) VALUES (?, ?, ?, ?, true, ?)',
-            nombre, descripcion, precio, stock || 0, imageUrl
+        
+        const result = await db.query(
+            'INSERT INTO productos (nombre, descripcion, precio, stock, activo, imageUrl) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [nombre, descripcion, precio, stock || 0, true, imageUrl]
         );
-        res.status(201).json({ id: result.lastID, message: 'Producto creado' });
+        res.status(201).json({ id: result.rows[0].id, message: 'Producto creado' });
     } catch (error) { res.status(500).json({ message: 'Error al crear' }); }
 });
 
@@ -272,10 +281,10 @@ app.put('/api/productos/:id', protegerRutas, upload.single('imagen'), async (req
     let imageUrl = req.body.imageUrlActual;
     if (req.file) imageUrl = `/uploads/${req.file.filename}`;
     try {
-        const db = await connectDb();
-        await db.run(
-            'UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, activo = ?, imageUrl = ? WHERE id = ?',
-            nombre, descripcion, precio, stock, activo, imageUrl, id
+        
+        await db.query(
+            'UPDATE productos SET nombre = $1, descripcion = $2, precio = $3, stock = $4, activo = $5, imageUrl = $6 WHERE id = $7',
+            [nombre, descripcion, precio, stock, activo, imageUrl, id]
         );
         res.json({ message: 'Producto actualizado' });
     } catch (error) { res.status(500).json({ message: 'Error al actualizar' }); }
@@ -284,8 +293,8 @@ app.put('/api/productos/:id', protegerRutas, upload.single('imagen'), async (req
 app.delete('/api/productos/:id', protegerRutas, async (req, res) => {
     const { id } = req.params;
     try {
-        const db = await connectDb();
-        await db.run('DELETE FROM productos WHERE id = ?', id);
+        
+        await db.query('DELETE FROM productos WHERE id = $1', [id]);
         res.json({ message: 'Producto eliminado' });
     } catch (error) { res.status(500).json({ message: 'Error al eliminar' }); }
 });
@@ -296,36 +305,44 @@ app.delete('/api/productos/:id', protegerRutas, async (req, res) => {
 // ======================================================
 
 app.get('/api/talleres/activos', async (req, res) => {
-    const db = await connectDb();
-    const talleres = await db.all('SELECT * FROM talleres WHERE activo = true');
+    
+    const result = await db.query('SELECT * FROM talleres WHERE activo = true');
+    const talleres = result.rows;
     res.json(talleres);
 });
 
 app.get('/api/talleres/todos', protegerRutas, async (req, res) => {
-    const db = await connectDb();
-    const talleres = await db.all('SELECT * FROM talleres ORDER BY fecha DESC');
+    
+    const result = await db.query('SELECT * FROM talleres ORDER BY fecha DESC');
+    const talleres = result.rows;
     res.json(talleres);
 });
 
 app.get('/api/taller/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await connectDb();
-    const taller = await db.get('SELECT * FROM talleres WHERE id = ?', id);
+    
+    const result = await db.query('SELECT * FROM talleres WHERE id = $1', [id]);
+    const taller = result.rows[0];
     if (taller) res.json(taller); else res.status(404).json({message:'No encontrado'});
 });
 
 app.post('/api/talleres', protegerRutas, upload.single('imagen'), async (req, res) => {
     const { nombre, descripcion, fecha, tipo, precio, lugar, cupos_totales } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; 
-    if (!nombre || precio === undefined) return res.status(400).json({ message: 'Faltan datos' });
+    
+    // --- VALIDACIÓN MEJORADA ---
+    if (!nombre || precio === undefined || precio === '' || isNaN(parseFloat(precio))) {
+        return res.status(400).json({ message: 'Faltan datos o el precio no es un número válido.' });
+    }
+
     try {
-        const db = await connectDb();
+        
         const cupos = parseInt(cupos_totales) || 10; 
-        const result = await db.run(
-            'INSERT INTO talleres (nombre, descripcion, fecha, tipo, precio, activo, imageUrl, lugar, cupos_totales, cupos_inscritos) VALUES (?, ?, ?, ?, ?, true, ?, ?, ?, 0)',
-            nombre, descripcion, fecha, tipo, precio, imageUrl, lugar, cupos
+        const result = await db.query(
+            'INSERT INTO talleres (nombre, descripcion, fecha, tipo, precio, activo, imageUrl, lugar, cupos_totales, cupos_inscritos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
+            [nombre, descripcion, fecha, tipo, parseFloat(precio), true, imageUrl, lugar, cupos, 0]
         );
-        res.status(201).json({ id: result.lastID, message: 'Taller creado con éxito' });
+        res.status(201).json({ id: result.rows[0].id, message: 'Taller creado con éxito' });
     } catch (error) { console.error(error); res.status(500).json({ message: 'Error al crear taller' }); }
 });
 
@@ -335,10 +352,10 @@ app.put('/api/talleres/:id', protegerRutas, upload.single('imagen'), async (req,
     let imageUrl = req.body.imageUrlActual; 
     if (req.file) imageUrl = `/uploads/${req.file.filename}`;
     try {
-        const db = await connectDb();
-        await db.run(
-            'UPDATE talleres SET nombre = ?, descripcion = ?, fecha = ?, tipo = ?, precio = ?, activo = ?, imageUrl = ?, lugar = ?, cupos_totales = ? WHERE id = ?',
-            nombre, descripcion, fecha, tipo, precio, activo, imageUrl, lugar, cupos_totales, id
+        
+        await db.query(
+            'UPDATE talleres SET nombre = $1, descripcion = $2, fecha = $3, tipo = $4, precio = $5, activo = $6, imageUrl = $7, lugar = $8, cupos_totales = $9 WHERE id = $10',
+            [nombre, descripcion, fecha, tipo, precio, activo, imageUrl, lugar, cupos_totales, id]
         );
         res.json({ message: 'Taller actualizado' });
     } catch (error) { res.status(500).json({ message: 'Error al actualizar' }); }
@@ -346,9 +363,9 @@ app.put('/api/talleres/:id', protegerRutas, upload.single('imagen'), async (req,
 
 app.delete('/api/talleres/:id', protegerRutas, async (req, res) => {
     const { id } = req.params;
-    const db = await connectDb();
+    
     try {
-        await db.run('DELETE FROM talleres WHERE id = ?', id);
+        await db.query('DELETE FROM talleres WHERE id = $1', [id]);
         res.json({message:'Eliminado'});
     } catch(e) { res.status(500).json({message:'No se puede eliminar si tiene inscritos'}); }
 });
@@ -358,19 +375,21 @@ app.post('/api/inscripcion', async (req, res) => {
     const { tallerId, nombre, email, telefono, intereses } = req.body;
     if (!tallerId || !nombre || !email) return res.status(400).json({ message: 'Datos incompletos' });
     try {
-        const db = await connectDb();
-        const taller = await db.get('SELECT * FROM talleres WHERE id = ?', tallerId);
+        
+        const tallerResult = await db.query('SELECT * FROM talleres WHERE id = $1', [tallerId]);
+        const taller = tallerResult.rows[0];
         if (!taller) return res.status(404).json({ message: 'Taller no encontrado' });
         if (taller.cupos_inscritos >= taller.cupos_totales) return res.status(409).json({ message: 'Cupos agotados.' });
 
-        let clienta = await db.get('SELECT id FROM clientes WHERE email = ?', email);
+        let clientaResult = await db.query('SELECT id FROM clientes WHERE email = $1', [email]);
+        let clienta = clientaResult.rows[0];
         if (!clienta) {
             // Cliente invitado (sin password)
-            const result = await db.run('INSERT INTO clientes (nombre, email, telefono, intereses) VALUES (?, ?, ?, ?)', nombre, email, telefono, intereses);
-            clienta = { id: result.lastID };
+            const result = await db.query('INSERT INTO clientes (nombre, email, telefono, intereses) VALUES ($1, $2, $3, $4) RETURNING id', [nombre, email, telefono, intereses]);
+            clienta = { id: result.rows[0].id };
         }
-        await db.run('INSERT INTO inscripciones (cliente_id, taller_id) VALUES (?, ?)', clienta.id, tallerId);
-        await db.run('UPDATE talleres SET cupos_inscritos = cupos_inscritos + 1 WHERE id = ?', tallerId);
+        await db.query('INSERT INTO inscripciones (cliente_id, taller_id) VALUES ($1, $2)', [clienta.id, tallerId]);
+        await db.query('UPDATE talleres SET cupos_inscritos = cupos_inscritos + 1 WHERE id = $1', [tallerId]);
         
         enviarEmailConfirmacion({ nombre, email }, taller).catch(console.error); 
         res.status(201).json({ message: `¡Inscripción exitosa!` });
@@ -386,30 +405,31 @@ app.post('/api/pedido', async (req, res) => {
     }
 
     try {
-        const db = await connectDb();
+        
         
         // 1. Buscar o crear cliente
-        let cliente = await db.get('SELECT id FROM clientes WHERE email = ?', email);
+        let clienteResult = await db.query('SELECT id FROM clientes WHERE email = $1', [email]);
+        let cliente = clienteResult.rows[0];
         if (!cliente) {
-            const result = await db.run(
-                'INSERT INTO clientes (nombre, email, telefono) VALUES (?, ?, ?)',
-                nombre, email, telefono
+            const result = await db.query(
+                'INSERT INTO clientes (nombre, email, telefono) VALUES ($1, $2, $3) RETURNING id',
+                [nombre, email, telefono]
             );
-            cliente = { id: result.lastID };
+            cliente = { id: result.rows[0].id };
         }
 
         // 2. Crear pedido
-        const pedidoResult = await db.run(
-            'INSERT INTO pedidos (cliente_id, total, estado) VALUES (?, ?, ?)',
-            cliente.id, total, 'pendiente'
+        const pedidoResult = await db.query(
+            'INSERT INTO pedidos (cliente_id, total, estado) VALUES ($1, $2, $3) RETURNING id',
+            [cliente.id, total, 'pendiente']
         );
-        const pedidoId = pedidoResult.lastID;
+        const pedidoId = pedidoResult.rows[0].id;
 
         // 3. Guardar items del pedido
         for (const item of productos) {
-            await db.run(
-                'INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
-                pedidoId, item.id, item.cantidad, item.precio
+            await db.query(
+                'INSERT INTO pedido_items (pedido_id, producto_id, cantidad, precio_unitario) VALUES ($1, $2, $3, $4)',
+                [pedidoId, item.id, item.cantidad, item.precio]
             );
         }
 
@@ -432,55 +452,67 @@ app.post('/api/pedido', async (req, res) => {
 
 app.get('/api/clientes', protegerRutas, async (req, res) => {
     try {
-        const db = await connectDb();
+        
         const { buscar, fechaInicio, fechaFin, tallerId } = req.query; 
         let query = `SELECT c.*, COUNT(i.id) as total_inscripciones FROM clientes c LEFT JOIN inscripciones i ON c.id = i.cliente_id `; 
-        const params = [], conditions = [];
-        if (tallerId) { conditions.push(`i.taller_id = ?`); params.push(tallerId); }
-        if (buscar) { conditions.push(`(c.nombre LIKE ? OR c.email LIKE ?)`); params.push(`%${buscar}%`); params.push(`%${buscar}%`); }
-        if (fechaInicio) { conditions.push(`c.fecha_registro >= ?`); params.push(`${fechaInicio}T00:00:00`); }
-        if (fechaFin) { conditions.push(`c.fecha_registro <= ?`); params.push(`${fechaFin}T23:59:59`); }
+        const params = [];
+        let paramIndex = 1;
+        const conditions = [];
+        if (tallerId) { conditions.push(`i.taller_id = $${paramIndex++}`); params.push(tallerId); }
+        if (buscar) { conditions.push(`(c.nombre ILIKE $${paramIndex++} OR c.email ILIKE $${paramIndex++})`); params.push(`%${buscar}%`); params.push(`%${buscar}%`); }
+        if (fechaInicio) { conditions.push(`c.fecha_registro >= $${paramIndex++}`); params.push(`${fechaInicio}T00:00:00`); }
+        if (fechaFin) { conditions.push(`c.fecha_registro <= $${paramIndex++}`); params.push(`${fechaFin}T23:59:59`); }
         if (conditions.length > 0) query += ` WHERE ${conditions.join(' AND ')}`;
         query += ` GROUP BY c.id ORDER BY c.fecha_registro DESC`;
-        const clientes = await db.all(query, params);
+        const result = await db.query(query, params);
+        const clientes = result.rows;
         res.json(clientes);
     } catch (error) { res.status(500).json({ message: 'Error al obtener clientes.' }); }
 });
 
 app.get('/api/cliente/:id', protegerRutas, async (req, res) => {
-    const { id } = req.params; const db = await connectDb();
-    const c = await db.get('SELECT * FROM clientes WHERE id=?',id); res.json(c);
+    const { id } = req.params; 
+    const result = await db.query('SELECT * FROM clientes WHERE id=$1',[id]); 
+    res.json(result.rows[0]);
 });
 
 app.put('/api/cliente/:id', protegerRutas, async (req, res) => {
     const { id } = req.params; const { nombre, email, telefono, intereses } = req.body;
-    const db = await connectDb();
-    await db.run('UPDATE clientes SET nombre=?, email=?, telefono=?, intereses=? WHERE id=?', nombre, email, telefono, intereses, id);
+    
+    await db.query('UPDATE clientes SET nombre=$1, email=$2, telefono=$3, intereses=$4 WHERE id=$5', [nombre, email, telefono, intereses, id]);
     res.json({message:'Actualizado'});
 });
 
 app.get('/api/cliente/:id/historial', protegerRutas, async (req, res) => {
-    const { id } = req.params; const db = await connectDb();
-    const h = await db.all(`SELECT t.nombre, t.fecha, i.fecha_inscripcion FROM inscripciones i JOIN talleres t ON i.taller_id=t.id WHERE i.cliente_id=? ORDER BY t.fecha DESC`, id);
+    const { id } = req.params; 
+    const result = await db.query(`SELECT t.nombre, t.fecha, i.fecha_inscripcion FROM inscripciones i JOIN talleres t ON i.taller_id=t.id WHERE i.cliente_id=$1 ORDER BY t.fecha DESC`, [id]);
+    const h = result.rows;
     res.json(h);
 });
 
 app.get('/api/cliente/:id/notas', protegerRutas, async (req, res) => {
-    const { id } = req.params; const db = await connectDb();
-    const n = await db.all('SELECT * FROM notas_fidelizacion WHERE cliente_id=? ORDER BY fecha DESC', id); res.json(n);
+    const { id } = req.params; 
+    const result = await db.query('SELECT * FROM notas_fidelizacion WHERE cliente_id=$1 ORDER BY fecha DESC', [id]); 
+    const n = result.rows;
+    res.json(n);
 });
 
 app.post('/api/cliente/:id/notas', protegerRutas, async (req, res) => {
-    const { id } = req.params; const { nota } = req.body; const db = await connectDb();
-    await db.run('INSERT INTO notas_fidelizacion (cliente_id, nota) VALUES (?, ?)', id, nota); res.json({message:'Nota guardada'});
+    const { id } = req.params; const { nota } = req.body; 
+    await db.query('INSERT INTO notas_fidelizacion (cliente_id, nota) VALUES ($1, $2)', [id, nota]); res.json({message:'Nota guardada'});
 });
 
 // --- DASHBOARD ---
 app.get('/api/dashboard-data', protegerRutas, async (req, res) => {
-    const db = await connectDb();
-    const e = await db.all('SELECT nombre as title, fecha as date FROM talleres WHERE activo=true');
-    const c = await db.get('SELECT COUNT(id) as total FROM clientes');
-    const t = await db.get('SELECT COUNT(id) as total FROM talleres WHERE activo=true');
+    
+    const eventosResult = await db.query('SELECT nombre as title, fecha as date FROM talleres WHERE activo=true');
+    const clientesResult = await db.query('SELECT COUNT(id) as total FROM clientes');
+    const talleresResult = await db.query('SELECT COUNT(id) as total FROM talleres WHERE activo=true');
+    
+    const e = eventosResult.rows;
+    const c = clientesResult.rows[0];
+    const t = talleresResult.rows[0];
+
     res.json({eventosCalendario:e, totalClientas:c.total, totalTalleresActivos:t.total});
 });
 
@@ -495,10 +527,10 @@ app.post('/api/contacto', async (req, res) => {
         return res.status(400).json({ message: 'Nombre, email y mensaje son obligatorios.' });
     }
     try {
-        const db = await connectDb();
-        await db.run(
-            'INSERT INTO mensajes_contacto (nombre, email, telefono, mensaje) VALUES (?, ?, ?, ?)',
-            nombre, email, telefono, mensaje
+        
+        await db.query(
+            'INSERT INTO mensajes_contacto (nombre, email, telefono, mensaje) VALUES ($1, $2, $3, $4)',
+            [nombre, email, telefono, mensaje]
         );
         res.status(201).json({ message: 'Gracias por tu mensaje. Te contactaremos pronto.' });
     } catch (error) {
@@ -514,8 +546,9 @@ app.get('/api/mensajes-contacto', protegerRutas, async (req, res) => {
         return res.status(403).json({ message: 'Acceso no autorizado.' });
     }
     try {
-        const db = await connectDb();
-        const mensajes = await db.all('SELECT * FROM mensajes_contacto ORDER BY fecha_creacion DESC');
+        
+        const result = await db.query('SELECT * FROM mensajes_contacto ORDER BY fecha_creacion DESC');
+        const mensajes = result.rows;
         res.json(mensajes);
     } catch (error) {
         console.error(error);
