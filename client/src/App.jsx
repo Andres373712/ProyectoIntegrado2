@@ -224,6 +224,8 @@ function App() {
   );
 }
 
+import WhatsAppButton from './components/WhatsAppButton'; 
+
 const Layout = ({ children }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/terminos-y-condiciones';
@@ -231,8 +233,9 @@ const Layout = ({ children }) => {
   return (
     <>
       {!hideNavbar && <Navegacion />}
-      <div className="pt-0">{children}</div>
+      <div className="pt-14">{children}</div>
       {!hideNavbar && <Footer />}
+      <WhatsAppButton />
     </>
   );
 };
