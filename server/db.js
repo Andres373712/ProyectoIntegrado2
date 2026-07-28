@@ -6,10 +6,7 @@ import 'dotenv/config';
 // The pool will read the DATABASE_URL from the environment variables.
 const { Pool } = pg;
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    connectionString: process.env.DATABASE_URL
 });
 
 // Test the connection
@@ -85,7 +82,64 @@ export async function initDb() {
             verificado BOOLEAN DEFAULT FALSE,
             token_verificacion TEXT UNIQUE,
             token_recuperacion TEXT,
-            expiracion_recuperacion TIMESTAMP
+            expiracion_recuperacion TIMESTAMP,
+            acepta_terminos BOOLEAN
+        );
+    `);
+
+    // --- MIGRACIÓN: Añadir columna acepta_terminos si no existe ---
+    await execute(`
+        ALTER TABLE clientes ADD COLUMN IF NOT EXISTS acepta_terminos BOOLEAN;
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS inscripciones (
+            id SERIAL PRIMARY KEY,
+            cliente_id INTEGER REFERENCES clientes(id),
+            taller_id INTEGER REFERENCES talleres(id) ON DELETE CASCADE,
+            fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(cliente_id, taller_id)
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS mensajes_contacto (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            email TEXT NOT NULL,
+            telefono TEXT,
+            mensaje TEXT NOT NULL,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            leido BOOLEAN DEFAULT FALSE
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS notas_fidelizacion (
+            id SERIAL PRIMARY KEY,
+            cliente_id INTEGER REFERENCES clientes(id) ON DELETE CASCADE,
+            nota TEXT NOT NULL,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS pedidos (
+            id SERIAL PRIMARY KEY,
+            cliente_id INTEGER REFERENCES clientes(id),
+            total INTEGER NOT NULL,
+            estado VARCHAR(50) DEFAULT 'pendiente',
+            fecha_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await execute(`
+        CREATE TABLE IF NOT EXISTS pedido_items (
+            id SERIAL PRIMARY KEY,
+            pedido_id INTEGER REFERENCES pedidos(id) ON DELETE CASCADE,
+            producto_id INTEGER REFERENCES productos(id),
+            cantidad INTEGER NOT NULL,
+            precio_unitario INTEGER NOT NULL
         );
     `);
     
@@ -105,7 +159,10 @@ export async function initDb() {
         const res = await db.query('SELECT * FROM admin WHERE email = $1', ['carolina@tmm.cl']);
         if (res.rows.length === 0) {
             console.log('>>> ADMIN NO ENCONTRADO. Creando uno nuevo...');
-            const pass = 'tmm.admin.2025';
+            const pass = process.env.DEFAULT_ADMIN_PASSWORD || 'tmm.admin.2025';
+            if (pass === 'tmm.admin.2025') {
+                console.warn('ADVERTENCIA: Usando contraseña de administrador por defecto. Defina DEFAULT_ADMIN_PASSWORD en su archivo .env');
+            }
             const passHash = await bcrypt.hash(pass, 10);
             await db.query(
                 'INSERT INTO admin (email, password_hash) VALUES ($1, $2)',

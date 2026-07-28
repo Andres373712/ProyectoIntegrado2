@@ -1,264 +1,274 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Check, X, UserPlus } from 'lucide-react'; // Iconos para feedback visual
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Check, UserPlus } from "lucide-react";
 
 function Registro() {
-    const [nombre, setNombre] = useState('');
-    const [email, setEmail] = useState('');
-    const [telefono, setTelefono] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [aceptaTerminos, setAceptaTerminos] = useState(false);
-    
-    const [error, setError] = useState('');
-    const [cargando, setCargando] = useState(false);
-    const navigate = useNavigate();
+  const [nombre, setNombre] = useState(""); // CORREGIDO
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
-    // --- VALIDACIONES EN TIEMPO REAL (Feedback Visual) ---
-    
-    // Contraseña: Mín 8, Mayúscula, minúscula, número y símbolo.
-    const hasMinLength = password.length >= 8;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSymbol = /[@$!%*?&]/.test(password);
-    const isPasswordStrong = hasMinLength && hasUpper && hasLower && hasNumber && hasSymbol;
-        
-    // Teléfono Chileno simple (9 dígitos, empieza con 9)
-    const isPhoneValid = /^9[0-9]{8}$/.test(telefono);
-    
-    // Email (formato básico)
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    // Nombre (Sin números)
-    const isNameValid = nombre.length > 0 && !/[0-9]/.test(nombre);
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const navigate = useNavigate();
 
 
-    const handleRegistro = (e) => {
-        e.preventDefault();
-        setError('');
-        setCargando(true);
 
-            // --- NUEVA VALIDACIÓN: Las contraseñas deben coincidir ---
-    if (password !== confirmPassword) {
-        setError('Las contraseñas no coinciden.');
-        setCargando(false);
-        return;
-    }
+  const hasMinLength = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSymbol = /[@$!%*?&.,]/.test(password);
+  const isPasswordStrong =
+    hasMinLength && hasUpper && hasLower && hasNumber && hasSymbol;
 
-        // --- VALIDACIONES ANTES DE ENVIAR ---
-        if (!aceptaTerminos) {
-            setError('Debes aceptar los términos y condiciones.');
-            setCargando(false);
-            return;
-        }
-        if (!isNameValid) {
-            setError('El nombre no debe contener números.');
-            setCargando(false);
-            return;
-        }
-        if (!isEmailValid) {
-            setError('El formato del correo electrónico no es válido.');
-            setCargando(false);
-            return;
-        }
-        if (!telefono.startsWith('9')) {
-            setError('El teléfono debe comenzar con 9.');
-            setCargando(false);
-            return;
-        }
-        if (telefono.length < 9) {
-            setError(`El teléfono es muy corto. Faltan ${9 - telefono.length} dígitos. Debe tener 9 dígitos en total.`);
-            setCargando(false);
-            return;
-        }
-        if (telefono.length > 9) {
-            setError(`El teléfono es muy largo. Sobran ${telefono.length - 9} caracteres. Debe tener 9 dígitos en total.`);
-            setCargando(false);
-            return;
-        }
-        if (!isPhoneValid) {
-            setError('El teléfono debe ser 9 seguido de 8 dígitos.');
-            setCargando(false);
-            return;
-        }
+  const isPhoneValid = /^9\d{8}$/.test(telefono);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isNameValid = nombre.trim().length > 0 && !/\d/.test(nombre);
+  const passwordsMatch = password === confirmPassword && password.length > 0;
 
-        if (!isPasswordStrong) {
-            setError('La contraseña no cumple con los requisitos de seguridad.');
-            setCargando(false);
-            return;
-        }
+  const handleRegistro = async (e) => {
+    e.preventDefault();
+    setError("");
+    setCargando(true);
 
-        const userData = { nombre, email, telefono, password, aceptaTerminos };
+    if (!isNameValid)
+      return (
+        setError("El nombre no puede contener números."),
+        setCargando(false)
+      );
+    if (!isEmailValid)
+      return (setError("Ingresa un correo válido."), setCargando(false));
+    if (!isPhoneValid)
+      return (
+        setError("Teléfono debe tener 9 dígitos y comenzar con 9."),
+        setCargando(false)
+      );
+    if (!isPasswordStrong)
+      return (
+        setError("La contraseña debe tener mayúscula, número y símbolo."),
+        setCargando(false)
+      );
+    if (!passwordsMatch)
+      return (setError("Las contraseñas no coinciden."), setCargando(false));
+    if (!aceptaTerminos)
+      return (setError("Debes aceptar los términos."), setCargando(false));
 
-        axios.post('http://localhost:5000/api/auth/register-cliente', userData)
-            .then(response => {
-                // El registro fue exitoso
-                alert(response.data.message); // "Registro exitoso. Revisa tu correo..."
-                navigate('/login-cliente'); // Redirigir al login
-            })
-            .catch(err => {
-                setError(err.response?.data?.message || 'Error en el registro. Inténtalo de nuevo.');
-                setCargando(false);
-            });
+    const userData = {
+      nombre: nombre.trim(),
+      email: email.toLowerCase().trim(),
+      telefono,
+      password,
+      aceptaTerminos: Boolean(aceptaTerminos), // FORZAMOS A BOOLEANO
     };
 
-    return (
-        <div className="bg-background min-h-screen flex items-center justify-center p-4">
-            <Card className="max-w-lg w-full shadow-2xl border-none animate-in fade-in zoom-in duration-300">
-                <CardHeader>
-                    <div className="flex justify-center mb-4">
-                        <div className="p-3 bg-primary/10 rounded-full">
-                            <UserPlus className="w-8 h-8 text-primary" />
-                        </div>
-                    </div>
-                    <CardTitle className="text-3xl text-center font-bold text-foreground">Crear Cuenta</CardTitle>
-                    <CardDescription className="text-center">
-                        Únete a nuestra comunidad de bienestar.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleRegistro} className="space-y-4">
-                        
-                        {/* Mensaje de Error */}
-                        {error && (
-                            <div className="bg-destructive/15 text-destructive border border-destructive/30 p-3 rounded-md text-sm font-medium text-center">
-                                {error}
-                            </div>
-                        )}
-                        
-                        {/* Nombre y Teléfono */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="nombre">Nombre Completo</Label>
-                                <Input 
-                                    id="nombre" 
-                                    value={nombre} 
-                                    onChange={e => setNombre(e.target.value)} 
-                                    
-                                    placeholder="Ej: Ana Pérez" 
-                                    className={nombre && !isNameValid ? "border-destructive focus-visible:ring-destructive" : ""}
-                                />
-                                {nombre && !isNameValid && <p className="text-xs text-destructive">No uses números.</p>}
-                            </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="telefono">Teléfono</Label>
-                            <Input 
-                                id="telefono"
-                                type="tel"
-                                value={telefono} 
-                                onChange={e => setTelefono(e.target.value)} 
-                                
-                                placeholder="912345678" 
-                                maxLength="9"
-                                className={telefono && !isPhoneValid ? "border-destructive focus-visible:ring-destructive" : ""}
-                            />
-                            {telefono && !telefono.startsWith('9') && (
-                                <p className="text-xs text-destructive">⚠️ Debe comenzar con 9</p>
-                            )}
-                            {telefono && telefono.startsWith('9') && telefono.length !== 9 && (
-                                <p className="text-xs text-destructive">
-                                    ⚠️ {telefono.length < 9 ? `Faltan ${9 - telefono.length} dígitos` : `Sobran ${telefono.length - 9} caracteres`}
-                                </p>
-                            )}
-                            {telefono && isPhoneValid && (
-                                <p className="text-xs text-green-600">✓ Formato correcto</p>
-                            )}
-                        </div>
-                        </div>
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/register-cliente",
+        userData,
+      );
+      alert(res.data.message);
+      navigate("/login-cliente");
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Error al registrar. Inténtalo más tarde.",
+      );
+      setCargando(false);
+    }
+  };
 
-                        {/* Email */}
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Correo Electrónico</Label>
-                            <Input 
-                                id="email" 
-                                type="email" 
-                                value={email} 
-                                onChange={e => setEmail(e.target.value)} 
-                                placeholder="nombre@ejemplo.com"
-                                className={email && !isEmailValid ? "border-destructive focus-visible:ring-destructive" : ""}
-                            />
-                            {email && !isEmailValid && <p className="text-xs text-destructive">Debe ser un correo válido (ej: ana@correo.com)</p>}
-                        </div>
-                        
-                        {/* Contraseña con Feedback Visual */}
-                        <div className="space-y-2 bg-muted/30 p-3 rounded-lg border">
-                            <Label htmlFor="password">Contraseña</Label>
-                            <Input 
-                                id="password" 
-                                type="password" 
-                                value={password} 
-                                onChange={e => setPassword(e.target.value)} 
-                                
-                            />
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-2">
-                                <RequirementItem met={hasMinLength} text="Mínimo 8 caracteres" />
-                                <RequirementItem met={hasUpper} text="Una mayúscula" />
-                                <RequirementItem met={hasLower} text="Una minúscula" />
-                                <RequirementItem met={hasNumber} text="Un número" />
-                                <RequirementItem met={hasSymbol} text="Un símbolo (@$!%*?&)" />
-                            </div>
-                        </div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 p-4">
+      <Card className="w-full max-w-lg border-0 shadow-2xl">
+        <CardHeader className="pb-8 text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-pink-100">
+            <UserPlus className="h-12 w-12 text-pink-600" />
+          </div>
+          <CardTitle className="text-4xl font-bold text-gray-800">
+            Crear Cuenta
+          </CardTitle>
+          <CardDescription className="mt-2 text-lg">
+            Únete a TMM Bienestar y Conexión
+          </CardDescription>
+        </CardHeader>
 
-                        {/* NUEVO: Confirmar Contraseña */}
-<div className="space-y-2">
-    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-    <Input 
-        id="confirmPassword" 
-        type="password" 
-        value={confirmPassword} 
-        onChange={e => setConfirmPassword(e.target.value)} 
-        
-        className={confirmPassword && password !== confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
-    />
-    {confirmPassword && password !== confirmPassword && (
-        <p className="text-xs text-destructive">Las contraseñas no coinciden</p>
-    )}
-    {confirmPassword && password === confirmPassword && (
-        <p className="text-xs text-green-600">✓ Las contraseñas coinciden</p>
-    )}
-</div>
+        <CardContent>
+          <form onSubmit={handleRegistro} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center font-medium text-red-700">
+                {error}
+              </div>
+            )}
 
-                        {/* Términos y Condiciones */}
-                        <div className="flex items-start space-x-2 pt-2">
-                            <Checkbox id="terms" checked={aceptaTerminos} onCheckedChange={setAceptaTerminos} />
-                            <Label htmlFor="terms" className="text-sm leading-none cursor-pointer">
-                                He leído y acepto los <Link to="/terminos-y-condiciones" className="text-primary hover:underline font-semibold" target="_blank">Términos y Condiciones</Link> y la Política de Privacidad.
-                            </Label>
-                        </div>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="nombre">Nombre Completo</Label>
+                <Input
+                  id="nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ana Pérez"
+                  autoComplete="name"
+                  className="h-12"
+                />
+              </div>
 
-                        <Button 
-                            type="submit" 
-                            className="w-full h-12 text-lg font-semibold shadow-md hover:scale-[1.02] transition-transform duration-200"
-                            disabled={cargando || !aceptaTerminos}
-                        >
-                            {cargando ? 'Registrando...' : 'Crear mi Cuenta'}
-                        </Button>
-                    </form>
-                    
-                    <p className="mt-6 text-center text-sm text-muted-foreground">
-                        ¿Ya tienes una cuenta? <Link to="/login-cliente" className="text-primary hover:underline font-bold">Inicia sesión aquí</Link>
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-    );
+              <div className="space-y-2">
+                <Label htmlFor="telefono">Teléfono (sin +56)</Label>
+                <Input
+                  id="telefono"
+                  value={telefono}
+                  onChange={(e) =>
+                    setTelefono(e.target.value.replace(/\D/g, "").slice(0, 9))
+                  }
+                  placeholder="912345678"
+                  maxLength={9}
+                  autoComplete="tel"
+                  className="h-12"
+                />
+                {telefono && !isPhoneValid && (
+                  <p className="text-xs text-red-600">
+                    Debe comenzar con 9 y tener 9 dígitos
+                  </p>
+                )}
+                {isPhoneValid && (
+                  <p className="text-xs text-green-600">Teléfono válido</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo Electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ana@ejemplo.com"
+                autoComplete="email"
+                className="h-12"
+              />
+            </div>
+
+            <div className="rounded-lg border bg-muted/40 p-5">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                className="mt-2 h-12"
+              />
+              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                <Req met={hasMinLength} text="8+ caracteres" />
+                <Req met={hasUpper} text="Una mayúscula" />
+                <Req met={hasLower} text="Una minúscula" />
+                <Req met={hasNumber} text="Un número" />
+                <Req met={hasSymbol} text="Un símbolo (@$!%*?&.,)" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                className="h-12"
+              />
+              {confirmPassword && (
+                <p
+                  className={
+                    passwordsMatch
+                      ? "mt-1 text-xs text-green-600"
+                      : "mt-1 text-xs text-red-600"
+                  }
+                >
+                  {passwordsMatch
+                    ? "Las contraseñas coinciden"
+                    : "No coinciden"}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-3 pt-4">
+              <Checkbox
+                id="terms"
+                checked={aceptaTerminos}
+                onCheckedChange={setAceptaTerminos}
+              />
+              <Label
+                htmlFor="terms"
+                className="cursor-pointer text-sm leading-tight"
+              >
+                Acepto los{" "}
+                <Link
+                  to="/terminos-y-condiciones"
+                  className="font-bold text-pink-600 hover:underline"
+                  target="_blank"
+                >
+                  Términos y Condiciones
+                </Link>{" "}
+                y la Política de Privacidad
+              </Label>
+            </div>
+
+            <Button
+              type="submit"
+              className="h-14 w-full bg-gradient-to-r from-pink-600 to-purple-600 text-lg font-bold text-white shadow-lg hover:from-pink-700 hover:to-purple-700"
+              disabled={cargando}
+            >
+              {cargando ? "Creando cuenta..." : "Registrarme"}
+            </Button>
+
+            <p className="mt-8 text-center text-sm text-gray-600">
+              ¿Ya tienes cuenta?{" "}
+              <Link
+                to="/login-cliente"
+                className="font-bold text-pink-600 hover:underline"
+              >
+                Inicia sesión aquí
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
-// Componente auxiliar para los requisitos de contraseña
-function RequirementItem({ met, text }) {
-    return (
-        <div className={`flex items-center text-xs ${met ? 'text-green-600 font-medium' : 'text-muted-foreground'}`}>
-            {met ? <Check size={12} className="mr-1.5" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 mr-2" />}
-            {text}
-        </div>
-    );
+function Req({ met, text }) {
+  return (
+    <div
+      className={`flex items-center gap-2 text-xs ${met ? "font-medium text-green-600" : "text-gray-500"}`}
+    >
+      {met ? (
+        <Check className="h-4 w-4" />
+      ) : (
+        <span className="text-gray-400">○</span>
+      )}{" "}
+      {text}
+    </div>
+  );
 }
 
 export default Registro;
