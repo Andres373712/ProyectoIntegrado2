@@ -15,6 +15,8 @@ import {
 
 // --- IMPORTACIONES DE CARRUSEL E ICONOS ---
 import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import { ShoppingCart, Ban } from "lucide-react";
 import { useCart } from "@/features/carrito/CartContext";
 import { useProductosActivos } from "@/features/productos/useProductos";
