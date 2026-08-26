@@ -1,63 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useClientes } from "@/features/clientes/useClientes";
 
 function AdminClientes() {
-  const [clientes, setClientes] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  const { clientes, cargando, listaTalleres, fetchClientes } = useClientes();
   // Estados para los filtros
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [tallerSeleccionado, setTallerSeleccionado] = useState(""); // Nuevo estado para el taller
-
-  // Estado para la lista de talleres (para el dropdown)
-  const [listaTalleres, setListaTalleres] = useState([]);
-
-  const token = typeof window !== "undefined" ? localStorage.getItem("tmm_token") : null;
-  const authHeaders = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
-
-  // Función para cargar clientas (ahora con filtro de taller)
-  const fetchClientes = useCallback(
-    async (busqueda = "", inicio = "", fin = "", tallerId = "") => {
-      setCargando(true);
-      try {
-        const params = new URLSearchParams();
-        if (busqueda) params.append("buscar", busqueda);
-        if (inicio) params.append("fechaInicio", inicio);
-        if (fin) params.append("fechaFin", fin);
-        if (tallerId) params.append("tallerId", tallerId); // Añadir el nuevo filtro
-
-        const queryString = params.toString();
-        const url = `http://localhost:5000/api/clientes${queryString ? `?${queryString}` : ""}`;
-
-        const response = await axios.get(url, authHeaders);
-        setClientes(response.data);
-      } catch (error) {
-        console.error("Error al cargar clientes:", error);
-      } finally {
-        setCargando(false);
-      }
-    },
-    [authHeaders],
-  );
-
-  // Cargar clientas Y la lista de talleres al inicio
-  useEffect(() => {
-    fetchClientes(); // Carga inicial de clientas
-
-    // Cargar la lista de talleres para el dropdown
-    axios
-      .get("http://localhost:5000/api/talleres/todos", authHeaders)
-      .then((response) => {
-        setListaTalleres(response.data);
-      })
-      .catch((error) =>
-        console.error("Error al cargar lista de talleres:", error),
-      );
-  }, [fetchClientes, authHeaders]); // fetchClientes ya incluye token como dependencia
 
   // Manejadores para los inputs
   const handleBusquedaChange = (e) => setTerminoBusqueda(e.target.value);

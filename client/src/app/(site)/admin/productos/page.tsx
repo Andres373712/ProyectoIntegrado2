@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { productosService } from "@/features/productos/productosService";
+import { useProductosAdmin } from "@/features/productos/useProductos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,23 +19,8 @@ function AdminProductos() {
   const [crearMensaje, setCrearMensaje] = useState("");
 
   // --- Estado Lista ---
-  const [productos, setProductos] = useState([]);
   const [listaMensaje, setListaMensaje] = useState("");
-
-  const token = typeof window !== "undefined" ? localStorage.getItem("tmm_token") : null;
-  const authHeaders = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
-
-  // Cargar productos
-  const fetchProductos = useCallback(() => {
-    axios
-      .get("http://localhost:5000/api/productos/todos", authHeaders)
-      .then((res) => setProductos(res.data))
-      .catch((_) => console.error("Error cargando productos:", _));
-  }, [authHeaders]);
-
-  useEffect(() => {
-    fetchProductos();
-  }, [fetchProductos]);
+  const { productos, fetchProductos } = useProductosAdmin();
 
   // Crear Producto
   const handleSubmit = (e) => {
@@ -48,12 +34,8 @@ function AdminProductos() {
     formData.append("stock", String(parseInt(stock) || 0));
     if (imagen) formData.append("imagen", imagen);
 
-    axios
-      .post("http://localhost:5000/api/productos", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    productosService
+      .crear(formData)
       .then(() => {
         setCrearMensaje(`¡Producto "${nombre}" creado!`);
         fetchProductos();
@@ -75,8 +57,8 @@ function AdminProductos() {
   // Eliminar Producto
   const handleEliminar = (id, nombreProd) => {
     if (window.confirm(`¿Eliminar "${nombreProd}"?`)) {
-      axios
-        .delete(`http://localhost:5000/api/productos/${id}`, authHeaders)
+      productosService
+        .eliminar(id)
         .then(() => {
           setListaMensaje(`Producto eliminado.`);
           fetchProductos();

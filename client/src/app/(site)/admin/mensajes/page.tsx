@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React from "react";
+import { useMensajesContacto } from "@/features/mensajes/useMensajesContacto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -14,32 +14,7 @@ import {
 import { Loader2, AlertTriangle } from "lucide-react";
 
 const AdminMensajes = () => {
-  const [mensajes, setMensajes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchMensajes = async () => {
-      try {
-        const token = localStorage.getItem("tmm_token");
-        const response = await axios.get(
-          "http://localhost:5000/api/mensajes-contacto",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        setMensajes(response.data);
-      } catch (err) {
-        setError(
-          "No se pudieron cargar los mensajes. " +
-            (err.response?.data?.message || ""),
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMensajes();
-  }, []);
+  const { mensajes, loading, error } = useMensajesContacto();
 
   if (loading) {
     return (

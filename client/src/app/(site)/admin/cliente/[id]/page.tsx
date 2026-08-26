@@ -1,93 +1,41 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import axios from "axios";
+import { useClienteDetalle } from "@/features/clientes/useClienteDetalle";
 
 function ClienteDetalle() {
-  // Estado para los datos (ahora editables)
-  const [clienta, setClienta] = useState({
-    nombre: "",
-    email: "",
-    telefono: "",
-    intereses: "",
-    fecha_registro: "",
-  });
-  // Estados para historial y notas
-  const [historial, setHistorial] = useState([]);
-  const [notas, setNotas] = useState([]);
-  const [nuevaNota, setNuevaNota] = useState("");
-  // Estados de control
-  const [cargando, setCargando] = useState(true);
-  const [mensajeNota, setMensajeNota] = useState("");
-  const [mensajeCliente, setMensajeCliente] = useState("");
-
   const { id } = useParams();
+  const {
+    clienta,
+    setClienta,
+    historial,
+    notas,
+    cargando,
+    mensajeCliente,
+    setMensajeCliente,
+    guardarNota,
+    guardarCliente,
+  } = useClienteDetalle(id as string);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("tmm_token") : null;
-  const authHeaders = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
-
-  // --- Carga de Datos ---
-  const fetchNotas = useCallback(() => {
-    axios
-      .get(`http://localhost:5000/api/cliente/${id}/notas`, authHeaders)
-      .then((res) => setNotas(res.data))
-      .catch((err) => console.error("Error cargando notas:", err));
-  }, [id, authHeaders]); // Añadimos token a las dependencias
-
-  useEffect(() => {
-    setCargando(true); // Indicar que estamos cargando
-    Promise.all([
-      axios.get(`http://localhost:5000/api/cliente/${id}`, authHeaders),
-      axios.get(
-        `http://localhost:5000/api/cliente/${id}/historial`,
-        authHeaders,
-      ),
-      axios.get(`http://localhost:5000/api/cliente/${id}/notas`, authHeaders),
-    ])
-      .then(([resClienta, resHistorial, resNotas]) => {
-        setClienta(
-          resClienta.data || {
-            nombre: "",
-            email: "",
-            telefono: "",
-            intereses: "",
-            fecha_registro: "",
-          },
-        ); // Asegurar que clienta no sea null
-        setHistorial(resHistorial.data);
-        setNotas(resNotas.data);
-        setCargando(false);
-      })
-      .catch((err) => {
-        console.error("Error al cargar datos de la clienta:", err);
-        setMensajeCliente("Error al cargar los datos. Intenta recargar."); // Mensaje de error
-        setCargando(false);
-      });
-  }, [id, authHeaders]); // fetchNotas ya no es necesaria aquí si la lógica está dentro
+  const [nuevaNota, setNuevaNota] = useState("");
+  const [mensajeNota, setMensajeNota] = useState("");
 
   // --- Guardar Nota ---
-  const handleGuardarNota = (e) => {
+  const handleGuardarNota = async (e) => {
     e.preventDefault();
     if (!nuevaNota) return;
     setMensajeNota("Guardando nota...");
 
-    axios
-      .post(
-        `http://localhost:5000/api/cliente/${id}/notas`,
-        { nota: nuevaNota },
-        authHeaders,
-      )
-      .then(() => {
-        setMensajeNota("Nota guardada.");
-        setNuevaNota("");
-        fetchNotas(); // Recargar notas
-        setTimeout(() => setMensajeNota(""), 3000);
-      })
-      .catch((err) => {
-        setMensajeNota("Error al guardar nota.");
-        console.error("Error guardando nota:", err);
-      });
+    try {
+      await guardarNota(nuevaNota);
+      setMensajeNota("Nota guardada.");
+      setNuevaNota("");
+      setTimeout(() => setMensajeNota(""), 3000);
+    } catch (err) {
+      setMensajeNota("Error al guardar nota.");
+      console.error("Error guardando nota:", err);
+    }
   };
 
   // --- Editar Datos Cliente ---
@@ -96,7 +44,7 @@ function ClienteDetalle() {
     setClienta((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGuardarCliente = (e) => {
+  const handleGuardarCliente = async (e) => {
     e.preventDefault();
     setMensajeCliente("Guardando...");
 
@@ -107,20 +55,14 @@ function ClienteDetalle() {
       intereses: clienta.intereses,
     };
 
-    axios
-      .put(
-        `http://localhost:5000/api/cliente/${id}`,
-        datosActualizados,
-        authHeaders,
-      )
-      .then(() => {
-        setMensajeCliente("¡Datos guardados!");
-        setTimeout(() => setMensajeCliente(""), 3000);
-      })
-      .catch((err) => {
-        setMensajeCliente(err.response?.data?.message || "Error al guardar.");
-        console.error("Error guardando cliente:", err);
-      });
+    try {
+      await guardarCliente(datosActualizados);
+      setMensajeCliente("¡Datos guardados!");
+      setTimeout(() => setMensajeCliente(""), 3000);
+    } catch (err) {
+      setMensajeCliente(err.response?.data?.message || "Error al guardar.");
+      console.error("Error guardando cliente:", err);
+    }
   };
 
   if (cargando)
