@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { talleresService } from "@/features/talleres/talleresService";
+import { getImageUrl } from "@/shared/lib/apiClient";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,11 +226,15 @@ function EditarTaller() {
         <div>
           <Label>Imagen Actual</Label>
           {taller.imageUrl && (
-            <img
-              src={`http://localhost:5000${taller.imageUrl}`}
-              alt="Actual"
-              className="mb-2 h-48 w-full rounded-md object-cover"
-            />
+            <div className="relative mb-2 h-48 w-full">
+              <Image
+                src={getImageUrl(taller.imageUrl)}
+                alt="Actual"
+                fill
+                unoptimized
+                className="rounded-md object-cover"
+              />
+            </div>
           )}
           <Label
             htmlFor="file-input-edit"

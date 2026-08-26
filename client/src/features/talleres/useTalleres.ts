@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { talleresService } from "./talleresService";
 import type { Taller } from "@/types/taller";
+
+export const talleresTodosQueryKey = ["talleres", "todos"] as const;
 
 export function useTalleresActivos() {
   const [talleres, setTalleres] = useState<Taller[]>([]);
@@ -45,23 +49,24 @@ export function useTaller(id: string | number) {
 }
 
 export function useTalleresAdmin() {
-  const [talleres, setTalleres] = useState<Taller[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data } = useQuery({
+    queryKey: talleresTodosQueryKey,
+    queryFn: async () => {
+      try {
+        return (await talleresService.getTodos()).data;
+      } catch (error) {
+        const mensaje = isAxiosError(error) ? error.response?.data?.message : error;
+        console.error("Error al cargar talleres:", mensaje);
+        return [];
+      }
+    },
+  });
 
   const fetchTalleres = () => {
-    talleresService
-      .getTodos()
-      .then((response) => setTalleres(response.data))
-      .catch((error) =>
-        console.error(
-          "Error al cargar talleres:",
-          error.response?.data?.message,
-        ),
-      );
+    queryClient.invalidateQueries({ queryKey: talleresTodosQueryKey });
   };
 
-  useEffect(() => {
-    fetchTalleres();
-  }, []);
-
-  return { talleres, fetchTalleres };
+  return { talleres: data ?? [], fetchTalleres };
 }

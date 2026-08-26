@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import { ShoppingCart, Ban } from "lucide-react";
 import { useCart } from "@/features/carrito/CartContext";
 import { useProductosActivos } from "@/features/productos/useProductos";
 import { getImageUrl } from "@/shared/lib/apiClient";
+import { formatCLP } from "@/lib/utils";
 
 import { useToast } from "@/shared/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
@@ -117,26 +119,14 @@ function Homepage() {
             {/* Columna 2: Carrusel (Derecha) */}
             <div className="mx-auto w-full max-w-md overflow-hidden rounded-xl border-4 border-white/20 shadow-2xl delay-200 duration-700 animate-in fade-in slide-in-from-right lg:max-w-full">
               <Slider {...sliderSettings}>
-                <div>
-                  <img
-                    src={CarouselImg1.src}
-                    alt="Taller 1"
-                    className="h-64 w-full object-cover md:h-96"
-                  />
+                <div className="relative h-64 w-full md:h-96">
+                  <Image src={CarouselImg1} alt="Taller 1" fill className="object-cover" />
                 </div>
-                <div>
-                  <img
-                    src={CarouselImg2.src}
-                    alt="Taller 2"
-                    className="h-64 w-full object-cover md:h-96"
-                  />
+                <div className="relative h-64 w-full md:h-96">
+                  <Image src={CarouselImg2} alt="Taller 2" fill className="object-cover" />
                 </div>
-                <div>
-                  <img
-                    src={CarouselImg3.src}
-                    alt="Taller 3"
-                    className="h-64 w-full object-cover md:h-96"
-                  />
+                <div className="relative h-64 w-full md:h-96">
+                  <Image src={CarouselImg3} alt="Taller 3" fill className="object-cover" />
                 </div>
               </Slider>
             </div>
@@ -175,11 +165,13 @@ function Homepage() {
                     className="flex flex-col justify-between overflow-hidden border-none shadow-md transition-shadow duration-300 hover:shadow-xl"
                   >
                     <CardHeader className="p-0">
-                      <div className="relative">
-                        <img
+                      <div className="relative h-56 w-full">
+                        <Image
                           src={getImageUrl(prod.imageUrl)}
                           alt={prod.nombre}
-                          className={`h-56 w-full object-cover transition-transform duration-500 hover:scale-105 ${sinStock ? "opacity-60 grayscale" : ""}`}
+                          fill
+                          unoptimized
+                          className={`object-cover transition-transform duration-500 hover:scale-105 ${sinStock ? "opacity-60 grayscale" : ""}`}
                         />
                         {sinStock && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
@@ -200,7 +192,7 @@ function Homepage() {
                       </CardDescription>
                       <div className="flex items-end justify-between">
                         <p className="text-2xl font-bold text-primary">
-                          ${prod.precio.toLocaleString("es-CL")}
+                          ${formatCLP(prod.precio)}
                         </p>
                         <p className="text-xs font-medium text-muted-foreground">
                           {sinStock
@@ -292,10 +284,11 @@ function Homepage() {
               <div className="absolute inset-0 translate-x-4 translate-y-4 transform rounded-full bg-primary/10"></div>
               {/* Imagen de Carolina */}
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl">
-                <img
-                  src={FotoCarolina.src}
+                <Image
+                  src={FotoCarolina}
                   alt="Carolina López"
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useTalleresActivos } from "@/features/talleres/useTalleres";
 import { getImageUrl } from "@/shared/lib/apiClient";
+import { formatCLP, formatFechaCL } from "@/lib/utils";
 
 function Catalogo() {
   const { talleres, cargando } = useTalleresActivos();
@@ -62,7 +64,7 @@ function Catalogo() {
                     </div>
                     <CardDescription>
                       {taller.fecha
-                        ? new Date(taller.fecha).toLocaleDateString("es-CL", {
+                        ? formatFechaCL(taller.fecha, {
                             month: "long",
                             day: "numeric",
                           })
@@ -70,11 +72,13 @@ function Catalogo() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative">
-                      <img
+                    <div className="relative mb-4 h-48 w-full">
+                      <Image
                         src={getImageUrl(taller.imageUrl)}
                         alt={taller.nombre}
-                        className={`mb-4 h-48 w-full rounded-md object-cover ${agotado ? "opacity-70 grayscale" : ""}`}
+                        fill
+                        unoptimized
+                        className={`rounded-md object-cover ${agotado ? "opacity-70 grayscale" : ""}`}
                       />
                       {agotado && (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -86,9 +90,7 @@ function Catalogo() {
                     </div>
                     <p className="mt-4 text-2xl font-bold">
                       $
-                      {taller.precio
-                        ? taller.precio.toLocaleString("es-CL")
-                        : "N/A"}
+                      {taller.precio ? formatCLP(taller.precio) : "N/A"}
                     </p>
                   </CardContent>
                   <CardFooter className="flex flex-col gap-2">

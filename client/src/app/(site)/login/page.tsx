@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { authService } from "@/features/auth/authService";
+import { useAuth } from "@/shared/auth/AuthProvider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ function Login() {
       .loginAdmin(email, password)
       .then((response) => {
         // Si el login es exitoso, guardamos el token
-        localStorage.setItem("tmm_token", response.data.token);
+        login(response.data.token);
         // Redirigimos al dashboard de administración
         router.push("/admin");
       })

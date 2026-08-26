@@ -16,13 +16,13 @@ import { useDashboardData } from "@/features/admin/useDashboardData";
 
 // Componente de Tarjeta de Estadística
 const StatCard = ({ title, value, icon: Icon, color }) => (
-  <div className="flex items-center space-x-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+  <div className="flex items-center space-x-4 rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
     <div className={`rounded-full p-3 ${color} bg-opacity-10 text-white`}>
       <Icon className={`h-8 w-8 ${color.replace("bg-", "text-")}`} />
     </div>
     <div>
-      <p className="text-sm font-medium text-gray-500">{title}</p>
-      <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <h3 className="text-2xl font-bold text-foreground">{value}</h3>
     </div>
   </div>
 );
@@ -31,7 +31,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
 const ActionCard = ({ title, description, link, icon: Icon, color }) => (
   <Link
     href={link}
-    className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
+    className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
   >
     <div
       className={`absolute right-0 top-0 p-3 opacity-10 transition-opacity group-hover:opacity-20`}
@@ -44,8 +44,8 @@ const ActionCard = ({ title, description, link, icon: Icon, color }) => (
       >
         <Icon className="h-6 w-6" />
       </div>
-      <h3 className="mb-2 text-lg font-bold text-gray-800">{title}</h3>
-      <p className="mb-4 text-sm text-gray-500">{description}</p>
+      <h3 className="mb-2 text-lg font-bold text-foreground">{title}</h3>
+      <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       <span className="flex items-center text-sm font-medium text-primary group-hover:underline">
         Ir a gestionar <ArrowRight className="ml-1 h-4 w-4" />
       </span>
@@ -58,22 +58,22 @@ function AdminDashboard() {
 
   if (cargando)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="animate-pulse text-lg text-gray-500">
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <p className="animate-pulse text-lg text-muted-foreground">
           Cargando panel de control...
         </p>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-10">
+    <div className="min-h-screen bg-muted p-6 md:p-10">
       {/* --- Encabezado --- */}
       <header className="mb-10">
-        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-foreground md:text-4xl">
           <LayoutDashboard className="h-8 w-8 text-primary" />
           Panel de Control
         </h1>
-        <p className="mt-2 text-lg text-gray-500">
+        <p className="mt-2 text-lg text-muted-foreground">
           Bienvenida, Carolina. Aquí tienes el resumen de tu negocio hoy.
         </p>
       </header>
@@ -103,7 +103,7 @@ function AdminDashboard() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* --- Sección 2: Accesos Directos (Gestión) --- */}
         <div className="space-y-6 lg:col-span-2">
-          <h2 className="mb-4 text-xl font-bold text-gray-800">
+          <h2 className="mb-4 text-xl font-bold text-foreground">
             Gestión Rápida
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -140,8 +140,8 @@ function AdminDashboard() {
 
         {/* --- Sección 3: Calendario --- */}
         <div className="lg:col-span-1">
-          <h2 className="mb-4 text-xl font-bold text-gray-800">Agenda</h2>
-          <div className="h-full rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-foreground">Agenda</h2>
+          <div className="h-full rounded-xl border border-border bg-card p-4 shadow-sm">
             <FullCalendar
               plugins={[dayGridPlugin]}
               initialView="dayGridMonth"

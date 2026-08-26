@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,10 +30,10 @@ function QuienesSomos() {
         <div className="mb-20 grid items-start gap-12 md:grid-cols-2">
           {/* Foto */}
           <div className="relative">
-            <div className="aspect-square overflow-hidden rounded-2xl border-8 border-white shadow-2xl">
+            <div className="relative aspect-square overflow-hidden rounded-2xl border-8 border-white shadow-2xl">
               {/* Fallback por si no existe la foto */}
-              <img
-                src={FotoCarolina.src}
+              <Image
+                src={FotoCarolina}
                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = "none";
@@ -40,7 +41,8 @@ function QuienesSomos() {
                   // Opcional: mostrar texto alternativo si falla la imagen
                 }}
                 alt="Carolina López Fundadora"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
             {/* Decoración */}

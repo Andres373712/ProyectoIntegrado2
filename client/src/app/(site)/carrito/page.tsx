@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useCart } from "@/features/carrito/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,30 +9,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, Plus, Minus, ShoppingBag, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { pedidosService } from "@/features/carrito/pedidosService";
+import { usePedido } from "@/features/carrito/usePedido";
 import { getImageUrl } from "@/shared/lib/apiClient";
+import { formatCLP } from "@/lib/utils";
 
 function Carrito() {
   const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
+  const { mensaje, exito, confirmarPedido } = usePedido();
 
   // Estados para el formulario de checkout
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [exito, setExito] = useState(false);
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
 
   const handleProcederCheckout = () => {
     setMostrarCheckout(true);
   };
 
-  const handleConfirmarPedido = (e) => {
+  const handleConfirmarPedido = async (e) => {
     e.preventDefault();
-    setMensaje("");
 
-    // Preparar datos del pedido
-    const datosPedido = {
+    const exitoso = await confirmarPedido({
       nombre,
       email,
       telefono,
@@ -42,31 +41,19 @@ function Carrito() {
         precio: item.precio,
       })),
       total,
-    };
+    });
 
-    // Enviar pedido al backend
-    pedidosService
-      .crear(datosPedido)
-      .then((response) => {
-        setExito(true);
-        setMensaje(response.data.message);
-        clearCart();
-
-        // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
-        setTimeout(() => {
-          window.open("https://www.mercadopago.cl/", "_blank");
-          alert(
-            "En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago con el monto de $" +
-              total.toLocaleString("es-CL"),
-          );
-        }, 2000);
-      })
-      .catch((error) => {
-        setExito(false);
-        setMensaje(
-          error.response?.data?.message || "Error al procesar el pedido.",
+    if (exitoso) {
+      clearCart();
+      // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
+      setTimeout(() => {
+        window.open("https://www.mercadopago.cl/", "_blank");
+        alert(
+          "En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago con el monto de $" +
+            formatCLP(total),
         );
-      });
+      }, 2000);
+    }
   };
 
   if (cart.length === 0) {
@@ -148,11 +135,13 @@ function Carrito() {
                   className="flex flex-row items-center gap-4 overflow-hidden p-4"
                 >
                   {/* Imagen Miniatura */}
-                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                    <img
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                    <Image
                       src={getImageUrl(item.imageUrl)}
                       alt={item.nombre}
-                      className="h-full w-full object-cover"
+                      fill
+                      unoptimized
+                      className="object-cover"
                     />
                   </div>
 
@@ -163,7 +152,7 @@ function Carrito() {
                       {item.tipo}
                     </p>
                     <p className="font-bold text-primary">
-                      ${item.precio.toLocaleString("es-CL")}
+                      ${formatCLP(item.precio)}
                     </p>
                   </div>
 
@@ -215,7 +204,7 @@ function Carrito() {
                           <span className="text-muted-foreground">
                             Subtotal
                           </span>
-                          <span>${total.toLocaleString("es-CL")}</span>
+                          <span>${formatCLP(total)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Envío</span>
@@ -227,7 +216,7 @@ function Carrito() {
                       <div className="mb-6 flex items-center justify-between">
                         <span className="text-lg font-bold">Total</span>
                         <span className="text-2xl font-bold text-primary">
-                          ${total.toLocaleString("es-CL")}
+                          ${formatCLP(total)}
                         </span>
                       </div>
                       <Button
@@ -282,7 +271,7 @@ function Carrito() {
                           <div className="mb-4 flex items-center justify-between">
                             <span className="font-bold">Total a pagar:</span>
                             <span className="text-2xl font-bold text-primary">
-                              ${total.toLocaleString("es-CL")}
+                              ${formatCLP(total)}
                             </span>
                           </div>
                         </div>

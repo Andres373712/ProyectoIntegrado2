@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { useClienteDetalle } from "@/features/clientes/useClienteDetalle";
+import { formatFechaCL } from "@/lib/utils";
 
 function ClienteDetalle() {
   const { id } = useParams();
@@ -76,16 +77,16 @@ function ClienteDetalle() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-muted p-8">
       <div className="mx-auto max-w-6xl">
         {/* --- Cabecera con Info Editable de la Clienta --- */}
         <form
           onSubmit={handleGuardarCliente}
-          className="mb-8 rounded-lg bg-white p-8 shadow-md"
+          className="mb-8 rounded-lg bg-card p-8 shadow-md"
         >
           <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Nombre Completo
               </label>
               <input
@@ -98,7 +99,7 @@ function ClienteDetalle() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
@@ -111,7 +112,7 @@ function ClienteDetalle() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Teléfono (WhatsApp)
               </label>
               <input
@@ -123,7 +124,7 @@ function ClienteDetalle() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Intereses (separados por coma)
               </label>
               <input
@@ -135,11 +136,8 @@ function ClienteDetalle() {
               />
             </div>
           </div>
-          <div className="mt-4 text-xs text-gray-500">
-            Clienta desde:{" "}
-            {clienta.fecha_registro
-              ? new Date(clienta.fecha_registro).toLocaleDateString("es-CL")
-              : "N/A"}
+          <div className="mt-4 text-xs text-muted-foreground">
+            Clienta desde: {formatFechaCL(clienta.fecha_registro)}
           </div>
           <div className="mt-6 flex items-center justify-end gap-4">
             {mensajeCliente && (
@@ -158,7 +156,7 @@ function ClienteDetalle() {
         {/* --- Columnas de Historial y Notas --- */}
         <div className="grid gap-8 md:grid-cols-2">
           {/* Columna 1: Historial de Talleres */}
-          <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="rounded-lg bg-card p-8 shadow-md">
             <h2 className="mb-4 text-2xl font-bold text-tmm-dark">
               Historial de Trazabilidad
             </h2>
@@ -167,22 +165,14 @@ function ClienteDetalle() {
                 historial.map((taller, index) => (
                   <div
                     key={index}
-                    className="rounded border-l-4 border-tmm-pink bg-gray-50 p-4"
+                    className="rounded border-l-4 border-tmm-pink bg-muted p-4"
                   >
                     <h3 className="text-lg font-bold">{taller.nombre}</h3>
-                    <p className="text-sm text-gray-600">
-                      Fecha taller:{" "}
-                      {taller.fecha
-                        ? new Date(taller.fecha).toLocaleDateString("es-CL")
-                        : "N/A"}
+                    <p className="text-sm text-muted-foreground">
+                      Fecha taller: {formatFechaCL(taller.fecha)}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      Inscripción:{" "}
-                      {taller.fecha_inscripcion
-                        ? new Date(taller.fecha_inscripcion).toLocaleDateString(
-                            "es-CL",
-                          )
-                        : "N/A"}
+                    <p className="text-xs text-muted-foreground">
+                      Inscripción: {formatFechaCL(taller.fecha_inscripcion)}
                     </p>
                   </div>
                 ))
@@ -193,12 +183,12 @@ function ClienteDetalle() {
           </div>
 
           {/* Columna 2: Notas de Fidelización */}
-          <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="rounded-lg bg-card p-8 shadow-md">
             <h2 className="mb-4 text-2xl font-bold text-tmm-dark">
               Notas de Fidelización
             </h2>
             <form onSubmit={handleGuardarNota} className="mb-6">
-              <label className="mb-2 block font-bold text-gray-700">
+              <label className="mb-2 block font-bold text-foreground">
                 Añadir nota personal:
               </label>
               <textarea
@@ -223,8 +213,8 @@ function ClienteDetalle() {
               {notas.length > 0 ? (
                 notas.map((nota) => (
                   <div key={nota.id} className="rounded bg-yellow-100 p-4">
-                    <p className="text-gray-800">{nota.nota}</p>
-                    <p className="mt-2 text-right text-xs text-gray-500">
+                    <p className="text-foreground">{nota.nota}</p>
+                    <p className="mt-2 text-right text-xs text-muted-foreground">
                       {new Date(nota.fecha).toLocaleString("es-CL")}
                     </p>
                   </div>

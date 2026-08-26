@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
+import { useAuth } from "@/shared/auth/AuthProvider";
 
 import { useCart } from "@/features/carrito/CartContext";
 import { ShoppingCart, Menu, X } from "lucide-react"; // Iconos
@@ -16,7 +17,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 function Navegacion() {
   const router = useRouter();
   const pathname = usePathname();
-  const token = typeof window !== "undefined" ? localStorage.getItem("tmm_token") : null;
+  const { token, isAdmin, logout } = useAuth();
   const { count } = useCart();
 
   const [visible, setVisible] = React.useState(true);
@@ -24,7 +25,7 @@ function Navegacion() {
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("tmm_token");
+    logout();
     router.push("/");
   };
 
@@ -63,16 +64,17 @@ function Navegacion() {
           {/* --- LOGO --- */}
           <div className="flex h-full flex-shrink-0 items-center">
             <Link href="/" className="group flex h-full items-center gap-3 py-2">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white transition-colors group-hover:border-white">
-                <img
-                  src={logoTMM.src}
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white transition-colors group-hover:border-white">
+                <Image
+                  src={logoTMM}
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
                     (target.parentNode as HTMLElement).classList.add("bg-primary");
                   }}
                   alt="TMM"
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
                 />
                 <span className="absolute text-[8px] font-bold text-black/20">
                   LOGO
@@ -120,25 +122,14 @@ function Navegacion() {
 
             {token ? (
               <>
-                {(() => {
-                  try {
-                    const decoded = jwtDecode<{ rol?: string }>(token);
-                    // Solo mostrar el botón Admin si el usuario es realmente admin
-                    if (decoded.rol === "admin") {
-                      return (
-                        <Link
-                          href="/admin"
-                          className="rounded-full border border-gray-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-300 hover:text-white"
-                        >
-                          Admin
-                        </Link>
-                      );
-                    }
-                  } catch (error) {
-                    console.error("Error decodificando token:", error);
-                  }
-                  return null;
-                })()}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="rounded-full border border-gray-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-300 hover:text-white"
+                  >
+                    Admin
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:underline"

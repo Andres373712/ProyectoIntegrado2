@@ -1,22 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { productosService } from "@/features/productos/productosService";
 import { useProductosAdmin } from "@/features/productos/useProductos";
+import { useFormularioCrud } from "@/shared/hooks/useFormularioCrud";
+import { getImageUrl } from "@/shared/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import InputPrecio from "@/components/InputPrecio";
+import { formatCLP } from "@/lib/utils";
+
+const PRODUCTO_INICIAL = {
+  nombre: "",
+  descripcion: "",
+  precio: "",
+  stock: "",
+};
 
 function AdminProductos() {
-  // --- Estado Formulario ---
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [precio, setPrecio] = useState("");
-  const [stock, setStock] = useState(""); // <-- NUEVO CAMPO STOCK
-  const [imagen, setImagen] = useState(null);
-  const [crearMensaje, setCrearMensaje] = useState("");
+  const { valores, setCampo, setImagen, mensaje, enviar } =
+    useFormularioCrud(PRODUCTO_INICIAL);
 
   // --- Estado Lista ---
   const [listaMensaje, setListaMensaje] = useState("");
@@ -25,33 +31,26 @@ function AdminProductos() {
   // Crear Producto
   const handleSubmit = (e) => {
     e.preventDefault();
-    setCrearMensaje("Guardando...");
+    const { nombre } = valores;
 
-    const formData = new FormData();
-    formData.append("nombre", nombre);
-    formData.append("descripcion", descripcion);
-    formData.append("precio", String(parseInt(precio) || 0));
-    formData.append("stock", String(parseInt(stock) || 0));
-    if (imagen) formData.append("imagen", imagen);
-
-    productosService
-      .crear(formData)
-      .then(() => {
-        setCrearMensaje(`¡Producto "${nombre}" creado!`);
-        fetchProductos();
-        // Limpiar
-        setNombre("");
-        setDescripcion("");
-        setPrecio("");
-        setStock("");
-        setImagen(null);
-        const fileInput = document.getElementById("file-input-prod") as HTMLInputElement | null;
-        if (fileInput) fileInput.value = "";
-      })
-      .catch((error) => {
-        setCrearMensaje("Error al crear producto.");
-        console.error(error);
-      });
+    enviar(
+      productosService.crear,
+      (v, img) => {
+        const formData = new FormData();
+        formData.append("nombre", v.nombre);
+        formData.append("descripcion", v.descripcion);
+        formData.append("precio", String(parseInt(v.precio) || 0));
+        formData.append("stock", String(parseInt(v.stock) || 0));
+        if (img) formData.append("imagen", img);
+        return formData;
+      },
+      {
+        mensajeExito: `¡Producto "${nombre}" creado!`,
+        mensajeError: "Error al crear producto.",
+        fileInputId: "file-input-prod",
+        alExito: fetchProductos,
+      },
+    );
   };
 
   // Eliminar Producto
@@ -81,8 +80,8 @@ function AdminProductos() {
             <Label htmlFor="nombre">Nombre del Producto</Label>
             <Input
               id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              value={valores.nombre}
+              onChange={(e) => setCampo("nombre", e.target.value)}
               required
             />
           </div>
@@ -90,8 +89,8 @@ function AdminProductos() {
             <Label htmlFor="descripcion">Descripción</Label>
             <Textarea
               id="descripcion"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              value={valores.descripcion}
+              onChange={(e) => setCampo("descripcion", e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -99,8 +98,8 @@ function AdminProductos() {
               <Label htmlFor="precio">Precio (CLP)</Label>
               <InputPrecio
                 id="precio"
-                value={precio}
-                onChange={setPrecio}
+                value={valores.precio}
+                onChange={(v) => setCampo("precio", v)}
                 required
               />
             </div>
@@ -109,8 +108,8 @@ function AdminProductos() {
               <Input
                 id="stock"
                 type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                value={valores.stock}
+                onChange={(e) => setCampo("stock", e.target.value)}
                 required
               />
             </div>
@@ -126,8 +125,8 @@ function AdminProductos() {
           <Button type="submit" className="w-full">
             Guardar Producto
           </Button>
-          {crearMensaje && (
-            <p className="mt-2 text-center text-sm">{crearMensaje}</p>
+          {mensaje && (
+            <p className="mt-2 text-center text-sm">{mensaje}</p>
           )}
         </form>
       </div>
@@ -147,19 +146,19 @@ function AdminProductos() {
                 className="flex flex-col items-center justify-between rounded-lg border p-4 md:flex-row"
               >
                 <div className="flex items-center gap-4">
-                  <img
-                    src={
-                      prod.imageUrl
-                        ? `http://localhost:5000${prod.imageUrl}`
-                        : "/placeholder.png"
-                    }
-                    alt={prod.nombre}
-                    className="h-16 w-16 rounded-md bg-muted object-cover"
-                  />
+                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                    <Image
+                      src={getImageUrl(prod.imageUrl)}
+                      alt={prod.nombre}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
                     <h3 className="text-lg font-bold">{prod.nombre}</h3>
                     <p className="text-sm text-muted-foreground">
-                      ${prod.precio.toLocaleString("es-CL")}
+                      ${formatCLP(prod.precio)}
                     </p>
                     {/* INDICADOR DE STOCK */}
                     <p

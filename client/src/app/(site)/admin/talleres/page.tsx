@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { talleresService } from "@/features/talleres/talleresService";
 import { useTalleresAdmin } from "@/features/talleres/useTalleres";
+import { useFormularioCrud } from "@/shared/hooks/useFormularioCrud";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import InputPrecio from "@/components/InputPrecio";
+import { formatCLP } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -18,17 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const TALLER_INICIAL = {
+  nombre: "",
+  descripcion: "",
+  fecha: "",
+  tipo: "B2C",
+  precio: "",
+  lugar: "",
+  cupos: 10 as number | string,
+};
+
 function Admin() {
-  // --- Estado para el formulario de CREAR ---
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [fecha, setFecha] = useState("");
-  const [tipo, setTipo] = useState("B2C");
-  const [precio, setPrecio] = useState("");
-  const [lugar, setLugar] = useState("");
-  const [cupos, setCupos] = useState<number | string>(10); // <-- NUEVO ESTADO: Por defecto 10
-  const [imagen, setImagen] = useState(null);
-  const [crearMensaje, setCrearMensaje] = useState("");
+  const { valores, setCampo, imagen, setImagen, mensaje, setMensaje, enviar } =
+    useFormularioCrud(TALLER_INICIAL);
 
   // --- Estado para la LISTA de talleres ---
   const [listaMensaje, setListaMensaje] = useState("");
@@ -37,53 +42,37 @@ function Admin() {
   // --- Manejador para CREAR taller ---
   const handleSubmit = (e) => {
     e.preventDefault();
+    const { nombre, descripcion, fecha, precio, lugar } = valores;
 
     if (!nombre || !descripcion || !fecha || !precio || !lugar || !imagen) {
-      setCrearMensaje(
+      setMensaje(
         "⚠️ Por favor completa todos los campos obligatorios (incluyendo la imagen).",
       );
-      setTimeout(() => setCrearMensaje(""), 4000);
+      setTimeout(() => setMensaje(""), 4000);
       return;
     }
 
-    setCrearMensaje("Creando...");
-
-    const formData = new FormData();
-    formData.append("nombre", nombre);
-    formData.append("descripcion", descripcion);
-    formData.append("fecha", fecha ? new Date(fecha).toISOString() : "");
-    formData.append("tipo", tipo);
-    formData.append("precio", String(parseInt(precio) || 0));
-    formData.append("lugar", lugar);
-    formData.append("cupos_totales", String(parseInt(String(cupos)) || 10)); // <-- NUEVO: Enviamos cupos
-    if (imagen) {
-      formData.append("imagen", imagen);
-    }
-
-    talleresService
-      .crear(formData)
-      .then(() => {
-        setCrearMensaje(`¡Éxito! Taller "${nombre}" creado.`);
-        fetchTalleres();
-        // Limpiar formulario
-        setNombre("");
-        setDescripcion("");
-        setFecha("");
-        setTipo("B2C");
-        setPrecio("");
-        setLugar("");
-        setCupos(10); // <-- Resetear cupos
-        setImagen(null);
-        const fileInput = document.getElementById("file-input") as HTMLInputElement | null;
-        if (fileInput) fileInput.value = "";
-      })
-      .catch((error) => {
-        setCrearMensaje("Error al crear el taller.");
-        console.error(
-          "Error de Axios:",
-          error.response?.data?.message || error.message,
-        );
-      });
+    enviar(
+      talleresService.crear,
+      (v, img) => {
+        const formData = new FormData();
+        formData.append("nombre", v.nombre);
+        formData.append("descripcion", v.descripcion);
+        formData.append("fecha", v.fecha ? new Date(v.fecha).toISOString() : "");
+        formData.append("tipo", v.tipo);
+        formData.append("precio", String(parseInt(v.precio) || 0));
+        formData.append("lugar", v.lugar);
+        formData.append("cupos_totales", String(parseInt(String(v.cupos)) || 10));
+        if (img) formData.append("imagen", img);
+        return formData;
+      },
+      {
+        mensajeExito: `¡Éxito! Taller "${nombre}" creado.`,
+        mensajeError: "Error al crear el taller.",
+        fileInputId: "file-input",
+        alExito: fetchTalleres,
+      },
+    );
   };
 
   const handleEliminar = (id, nombreTaller) => {
@@ -118,8 +107,8 @@ function Admin() {
             <Label htmlFor="nombre">Nombre del Taller</Label>
             <Input
               id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              value={valores.nombre}
+              onChange={(e) => setCampo("nombre", e.target.value)}
               required
             />
           </div>
@@ -127,8 +116,8 @@ function Admin() {
             <Label htmlFor="descripcion">Descripción</Label>
             <Textarea
               id="descripcion"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              value={valores.descripcion}
+              onChange={(e) => setCampo("descripcion", e.target.value)}
               required
             />
           </div>
@@ -138,14 +127,14 @@ function Admin() {
               <Input
                 id="fecha"
                 type="datetime-local"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
+                value={valores.fecha}
+                onChange={(e) => setCampo("fecha", e.target.value)}
                 required
               />
             </div>
             <div>
               <Label>Tipo</Label>
-              <Select value={tipo} onValueChange={setTipo}>
+              <Select value={valores.tipo} onValueChange={(v) => setCampo("tipo", v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
@@ -163,8 +152,8 @@ function Admin() {
               <Label htmlFor="lugar">Lugar</Label>
               <Input
                 id="lugar"
-                value={lugar}
-                onChange={(e) => setLugar(e.target.value)}
+                value={valores.lugar}
+                onChange={(e) => setCampo("lugar", e.target.value)}
                 required
                 placeholder="Ej: Online..."
               />
@@ -176,8 +165,8 @@ function Admin() {
                 id="cupos"
                 type="number"
                 min="1"
-                value={cupos}
-                onChange={(e) => setCupos(e.target.value)}
+                value={valores.cupos}
+                onChange={(e) => setCampo("cupos", e.target.value)}
                 required
               />
             </div>
@@ -187,8 +176,8 @@ function Admin() {
             <Label htmlFor="precio">Precio (CLP)</Label>
             <InputPrecio
               id="precio"
-              value={precio}
-              onChange={setPrecio}
+              value={valores.precio}
+              onChange={(v) => setCampo("precio", v)}
               required
             />
           </div>
@@ -204,7 +193,7 @@ function Admin() {
           <Button type="submit" className="h-11 w-full text-lg">
             Guardar Taller
           </Button>
-          {crearMensaje && <p className="mt-4 text-center">{crearMensaje}</p>}
+          {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
         </form>
       </div>
 
@@ -221,18 +210,19 @@ function Admin() {
                 className="flex flex-col items-center justify-between rounded-lg border p-4 md:flex-row"
               >
                 <div className="flex items-center gap-4">
-                  <img
-                    src={getImageUrl(taller.imageUrl)}
-                    alt={taller.nombre}
-                    className="h-16 w-16 rounded-md bg-muted object-cover"
-                  />
+                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                    <Image
+                      src={getImageUrl(taller.imageUrl)}
+                      alt={taller.nombre}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
                     <h3 className="text-lg font-bold">{taller.nombre}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {taller.tipo} - $
-                      {taller.precio
-                        ? taller.precio.toLocaleString("es-CL")
-                        : "0"}
+                      {taller.tipo} - ${formatCLP(taller.precio)}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Cupos: {taller.cupos_inscritos} / {taller.cupos_totales}{" "}

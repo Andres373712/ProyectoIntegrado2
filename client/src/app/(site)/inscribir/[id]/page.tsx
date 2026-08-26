@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,50 +16,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Users } from "lucide-react";
 import { useTaller } from "@/features/talleres/useTalleres";
-import { inscripcionService } from "@/features/inscripcion/inscripcionService";
+import { useInscripcion } from "@/features/inscripcion/useInscripcion";
 import { getImageUrl } from "@/shared/lib/apiClient";
+import { formatCLP, formatFechaCL } from "@/lib/utils";
 
 function Inscripcion() {
   const { id } = useParams();
   const { taller, cargando } = useTaller(id as string);
+  const { mensaje, exito, inscribir } = useInscripcion();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [exito, setExito] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensaje("");
-    const datosInscripcion = {
-      tallerId: id,
+    const exitoso = await inscribir({
+      tallerId: id as string,
       nombre,
       email,
       telefono,
       intereses: taller.tipo,
-    };
+    });
 
-    inscripcionService
-      .inscribir(datosInscripcion)
-      .then((response) => {
-        setExito(true);
-        setMensaje(response.data.message);
-        // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
-        setTimeout(() => {
-          window.open("https://www.mercadopago.cl/", "_blank");
-          alert(
-            'En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago para el taller "' +
-              taller.nombre +
-              '" por $' +
-              taller.precio.toLocaleString("es-CL"),
-          );
-        }, 2000);
-      })
-      .catch((error) => {
-        setExito(false);
-        setMensaje(error.response?.data?.message || "Error en la inscripción.");
-      });
+    if (exitoso) {
+      // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
+      setTimeout(() => {
+        window.open("https://www.mercadopago.cl/", "_blank");
+        alert(
+          'En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago para el taller "' +
+            taller.nombre +
+            '" por $' +
+            formatCLP(taller.precio),
+        );
+      }, 2000);
+    }
   };
 
   if (cargando) return <p className="p-10 text-center">Cargando taller...</p>;
@@ -75,11 +67,15 @@ function Inscripcion() {
         <Card className="h-fit border-none shadow-lg">
           <CardHeader>
             {taller.imageUrl ? (
-              <img
-                src={getImageUrl(taller.imageUrl)}
-                alt={taller.nombre}
-                className={`mb-4 h-64 w-full rounded-md object-cover ${agotado ? "grayscale" : ""}`}
-              />
+              <div className={`relative mb-4 h-64 w-full ${agotado ? "grayscale" : ""}`}>
+                <Image
+                  src={getImageUrl(taller.imageUrl)}
+                  alt={taller.nombre}
+                  fill
+                  unoptimized
+                  className="rounded-md object-cover"
+                />
+              </div>
             ) : (
               <div className="mb-4 flex h-64 w-full items-center justify-center rounded-md bg-muted">
                 <span className="text-muted-foreground">Sin imagen</span>
@@ -92,11 +88,11 @@ function Inscripcion() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-2xl font-bold text-primary">
-              ${taller.precio.toLocaleString("es-CL")}
+              ${formatCLP(taller.precio)}
             </div>
             <div className="text-md flex items-center text-foreground/90">
               <strong>Fecha:</strong>&nbsp;{" "}
-              {new Date(taller.fecha).toLocaleDateString("es-CL", {
+              {formatFechaCL(taller.fecha, {
                 weekday: "long",
                 year: "numeric",
                 month: "long",

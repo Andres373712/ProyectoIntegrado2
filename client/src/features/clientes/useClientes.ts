@@ -1,15 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { clientesService } from "./clientesService";
 import { talleresService } from "@/features/talleres/talleresService";
+import { talleresTodosQueryKey } from "@/features/talleres/useTalleres";
 import type { Cliente } from "@/types/cliente";
-import type { Taller } from "@/types/taller";
 
 export function useClientes() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [listaTalleres, setListaTalleres] = useState<Taller[]>([]);
+
+  // Misma query key que useTalleresAdmin(): si el admin ya visitó
+  // /admin/talleres, esta lista se sirve de caché en vez de repetir el fetch.
+  const { data: listaTalleres = [] } = useQuery({
+    queryKey: talleresTodosQueryKey,
+    queryFn: async () => (await talleresService.getTodos()).data,
+  });
 
   const fetchClientes = useCallback(
     async (busqueda = "", inicio = "", fin = "", tallerId = "") => {
@@ -33,12 +40,6 @@ export function useClientes() {
 
   useEffect(() => {
     fetchClientes();
-    talleresService
-      .getTodos()
-      .then((response) => setListaTalleres(response.data))
-      .catch((error) =>
-        console.error("Error al cargar lista de talleres:", error),
-      );
   }, [fetchClientes]);
 
   return { clientes, cargando, listaTalleres, fetchClientes };

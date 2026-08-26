@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/features/carrito/CartContext";
+import { AuthProvider } from "@/shared/auth/AuthProvider";
+import { QueryProvider } from "@/shared/query/QueryProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "TMM Bienestar y Conexión",
@@ -11,7 +14,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es">
       <body>
-        <CartProvider>{children}</CartProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <CartProvider>{children}</CartProvider>
+          </AuthProvider>
+        </QueryProvider>
+        <Toaster />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useClientes } from "@/features/clientes/useClientes";
+import { formatFechaCL } from "@/lib/utils";
 
 function AdminClientes() {
   const { clientes, cargando, listaTalleres, fetchClientes } = useClientes();
@@ -34,7 +35,7 @@ function AdminClientes() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-muted p-8">
       <div className="mx-auto max-w-5xl">
         {" "}
         {/* Ampliado un poco el ancho */}
@@ -44,11 +45,11 @@ function AdminClientes() {
         {/* --- Formulario de Filtros --- */}
         <form
           onSubmit={handleBuscarSubmit}
-          className="mb-6 flex flex-wrap items-end gap-4 rounded-lg bg-white p-4 shadow-md"
+          className="mb-6 flex flex-wrap items-end gap-4 rounded-lg bg-card p-4 shadow-md"
         >
           {/* Input de Texto */}
           <div className="min-w-[150px] flex-grow">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Buscar
             </label>
             <input
@@ -61,7 +62,7 @@ function AdminClientes() {
           </div>
           {/* Input de Fecha Inicio */}
           <div className="min-w-[140px]">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Desde
             </label>
             <input
@@ -73,7 +74,7 @@ function AdminClientes() {
           </div>
           {/* Input de Fecha Fin */}
           <div className="min-w-[140px]">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Hasta
             </label>
             <input
@@ -85,19 +86,18 @@ function AdminClientes() {
           </div>
           {/* NUEVO Dropdown de Taller */}
           <div className="min-w-[200px] flex-grow">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Inscritas en Taller
             </label>
             <select
               value={tallerSeleccionado}
               onChange={handleTallerChange}
-              className="w-full rounded border bg-white p-2"
+              className="w-full rounded border bg-card p-2"
             >
               <option value="">-- Todos los talleres --</option>
               {listaTalleres.map((taller) => (
                 <option key={taller.id} value={taller.id}>
-                  {taller.nombre} (
-                  {new Date(taller.fecha).toLocaleDateString("es-CL")})
+                  {taller.nombre} ({formatFechaCL(taller.fecha)})
                 </option>
               ))}
             </select>
@@ -113,7 +113,7 @@ function AdminClientes() {
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="h-[42px] self-end rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
+            className="h-[42px] self-end rounded-lg bg-secondary px-4 py-2 text-secondary-foreground hover:bg-secondary/80"
             title="Limpiar filtros"
           >
             {" "}
@@ -121,10 +121,10 @@ function AdminClientes() {
           </button>
         </form>
         {/* --- Lista de Clientas --- */}
-        <div className="rounded-lg bg-white p-8 shadow-md">
+        <div className="rounded-lg bg-card p-8 shadow-md">
           {/* ... (El resto del código de la lista es igual que antes) ... */}
           {cargando ? (
-            <p className="text-center text-gray-500">Cargando clientas...</p>
+            <p className="text-center text-muted-foreground">Cargando clientas...</p>
           ) : (
             <div className="space-y-4">
               {clientes.length > 0 ? (
@@ -135,17 +135,14 @@ function AdminClientes() {
                   >
                     <div>
                       <h3 className="text-lg font-bold">{clienta.nombre}</h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {clienta.email || "(Sin email)"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Tel: {clienta.telefono || "-"}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        Registrada:{" "}
-                        {new Date(clienta.fecha_registro).toLocaleDateString(
-                          "es-CL",
-                        )}
+                      <p className="text-xs text-muted-foreground">
+                        Registrada: {formatFechaCL(clienta.fecha_registro)}
                       </p>
                     </div>
                     <div className="mt-2 text-left sm:mt-0 sm:text-right">
@@ -167,7 +164,7 @@ function AdminClientes() {
                   </div>
                 ))
               ) : (
-                <p className="text-center text-gray-500">
+                <p className="text-center text-muted-foreground">
                   {terminoBusqueda ||
                   fechaInicio ||
                   fechaFin ||

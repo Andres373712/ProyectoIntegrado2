@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { authService } from "@/features/auth/authService";
+import { useAuth } from "@/shared/auth/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ function LoginClienteInner() {
   const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   // --- DETECTAR SI VIENE DEL CORREO DE VERIFICACIÓN ---
   useEffect(() => {
@@ -43,7 +45,7 @@ function LoginClienteInner() {
     authService
       .loginCliente(email, password)
       .then((response) => {
-        localStorage.setItem("tmm_token", response.data.token);
+        login(response.data.token);
         router.push("/");
       })
       .catch((err) => {
