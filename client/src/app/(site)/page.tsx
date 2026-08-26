@@ -122,13 +122,31 @@ function Homepage() {
             <div className="mx-auto w-full max-w-md overflow-hidden rounded-xl border-4 border-white/20 shadow-2xl delay-200 duration-700 animate-in fade-in slide-in-from-right lg:max-w-full">
               <Slider {...sliderSettings}>
                 <div className="relative h-64 w-full md:h-96">
-                  <Image src={CarouselImg1} alt="Taller 1" fill className="object-cover" />
+                  <Image
+                    src={CarouselImg1}
+                    alt="Taller 1"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 448px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="relative h-64 w-full md:h-96">
-                  <Image src={CarouselImg2} alt="Taller 2" fill className="object-cover" />
+                  <Image
+                    src={CarouselImg2}
+                    alt="Taller 2"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 448px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="relative h-64 w-full md:h-96">
-                  <Image src={CarouselImg3} alt="Taller 3" fill className="object-cover" />
+                  <Image
+                    src={CarouselImg3}
+                    alt="Taller 3"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 448px"
+                    className="object-cover"
+                  />
                 </div>
               </Slider>
             </div>
@@ -173,6 +191,7 @@ function Homepage() {
                           alt={prod.nombre}
                           fill
                           unoptimized
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 384px"
                           className={`object-cover transition-transform duration-500 hover:scale-105 ${sinStock ? "opacity-60 grayscale" : ""}`}
                         />
                         {sinStock && (
@@ -290,6 +309,7 @@ function Homepage() {
                   src={FotoCarolina}
                   alt="Carolina López"
                   fill
+                  sizes="320px"
                   className="object-cover"
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                     const target = e.target as HTMLImageElement;

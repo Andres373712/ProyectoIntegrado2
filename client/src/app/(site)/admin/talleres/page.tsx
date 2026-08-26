@@ -216,6 +216,7 @@ function Admin() {
                       alt={taller.nombre}
                       fill
                       unoptimized
+                      sizes="64px"
                       className="object-cover"
                     />
                   </div>

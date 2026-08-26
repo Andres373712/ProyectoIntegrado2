@@ -141,6 +141,7 @@ function Carrito() {
                       alt={item.nombre}
                       fill
                       unoptimized
+                      sizes="80px"
                       className="object-cover"
                     />
                   </div>

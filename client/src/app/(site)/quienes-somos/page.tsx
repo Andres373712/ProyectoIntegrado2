@@ -31,6 +31,7 @@ function QuienesSomos() {
             <div className="relative aspect-square overflow-hidden rounded-2xl border-8 border-white shadow-2xl">
               {/* Fallback por si no existe la foto */}
               <FotoConFallback
+                sizes="(max-width: 768px) 100vw, 480px"
                 src={FotoCarolina}
                 alt="Carolina López Fundadora"
                 className="object-cover"

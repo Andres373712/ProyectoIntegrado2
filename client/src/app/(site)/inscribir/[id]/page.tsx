@@ -73,6 +73,7 @@ function Inscripcion() {
                   alt={taller.nombre}
                   fill
                   unoptimized
+                  sizes="(max-width: 768px) 100vw, 552px"
                   className="rounded-md object-cover"
                 />
               </div>

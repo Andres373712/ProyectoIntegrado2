@@ -232,6 +232,7 @@ function EditarTaller() {
                 alt="Actual"
                 fill
                 unoptimized
+                sizes="(max-width: 640px) 100vw, 576px"
                 className="rounded-md object-cover"
               />
             </div>

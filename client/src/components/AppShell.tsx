@@ -74,6 +74,7 @@ function Navegacion() {
                   }}
                   alt="TMM"
                   fill
+                  sizes="40px"
                   className="object-cover"
                 />
                 <span className="absolute text-[8px] font-bold text-black/20">

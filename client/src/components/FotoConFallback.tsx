@@ -11,16 +11,19 @@ export default function FotoConFallback({
   src,
   alt,
   className,
+  sizes = "100vw",
 }: {
   src: StaticImageData;
   alt: string;
   className?: string;
+  sizes?: string;
 }) {
   return (
     <Image
       src={src}
       alt={alt}
       fill
+      sizes={sizes}
       className={className}
       onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
         const target = e.target as HTMLImageElement;

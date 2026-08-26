@@ -76,6 +76,7 @@ async function Catalogo() {
                         alt={taller.nombre}
                         fill
                         unoptimized
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 384px"
                         className={`rounded-md object-cover ${agotado ? "opacity-70 grayscale" : ""}`}
                       />
                       {agotado && (

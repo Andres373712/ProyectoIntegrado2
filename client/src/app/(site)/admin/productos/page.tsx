@@ -152,6 +152,7 @@ function AdminProductos() {
                       alt={prod.nombre}
                       fill
                       unoptimized
+                      sizes="64px"
                       className="object-cover"
                     />
                   </div>
