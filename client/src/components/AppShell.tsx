@@ -52,19 +52,19 @@ function Navegacion() {
   // Eliminamos 'font-bold' del activo para que no cambie el tamaño/grosor.
   const linkClass = (path) =>
     `text-xs uppercase tracking-widest font-medium transition-all duration-200
-         text-white hover:text-gray-300
-         ${isActive(path) ? "border-b border-white pb-1" : ""}`;
+         text-foreground/70 hover:text-foreground
+         ${isActive(path) ? "border-b-2 border-[#E4007C] pb-1 text-foreground" : ""}`;
 
   return (
     <nav
-      className={`fixed z-50 w-full transition-transform duration-300 ease-in-out ${visible ? "translate-y-0" : "-translate-y-full"} border-b border-white/10 bg-black shadow-lg`}
+      className={`fixed z-50 w-full transition-transform duration-300 ease-in-out ${visible ? "translate-y-0" : "-translate-y-full"} border-b border-border bg-background shadow-sm`}
     >
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           {/* --- LOGO --- */}
           <div className="flex h-full flex-shrink-0 items-center">
             <Link href="/" className="group flex h-full items-center gap-3 py-2">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white transition-colors group-hover:border-white">
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-[#E4007C] bg-white transition-colors">
                 <Image
                   src={logoTMM}
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -81,7 +81,7 @@ function Navegacion() {
                   LOGO
                 </span>
               </div>
-              <span className="hidden text-sm font-bold tracking-widest text-white transition-colors group-hover:text-gray-200 sm:block">
+              <span className="hidden font-serif text-sm font-semibold tracking-wide text-foreground transition-colors sm:block">
                 TMM Bienestar y Conexión
               </span>
             </Link>
@@ -108,14 +108,14 @@ function Navegacion() {
             {/* Carrito */}
             <Link
               href="/carrito"
-              className="group relative text-white transition-colors hover:text-gray-300"
+              className="group relative text-foreground/70 transition-colors hover:text-foreground"
             >
               <ShoppingCart
                 size={20}
                 className="transition-transform group-hover:scale-110"
               />
               {count > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 animate-pulse items-center justify-center rounded-full border border-black bg-white text-[9px] font-bold text-black">
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 animate-pulse items-center justify-center rounded-full border border-background bg-[#E4007C] text-[9px] font-bold text-white">
                   {count}
                 </span>
               )}
@@ -126,29 +126,29 @@ function Navegacion() {
                 {isAdmin && (
                   <Link
                     href="/admin"
-                    className="rounded-full border border-gray-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-300 hover:text-white"
+                    className="rounded-full border border-border px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/70 hover:text-foreground"
                   >
                     Admin
                   </Link>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:underline"
+                  className="text-[10px] font-bold text-destructive hover:underline"
                 >
                   Salir
                 </button>
               </>
             ) : (
-              <div className="flex items-center space-x-4 border-l border-gray-700 pl-6">
+              <div className="flex items-center space-x-4 border-l border-border pl-6">
                 <Link
                   href="/login"
-                  className="text-xs uppercase tracking-wider text-gray-300 transition-colors hover:text-white"
+                  className="text-xs uppercase tracking-wider text-foreground/70 transition-colors hover:text-foreground"
                 >
                   Ingresar
                 </Link>
                 <Link
                   href="/registro"
-                  className="rounded-full bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-md transition-transform hover:scale-105 hover:bg-gray-200"
+                  className="rounded-full bg-primary px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-md transition-transform hover:scale-105"
                 >
                   Registrarse
                 </Link>
@@ -158,17 +158,17 @@ function Navegacion() {
 
           {/* --- BOTÓN MÓVIL --- */}
           <div className="ml-auto flex items-center gap-4 md:hidden">
-            <Link href="/carrito" className="relative text-white">
+            <Link href="/carrito" className="relative text-foreground">
               <ShoppingCart size={20} />
               {count > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-black">
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#E4007C] text-[9px] text-white">
                   {count}
                 </span>
               )}
             </Link>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-white hover:text-gray-300"
+              className="text-foreground hover:text-foreground/70"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -178,49 +178,49 @@ function Navegacion() {
 
       {/* --- MENÚ MÓVIL DESPLEGABLE --- */}
       {menuOpen && (
-        <div className="absolute top-14 w-full space-y-4 border-t border-gray-800 bg-black p-4 shadow-2xl animate-in slide-in-from-top-5 md:hidden">
+        <div className="absolute top-14 w-full space-y-4 border-t border-border bg-background p-4 shadow-lg animate-in slide-in-from-top-5 md:hidden">
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="block py-2 text-sm uppercase tracking-wider text-white hover:text-gray-300"
+            className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
           >
             Inicio
           </Link>
           <Link
             href="/catalogo"
             onClick={() => setMenuOpen(false)}
-            className="block py-2 text-sm uppercase tracking-wider text-white hover:text-gray-300"
+            className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
           >
             Catálogo
           </Link>
           <Link
             href="/quienes-somos"
             onClick={() => setMenuOpen(false)}
-            className="block py-2 text-sm uppercase tracking-wider text-white hover:text-gray-300"
+            className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
           >
             Nosotros
           </Link>
           <Link
             href="/contacto"
             onClick={() => setMenuOpen(false)}
-            className="block py-2 text-sm uppercase tracking-wider text-white hover:text-gray-300"
+            className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
           >
             Contacto
           </Link>
-          <hr className="border-gray-800" />
+          <hr className="border-border" />
           {!token && (
             <>
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-gray-400 hover:text-white"
+                className="block py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Ingresar
               </Link>
               <Link
                 href="/registro"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm font-bold text-white"
+                className="block py-2 text-sm font-bold text-foreground"
               >
                 Registrarse
               </Link>

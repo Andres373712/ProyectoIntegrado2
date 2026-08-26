@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* About Section */}
           <div>
-            <h3 className="mb-4 text-lg font-bold">TMM Bienestar</h3>
+            <h3 className="mb-4 font-serif text-lg font-semibold">TMM Bienestar</h3>
             <p className="text-gray-400">
               Transformando vidas a través de la conexión y el bienestar.
             </p>

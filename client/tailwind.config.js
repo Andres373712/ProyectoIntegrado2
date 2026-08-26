@@ -85,10 +85,10 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        // --- Nuestras Fuentes Personalizadas ---
-        sans: ["Inter", "sans-serif"],
-        serif: ["Lora", "serif"],
-        display: ["Playfair Display", "serif"],
+        // --- Nuestras Fuentes Personalizadas ("Cálido Elevado") ---
+        sans: ["Karla", "Helvetica Neue", "Arial", "sans-serif"],
+        serif: ["Domine", "Georgia", "Times New Roman", "serif"],
+        display: ["Domine", "Georgia", "Times New Roman", "serif"],
       },
     },
   },

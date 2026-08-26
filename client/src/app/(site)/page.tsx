@@ -103,7 +103,10 @@ function Homepage() {
           <div className="grid h-full grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Columna 1: Texto (Izquierda) */}
             <div className="space-y-6 text-center text-white duration-700 animate-in fade-in slide-in-from-left lg:text-left">
-              <h1 className="text-4xl font-bold leading-tight drop-shadow-lg md:text-6xl">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.15em] text-[#ff9dc7] drop-shadow-md md:text-sm">
+                Talleres de bienestar &amp; artesanía
+              </span>
+              <h1 className="font-serif text-4xl font-semibold leading-tight drop-shadow-lg md:text-6xl">
                 TMM Bienestar y Conexión
               </h1>
               <p className="mx-auto max-w-lg text-lg text-white/90 drop-shadow-md md:text-xl lg:mx-0">
@@ -113,7 +116,7 @@ function Homepage() {
               <div className="pt-4">
                 <Button
                   asChild
-                  className="border-none bg-primary px-8 py-6 text-lg text-white shadow-lg transition-transform hover:scale-105 hover:bg-primary/90"
+                  className="rounded-full border-none bg-[#E4007C] px-8 py-6 text-lg text-white shadow-lg transition-transform hover:scale-105 hover:bg-[#c8006c]"
                 >
                   <Link href="/catalogo">Explorar Talleres</Link>
                 </Button>
@@ -162,7 +165,10 @@ function Homepage() {
       {/* --- 2. SECCIÓN PRODUCTOS DISPONIBLES --- */}
       <RevealOnScroll className="mx-auto max-w-6xl p-8 md:p-20">
         <div className="mb-12 text-center">
-          <h2 className="mb-4 text-3xl font-bold text-primary md:text-4xl">
+          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+            Para llevar a casa
+          </span>
+          <h2 className="mb-4 mt-3 text-3xl font-semibold text-foreground md:text-4xl">
             Nuestros Productos y Kits
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
@@ -283,10 +289,12 @@ function Homepage() {
       <RevealOnScroll className="bg-secondary/30 p-12 md:p-24">
         <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
           <div className="order-2 md:order-1">
-            <h2 className="mb-6 text-3xl font-bold text-foreground">
+            <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+              Nuestra historia
+            </span>
+            <h2 className="mb-6 mt-3 text-3xl font-semibold text-foreground">
               Conoce a Carolina
             </h2>
-            <div className="mb-6 h-1 w-16 bg-primary"></div>
             <p className="mb-6 text-lg leading-relaxed text-muted-foreground">
               ¡Hola! Soy Carolina López, fundadora de TMM. Mi misión es crear un
               refugio donde puedas desconectarte del estrés diario y
@@ -296,7 +304,7 @@ function Homepage() {
             <Button
               asChild
               variant="link"
-              className="p-0 text-lg font-bold text-primary hover:underline"
+              className="p-0 text-lg font-bold text-[#E4007C] hover:underline"
             >
               <Link href="/quienes-somos">Leer nuestra historia completa →</Link>
             </Button>
@@ -304,7 +312,7 @@ function Homepage() {
           <div className="order-1 flex justify-center md:order-2">
             <div className="relative h-64 w-64 md:h-80 md:w-80">
               {/* Círculo decorativo detrás */}
-              <div className="absolute inset-0 translate-x-4 translate-y-4 transform rounded-full bg-primary/10"></div>
+              <div className="absolute inset-0 translate-x-4 translate-y-4 transform rounded-full bg-[#E4007C]/10"></div>
               {/* Imagen de Carolina */}
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl">
                 <Image

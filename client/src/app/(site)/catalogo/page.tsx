@@ -32,7 +32,10 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
     <div className="min-h-screen bg-background p-8 text-foreground md:p-12">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-primary md:text-5xl">
+          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+            Catálogo
+          </span>
+          <h1 className="mb-4 mt-3 text-4xl font-semibold text-foreground md:text-5xl">
             Todos Nuestros Talleres
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-foreground/80 md:text-xl">
@@ -112,7 +115,10 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
                         Sin Cupos
                       </Button>
                     ) : (
-                      <Button asChild className="w-full">
+                      <Button
+                        asChild
+                        className="w-full bg-[#E4007C] text-white hover:bg-[#c8006c]"
+                      >
                         <Link href={`/inscribir/${taller.id}`}>
                           Inscribirme Ahora
                         </Link>
