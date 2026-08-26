@@ -1,0 +1,149 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import bcrypt from 'bcryptjs';
+
+process.env.JWT_SECRET = 'clave-de-test-no-usar-en-produccion';
+
+vi.mock('../repositories/adminRepository.js', () => ({
+  adminRepository: { getByEmail: vi.fn() },
+}));
+vi.mock('../repositories/clientesRepository.js', () => ({
+  clientesRepository: {
+    getByEmail: vi.fn(),
+    crearParaRegistro: vi.fn(),
+    actualizarParaRegistro: vi.fn(),
+    getByTokenVerificacion: vi.fn(),
+    marcarVerificado: vi.fn(),
+  },
+}));
+vi.mock('../../emailService.js', () => ({
+  enviarEmailVerificacion: vi.fn().mockResolvedValue(undefined),
+}));
+
+const { adminRepository } = await import('../repositories/adminRepository.js');
+const { clientesRepository } = await import('../repositories/clientesRepository.js');
+const { authService } = await import('./authService.js');
+const { HttpError } = await import('../utils/httpError.js');
+
+describe('authService.loginAdmin', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lanza 401 si el email no existe', async () => {
+    adminRepository.getByEmail.mockResolvedValue(undefined);
+    await expect(authService.loginAdmin({ email: 'x@x.com', password: 'y' })).rejects.toMatchObject({
+      status: 401,
+      message: 'Credenciales inválidas',
+    });
+  });
+
+  it('lanza 401 si la contraseña no coincide', async () => {
+    adminRepository.getByEmail.mockResolvedValue({
+      id: 1,
+      email: 'admin@tmm.cl',
+      password_hash: await bcrypt.hash('correcta', 10),
+    });
+    await expect(
+      authService.loginAdmin({ email: 'admin@tmm.cl', password: 'incorrecta' }),
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('devuelve un JWT válido con las credenciales correctas', async () => {
+    adminRepository.getByEmail.mockResolvedValue({
+      id: 7,
+      email: 'admin@tmm.cl',
+      password_hash: await bcrypt.hash('correcta', 10),
+    });
+    const token = await authService.loginAdmin({ email: 'admin@tmm.cl', password: 'correcta' });
+    expect(typeof token).toBe('string');
+    expect(token.split('.')).toHaveLength(3); // header.payload.signature
+  });
+});
+
+describe('authService.loginCliente', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lanza 404 si el correo no está registrado', async () => {
+    clientesRepository.getByEmail.mockResolvedValue(undefined);
+    await expect(authService.loginCliente({ email: 'x@x.com', password: 'y' })).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('lanza 403 si la cuenta no tiene contraseña (nunca se registró)', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1, password_hash: null, verificado: 0 });
+    await expect(authService.loginCliente({ email: 'x@x.com', password: 'y' })).rejects.toMatchObject({
+      status: 403,
+      message: 'Debes registrarte primero.',
+    });
+  });
+
+  it('lanza 403 si la cuenta no está verificada', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({
+      id: 1,
+      password_hash: await bcrypt.hash('x', 10),
+      verificado: 0,
+    });
+    await expect(authService.loginCliente({ email: 'x@x.com', password: 'x' })).rejects.toMatchObject({
+      status: 403,
+      message: 'Verifica tu correo primero.',
+    });
+  });
+
+  it('lanza 401 con la contraseña incorrecta', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({
+      id: 1,
+      password_hash: await bcrypt.hash('correcta', 10),
+      verificado: 1,
+    });
+    await expect(
+      authService.loginCliente({ email: 'x@x.com', password: 'incorrecta' }),
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('devuelve token con credenciales válidas y cuenta verificada', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({
+      id: 5,
+      email: 'cliente@test.com',
+      password_hash: await bcrypt.hash('correcta', 10),
+      verificado: 1,
+    });
+    const token = await authService.loginCliente({ email: 'cliente@test.com', password: 'correcta' });
+    expect(token.split('.')).toHaveLength(3);
+  });
+});
+
+describe('authService.registrarCliente', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lanza 409 si ya existe una cuenta verificada con ese email', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1, password_hash: 'algo' });
+    await expect(
+      authService.registrarCliente({ nombre: 'A', email: 'a@a.com', telefono: '1', password: 'X' }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(clientesRepository.crearParaRegistro).not.toHaveBeenCalled();
+  });
+
+  it('completa una cuenta a medias (existe por inscripción, sin password) en vez de crear otra', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1, password_hash: null });
+    const resultado = await authService.registrarCliente({
+      nombre: 'A',
+      email: 'a@a.com',
+      telefono: '1',
+      password: 'X',
+    });
+    expect(resultado).toEqual({ actualizada: true });
+    expect(clientesRepository.actualizarParaRegistro).toHaveBeenCalledWith(1, expect.any(Object));
+    expect(clientesRepository.crearParaRegistro).not.toHaveBeenCalled();
+  });
+
+  it('crea una cuenta nueva cuando el email no existe', async () => {
+    clientesRepository.getByEmail.mockResolvedValue(undefined);
+    const resultado = await authService.registrarCliente({
+      nombre: 'A',
+      email: 'nueva@a.com',
+      telefono: '1',
+      password: 'X',
+    });
+    expect(resultado).toEqual({ actualizada: false });
+    expect(clientesRepository.crearParaRegistro).toHaveBeenCalled();
+  });
+});

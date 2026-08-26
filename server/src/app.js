@@ -15,7 +15,9 @@ export const app = express();
 
 app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
+// Los nombres de archivo son únicos por subida (uuid): el mismo nombre
+// nunca cambia de contenido, así que se puede cachear de forma agresiva.
+app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '1y', immutable: true }));
 
 app.use('/api', talleresRoutes);
 app.use('/api', productosRoutes);

@@ -7,5 +7,7 @@ export const mensajesService = {
     await enviarEmailContacto(datos).catch(console.error);
   },
 
-  getTodos: () => mensajesRepository.getTodos(),
+  getTodos: (paginacion) => mensajesRepository.getTodos(paginacion),
+
+  contarTodos: () => mensajesRepository.contarTodos(),
 };

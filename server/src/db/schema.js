@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
 
 // Refleja exactamente las tablas creadas hoy en server/db.js (mismos nombres
 // de columna, incl. "imageurl" en minúscula) — no es un rediseño de esquema.
@@ -45,22 +45,33 @@ export const clientes = sqliteTable('clientes', {
   acepta_terminos: integer('acepta_terminos'),
 });
 
-export const inscripciones = sqliteTable('inscripciones', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  cliente_id: integer('cliente_id').references(() => clientes.id),
-  taller_id: integer('taller_id').references(() => talleres.id),
-  fecha_inscripcion: text('fecha_inscripcion').default('CURRENT_TIMESTAMP'),
-});
+export const inscripciones = sqliteTable(
+  'inscripciones',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    cliente_id: integer('cliente_id').references(() => clientes.id),
+    taller_id: integer('taller_id').references(() => talleres.id),
+    fecha_inscripcion: text('fecha_inscripcion').default('CURRENT_TIMESTAMP'),
+  },
+  (table) => [
+    index('inscripciones_cliente_id_idx').on(table.cliente_id),
+    index('inscripciones_taller_id_idx').on(table.taller_id),
+  ],
+);
 
-export const mensajesContacto = sqliteTable('mensajes_contacto', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  nombre: text('nombre').notNull(),
-  email: text('email').notNull(),
-  telefono: text('telefono'),
-  mensaje: text('mensaje').notNull(),
-  fecha_creacion: text('fecha_creacion').default('CURRENT_TIMESTAMP'),
-  leido: integer('leido').default(0),
-});
+export const mensajesContacto = sqliteTable(
+  'mensajes_contacto',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    nombre: text('nombre').notNull(),
+    email: text('email').notNull(),
+    telefono: text('telefono'),
+    mensaje: text('mensaje').notNull(),
+    fecha_creacion: text('fecha_creacion').default('CURRENT_TIMESTAMP'),
+    leido: integer('leido').default(0),
+  },
+  (table) => [index('mensajes_contacto_fecha_creacion_idx').on(table.fecha_creacion)],
+);
 
 export const notasFidelizacion = sqliteTable('notas_fidelizacion', {
   id: integer('id').primaryKey({ autoIncrement: true }),

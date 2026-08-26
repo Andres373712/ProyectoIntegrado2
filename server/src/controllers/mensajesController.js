@@ -1,4 +1,5 @@
 import { mensajesService } from '../services/mensajesService.js';
+import { parsePaginacion } from '../utils/pagination.js';
 
 export const mensajesController = {
   crearContacto: async (req, res) => {
@@ -13,7 +14,9 @@ export const mensajesController = {
 
   getTodos: async (req, res) => {
     try {
-      res.json(await mensajesService.getTodos());
+      const paginacion = parsePaginacion(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await mensajesService.contarTodos()));
+      res.json(await mensajesService.getTodos(paginacion));
     } catch (error) {
       console.error('Error cargando mensajes:', error);
       res.status(500).json({ message: 'Error al cargar mensajes' });

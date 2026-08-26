@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { talleresController } from '../controllers/talleresController.js';
 import { protegerRutas, esAdmin } from '../middlewares/auth.js';
-import { upload } from '../middlewares/upload.js';
+import { upload, procesarImagen } from '../middlewares/upload.js';
 import { validate } from '../middlewares/validate.js';
 import { tallerCrearSchema, tallerActualizarSchema } from '../validators/taller.schema.js';
 
@@ -18,6 +18,7 @@ router.post(
   protegerRutas,
   esAdmin,
   upload.single('imagen'),
+  procesarImagen,
   validate(tallerCrearSchema),
   talleresController.crear
 );
@@ -27,6 +28,7 @@ router.put(
   protegerRutas,
   esAdmin,
   upload.single('imagen'),
+  procesarImagen,
   validate(tallerActualizarSchema),
   talleresController.actualizar
 );

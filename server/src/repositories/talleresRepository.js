@@ -3,9 +3,27 @@ import { db } from '../db/client.js';
 import { talleres } from '../db/schema.js';
 
 export const talleresRepository = {
-  getActivos: () => db.select().from(talleres).where(eq(talleres.activo, 1)).orderBy(asc(talleres.fecha)),
+  getActivos: (paginacion) => {
+    let q = db.select().from(talleres).where(eq(talleres.activo, 1)).orderBy(asc(talleres.fecha));
+    if (paginacion) q = q.limit(paginacion.limit).offset(paginacion.offset);
+    return q;
+  },
 
-  getTodos: () => db.select().from(talleres).orderBy(desc(talleres.fecha)),
+  contarActivos: async () => {
+    const filas = await db.select({ total: sql`COUNT(*)` }).from(talleres).where(eq(talleres.activo, 1));
+    return filas[0].total;
+  },
+
+  getTodos: (paginacion) => {
+    let q = db.select().from(talleres).orderBy(desc(talleres.fecha));
+    if (paginacion) q = q.limit(paginacion.limit).offset(paginacion.offset);
+    return q;
+  },
+
+  contarTodos: async () => {
+    const filas = await db.select({ total: sql`COUNT(*)` }).from(talleres);
+    return filas[0].total;
+  },
 
   getById: async (id) => {
     const filas = await db.select().from(talleres).where(eq(talleres.id, id));

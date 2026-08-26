@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,12 +10,14 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { useTalleresActivos } from "@/features/talleres/useTalleres";
+import { talleresService } from "@/features/talleres/talleresService";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
 
-function Catalogo() {
-  const { talleres, cargando } = useTalleresActivos();
+// Server Component: sin interactividad propia (solo lectura + <Link>), se
+// obtienen los talleres en el servidor en vez de con un hook + loading state.
+async function Catalogo() {
+  const { data: talleres } = await talleresService.getActivos();
 
   return (
     <div className="min-h-screen bg-background p-8 text-foreground md:p-12">
@@ -31,9 +31,7 @@ function Catalogo() {
           </p>
         </div>
 
-        {cargando ? (
-          <p className="text-center">Cargando talleres...</p>
-        ) : (
+        {talleres.length > 0 && (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {talleres.map((taller) => {
               // CÁLCULO DE CUPOS
@@ -118,7 +116,7 @@ function Catalogo() {
           </div>
         )}
 
-        {!cargando && talleres.length === 0 && (
+        {talleres.length === 0 && (
           <p className="text-center text-lg text-foreground/70">
             No hay talleres activos en este momento.
           </p>

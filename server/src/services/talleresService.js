@@ -8,9 +8,15 @@ const conFormaDeRespuesta = (t) => ({
 });
 
 export const talleresService = {
-  getActivos: async () => (await talleresRepository.getActivos()).map(conFormaDeRespuesta),
+  getActivos: async (paginacion) =>
+    (await talleresRepository.getActivos(paginacion)).map(conFormaDeRespuesta),
 
-  getTodos: async () => (await talleresRepository.getTodos()).map(conFormaDeRespuesta),
+  contarActivos: () => talleresRepository.contarActivos(),
+
+  getTodos: async (paginacion) =>
+    (await talleresRepository.getTodos(paginacion)).map(conFormaDeRespuesta),
+
+  contarTodos: () => talleresRepository.contarTodos(),
 
   getById: async (id) => {
     const taller = await talleresRepository.getById(id);

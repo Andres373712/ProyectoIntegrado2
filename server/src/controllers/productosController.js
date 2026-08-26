@@ -1,9 +1,12 @@
 import { productosService } from '../services/productosService.js';
+import { parsePaginacion } from '../utils/pagination.js';
 
 export const productosController = {
   getActivos: async (req, res) => {
     try {
-      res.json(await productosService.getActivos());
+      const paginacion = parsePaginacion(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await productosService.contarActivos()));
+      res.json(await productosService.getActivos(paginacion));
     } catch (error) {
       res.status(500).json({ message: 'Error productos públicos' });
     }
@@ -11,7 +14,9 @@ export const productosController = {
 
   getTodos: async (req, res) => {
     try {
-      res.json(await productosService.getTodos());
+      const paginacion = parsePaginacion(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await productosService.contarTodos()));
+      res.json(await productosService.getTodos(paginacion));
     } catch (error) {
       console.error('Error productos admin:', error);
       res.status(500).json({ message: 'Error' });

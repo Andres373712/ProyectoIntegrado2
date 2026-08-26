@@ -26,9 +26,16 @@ function tablaExiste(nombre) {
 /**
  * Si la base de datos ya tiene las tablas creadas por el sistema anterior
  * (CREATE TABLE IF NOT EXISTS en el viejo db.js) pero nunca corrió una
- * migración de Drizzle, marca la migración inicial como ya aplicada en vez
- * de re-ejecutar los CREATE TABLE — evita romper una base de datos existente
+ * migración de Drizzle, marca SOLO la migración 0000 (la que reconstruye el
+ * esquema que el sistema anterior ya creaba) como ya aplicada, en vez de
+ * re-ejecutar sus CREATE TABLE — evita romper una base de datos existente
  * con datos reales al adoptar el ORM.
+ *
+ * OJO: nunca hay que marcar aquí migraciones posteriores (0001+) — esas son
+ * cambios reales (ej. índices nuevos) que sí deben ejecutarse contra
+ * cualquier base de datos, baseline-ada o no. Antes este bug marcaba TODO
+ * el journal como aplicado, incluyendo migraciones que nunca corrieron de
+ * verdad (detectado al probar contra una DB "legacy" simulada).
  */
 function baselinearMigracionInicialSiHaceFalta() {
   sqlite.exec(`
@@ -44,14 +51,17 @@ function baselinearMigracionInicialSiHaceFalta() {
   const journal = JSON.parse(
     fs.readFileSync(path.join(MIGRATIONS_FOLDER, 'meta/_journal.json'), 'utf-8')
   );
-  const insertar = sqlite.prepare(
-    `INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)`
+  const migracionInicial = journal.entries.find((entry) => entry.idx === 0);
+  if (!migracionInicial) return;
+
+  const sqlFile = fs.readFileSync(
+    path.join(MIGRATIONS_FOLDER, `${migracionInicial.tag}.sql`),
+    'utf-8',
   );
-  for (const entry of journal.entries) {
-    const sqlFile = fs.readFileSync(path.join(MIGRATIONS_FOLDER, `${entry.tag}.sql`), 'utf-8');
-    const hash = crypto.createHash('sha256').update(sqlFile).digest('hex');
-    insertar.run(hash, entry.when);
-  }
+  const hash = crypto.createHash('sha256').update(sqlFile).digest('hex');
+  sqlite
+    .prepare(`INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)`)
+    .run(hash, migracionInicial.when);
 }
 
 /**

@@ -105,9 +105,6 @@ function Login() {
               </Link>
             </div>
           </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Credenciales por defecto: carolina@tmm.cl / tmm.admin.2025
-          </p>
         </CardContent>
       </Card>
     </div>

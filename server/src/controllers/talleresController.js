@@ -1,9 +1,14 @@
 import { talleresService } from '../services/talleresService.js';
+import { parsePaginacion } from '../utils/pagination.js';
 
 export const talleresController = {
+  // Sin ?page/?pageSize: mismo comportamiento de siempre (array completo).
+  // Con ambos: LIMIT/OFFSET en la consulta + header X-Total-Count.
   getActivos: async (req, res) => {
     try {
-      res.json(await talleresService.getActivos());
+      const paginacion = parsePaginacion(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await talleresService.contarActivos()));
+      res.json(await talleresService.getActivos(paginacion));
     } catch (error) {
       console.error('Error talleres activos:', error);
       res.status(500).json({ message: 'Error al cargar talleres' });
@@ -12,7 +17,9 @@ export const talleresController = {
 
   getTodos: async (req, res) => {
     try {
-      res.json(await talleresService.getTodos());
+      const paginacion = parsePaginacion(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await talleresService.contarTodos()));
+      res.json(await talleresService.getTodos(paginacion));
     } catch (error) {
       console.error('Error talleres admin:', error);
       res.status(500).json({ message: 'Error' });

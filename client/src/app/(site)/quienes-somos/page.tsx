@@ -1,11 +1,9 @@
-"use client";
-
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Heart, Users, Star } from "lucide-react";
+import FotoConFallback from "@/components/FotoConFallback";
 
 // Importamos la foto de la fundadora
 import FotoCarolina from "@/assets/carolina.jpg";
@@ -32,16 +30,9 @@ function QuienesSomos() {
           <div className="relative">
             <div className="relative aspect-square overflow-hidden rounded-2xl border-8 border-white shadow-2xl">
               {/* Fallback por si no existe la foto */}
-              <Image
+              <FotoConFallback
                 src={FotoCarolina}
-                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  (target.parentNode as HTMLElement).style.backgroundColor = "#e5e7eb"; // Fondo gris
-                  // Opcional: mostrar texto alternativo si falla la imagen
-                }}
                 alt="Carolina López Fundadora"
-                fill
                 className="object-cover"
               />
             </div>

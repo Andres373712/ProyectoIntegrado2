@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { productosController } from '../controllers/productosController.js';
 import { protegerRutas, esAdmin } from '../middlewares/auth.js';
-import { upload } from '../middlewares/upload.js';
+import { upload, procesarImagen } from '../middlewares/upload.js';
 import { validate } from '../middlewares/validate.js';
 import { productoCrearSchema } from '../validators/producto.schema.js';
 
@@ -15,6 +15,7 @@ router.post(
   protegerRutas,
   esAdmin,
   upload.single('imagen'),
+  procesarImagen,
   validate(productoCrearSchema),
   productosController.crear
 );
