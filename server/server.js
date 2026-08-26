@@ -39,10 +39,20 @@ const protegerRutas = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Acceso denegado' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token inválido' });
+    if (err) {
+      console.error('JWT Verification Error:', err);
+      return res.status(403).json({ message: 'Token inválido' });
+    }
     req.user = user;
     next();
   });
+};
+
+const esAdmin = (req, res, next) => {
+  if (req.user.rol !== 'admin') {
+    return res.status(403).json({ message: 'Acceso denegado, se requiere rol de administrador' });
+  }
+  next();
 };
 
 // ===================== TALLERES =====================
@@ -62,7 +72,7 @@ app.get('/api/talleres/activos', async (req, res) => {
   }
 });
 
-app.get('/api/talleres/todos', protegerRutas, async (req, res) => {
+app.get('/api/talleres/todos', protegerRutas, esAdmin, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM talleres ORDER BY fecha DESC');
     const talleres = rows.map(t => ({
@@ -95,7 +105,7 @@ app.get('/api/taller/:id', async (req, res) => {
   }
 });
 
-app.post('/api/talleres', protegerRutas, upload.single('imagen'), async (req, res) => {
+app.post('/api/talleres', protegerRutas, esAdmin, upload.single('imagen'), async (req, res) => {
   const { nombre, descripcion, fecha, tipo, precio, lugar, cupos_totales } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -116,7 +126,7 @@ app.post('/api/talleres', protegerRutas, upload.single('imagen'), async (req, re
   }
 });
 
-app.put('/api/talleres/:id', protegerRutas, upload.single('imagen'), async (req, res) => {
+app.put('/api/talleres/:id', protegerRutas, esAdmin, upload.single('imagen'), async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion, fecha, tipo, precio, activo, lugar, cupos_totales } = req.body;
   let imageUrl = req.body.imageUrlActual || null;
@@ -136,7 +146,7 @@ app.put('/api/talleres/:id', protegerRutas, upload.single('imagen'), async (req,
   }
 });
 
-app.delete('/api/talleres/:id', protegerRutas, async (req, res) => {
+app.delete('/api/talleres/:id', protegerRutas, esAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     await db.query('DELETE FROM talleres WHERE id = $1', [id]);
@@ -157,7 +167,7 @@ app.get('/api/productos/activos', async (req, res) => {
   }
 });
 
-app.get('/api/productos/todos', protegerRutas, async (req, res) => {
+app.get('/api/productos/todos', protegerRutas, esAdmin, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM productos ORDER BY id DESC');
     const productos = rows.map(p => ({ ...p, imageUrl: p.imageurl }));
@@ -168,7 +178,7 @@ app.get('/api/productos/todos', protegerRutas, async (req, res) => {
   }
 });
 
-app.post('/api/productos', protegerRutas, upload.single('imagen'), async (req, res) => {
+app.post('/api/productos', protegerRutas, esAdmin, upload.single('imagen'), async (req, res) => {
   const { nombre, descripcion, precio, stock } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -186,7 +196,7 @@ app.post('/api/productos', protegerRutas, upload.single('imagen'), async (req, r
   }
 });
 
-app.delete('/api/productos/:id', protegerRutas, async (req, res) => {
+app.delete('/api/productos/:id', protegerRutas, esAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     await db.query('DELETE FROM productos WHERE id = $1', [id]);
@@ -212,7 +222,7 @@ app.post('/api/contacto', async (req, res) => {
   }
 });
 
-app.get('/api/mensajes-contacto', protegerRutas, async (req, res) => {
+app.get('/api/mensajes-contacto', protegerRutas, esAdmin, async (req, res) => {
   if (req.user.rol !== 'admin') return res.status(403).json({ message: 'Acceso denegado' });
 
   try {
@@ -225,7 +235,7 @@ app.get('/api/mensajes-contacto', protegerRutas, async (req, res) => {
 });
 
 // ===================== DASHBOARD DATA =====================
-app.get('/api/dashboard-data', protegerRutas, async (req, res) => {
+app.get('/api/dashboard-data', protegerRutas, esAdmin, async (req, res) => {
   try {
     const eventosResult = await db.query('SELECT nombre as title, fecha as date FROM talleres WHERE activo = true');
     const clientesResult = await db.query('SELECT COUNT(id) as total FROM clientes');

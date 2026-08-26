@@ -1,0 +1,77 @@
+"use client";
+
+import React, { useState } from "react";
+import { authService } from "@/features/auth/authService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import Link from "next/link";
+
+function RecuperarPassword() {
+  const [email, setEmail] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [enviado, setEnviado] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Nota: Asegúrate de que tu backend tenga esta ruta implementada
+    authService
+      .forgotPassword(email)
+      .then((res) => {
+        setMensaje(res.data.message);
+        setEnviado(true);
+      })
+      .catch(() => setMensaje("Error al conectar con el servidor."));
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 pt-24">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">
+            Recuperar Contraseña
+          </CardTitle>
+          <CardDescription className="text-center">
+            Te enviaremos un enlace para restablecerla.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {enviado ? (
+            <div className="rounded-md bg-green-50 p-4 text-center text-green-800">
+              {mensaje}
+              <div className="mt-4">
+                <Link href="/login-cliente" className="text-primary underline">
+                  Volver al login
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Enviar Enlace
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+export default RecuperarPassword;
