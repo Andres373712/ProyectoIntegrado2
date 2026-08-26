@@ -1,18 +1,11 @@
 # Dependencies
 node_modules/
-client/node_modules/
-server/node_modules/
 
 # Environment variables
-server/.env
+.env
 
 # Database
-server/*.sqlite
-server/tmm_bienestar.sqlite
-
-# Build files
-client/dist/
-client/build/
+*.sqlite
 
 # OS files
 .DS_Store
@@ -20,7 +13,7 @@ Thumbs.db
 desktop.ini
 
 # Uploads
-server/uploads/
+uploads/
 
 # Logs
 *.log

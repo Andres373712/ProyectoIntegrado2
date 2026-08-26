@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import 'dotenv/config';
 
 let dbInstance; // This will hold the promise that resolves to the db object
@@ -212,10 +213,8 @@ export async function initDb() {
         const res = await db.query('SELECT * FROM admin WHERE email = $1', ['carolina@tmm.cl']);
         if (res.rows.length === 0) {
             console.log('>>> ADMIN NOT FOUND. Creating a new one...');
-            const pass = process.env.DEFAULT_ADMIN_PASSWORD || 'tmm.admin.2025';
-            if (pass === 'tmm.admin.2025') {
-                console.warn('WARNING: Using default admin password. Set DEFAULT_ADMIN_PASSWORD in your .env file.');
-            }
+            const passGenerada = !process.env.DEFAULT_ADMIN_PASSWORD;
+            const pass = process.env.DEFAULT_ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
             const passHash = await bcrypt.hash(pass, 10);
             await db.query(
                 'INSERT INTO admin (email, password_hash) VALUES ($1, $2)',
@@ -223,6 +222,10 @@ export async function initDb() {
             );
             console.log('=============================================');
             console.log('Default administrator created.');
+            if (passGenerada) {
+                console.log(`Contraseña generada (guárdala, no se volverá a mostrar): ${pass}`);
+                console.log('Define DEFAULT_ADMIN_PASSWORD en .env para fijar una contraseña propia.');
+            }
             console.log('=============================================');
         }
 

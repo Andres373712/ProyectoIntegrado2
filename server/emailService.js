@@ -8,9 +8,6 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS, // Asegúrate de usar App Password si tienes 2FA
   },
-  tls: {
-    rejectUnauthorized: false
-  }
 });
 
 // Verificar conexión al iniciar (opcional pero recomendado)

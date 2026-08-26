@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import { initDb, db } from './db.js';
 import {
   enviarEmailConfirmacion,
@@ -22,16 +23,42 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-app.use(cors());
+app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
+});
+
+const EXTENSIONES_PERMITIDAS = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif'
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  filename: (req, file, cb) => {
+    const ext = EXTENSIONES_PERMITIDAS[file.mimetype] || '';
+    cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+  }
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (EXTENSIONES_PERMITIDAS[file.mimetype]) return cb(null, true);
+    cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes JPG, PNG, WEBP o GIF.'));
+  }
+});
 
 const protegerRutas = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -111,13 +138,18 @@ app.post('/api/talleres', protegerRutas, esAdmin, upload.single('imagen'), async
 
   if (!nombre || !precio) return res.status(400).json({ message: 'Faltan datos' });
 
+  const precioNum = parseFloat(precio);
+  const cupos = cupos_totales === undefined ? 10 : parseInt(cupos_totales);
+  if (Number.isNaN(precioNum) || Number.isNaN(cupos)) {
+    return res.status(400).json({ message: 'Precio o cupos totales inválidos' });
+  }
+
   try {
-    const cupos = parseInt(cupos_totales) || 10;
     await db.query(
-      `INSERT INTO talleres 
+      `INSERT INTO talleres
        (nombre, descripcion, fecha, tipo, precio, activo, imageurl, lugar, cupos_totales, cupos_inscritos)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [nombre, descripcion || '', fecha, tipo, parseFloat(precio), true, imageUrl, lugar || '', cupos, 0]
+      [nombre, descripcion || '', fecha, tipo, precioNum, true, imageUrl, lugar || '', cupos, 0]
     );
     res.status(201).json({ message: 'Taller creado con éxito' });
   } catch (error) {
@@ -132,12 +164,18 @@ app.put('/api/talleres/:id', protegerRutas, esAdmin, upload.single('imagen'), as
   let imageUrl = req.body.imageUrlActual || null;
   if (req.file) imageUrl = `/uploads/${req.file.filename}`;
 
+  const precioNum = parseFloat(precio);
+  const cuposNum = parseInt(cupos_totales);
+  if (Number.isNaN(precioNum) || Number.isNaN(cuposNum)) {
+    return res.status(400).json({ message: 'Precio o cupos totales inválidos' });
+  }
+
   try {
     await db.query(
-      `UPDATE talleres SET 
+      `UPDATE talleres SET
        nombre=$1, descripcion=$2, fecha=$3, tipo=$4, precio=$5, activo=$6, imageurl=$7, lugar=$8, cupos_totales=$9
        WHERE id=$10`,
-      [nombre, descripcion, fecha, tipo, precio, activo, imageUrl, lugar, cupos_totales, id]
+      [nombre, descripcion, fecha, tipo, precioNum, activo, imageUrl, lugar, cuposNum, id]
     );
     res.json({ message: 'Taller actualizado' });
   } catch (error) {
@@ -184,10 +222,16 @@ app.post('/api/productos', protegerRutas, esAdmin, upload.single('imagen'), asyn
 
   if (!nombre || !precio) return res.status(400).json({ message: 'Faltan datos' });
 
+  const precioNum = parseFloat(precio);
+  const stockNum = stock === undefined ? 0 : parseInt(stock);
+  if (Number.isNaN(precioNum) || Number.isNaN(stockNum)) {
+    return res.status(400).json({ message: 'Precio o stock inválidos' });
+  }
+
   try {
     await db.query(
       'INSERT INTO productos (nombre, descripcion, precio, stock, activo, imageurl) VALUES ($1, $2, $3, $4, $5, $6)',
-      [nombre, descripcion || '', parseFloat(precio), parseInt(stock) || 0, true, imageUrl]
+      [nombre, descripcion || '', precioNum, stockNum, true, imageUrl]
     );
     res.status(201).json({ message: 'Producto creado' });
   } catch (error) {
@@ -290,7 +334,7 @@ app.post('/api/inscripcion', async (req, res) => {
 });
 
 // ===================== LOGIN ADMIN =====================
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const { rows } = await db.query('SELECT * FROM admin WHERE email = $1', [email]);
@@ -382,7 +426,7 @@ app.post('/api/auth/register-cliente', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login-cliente', async (req, res) => {
+app.post('/api/auth/login-cliente', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const { rows } = await db.query('SELECT * FROM clientes WHERE email = $1', [email]);
@@ -413,13 +457,21 @@ app.get('/api/auth/verificar/:token', async (req, res) => {
   try {
     const { rows } = await db.query('SELECT id FROM clientes WHERE token_verificacion = $1', [token]);
     if (rows.length === 0) {
-      return res.redirect('http://localhost:5173/?error=invalid');
+      return res.redirect(`${FRONTEND_URL}/?error=invalid`);
     }
     await db.query('UPDATE clientes SET verificado = true, token_verificacion = NULL WHERE id = $1', [rows[0].id]);
-    res.redirect('http://localhost:5173/?verified=true');
+    res.redirect(`${FRONTEND_URL}/?verified=true`);
   } catch (error) {
     res.status(500).send('Error');
   }
+});
+
+// ===================== MANEJO DE ERRORES DE SUBIDA =====================
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError || err.message?.includes('Tipo de archivo no permitido')) {
+    return res.status(400).json({ message: err.message });
+  }
+  next(err);
 });
 
 // ===================== INICIAR SERVIDOR =====================
