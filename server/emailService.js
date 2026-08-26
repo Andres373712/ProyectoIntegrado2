@@ -8,6 +8,12 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS, // Asegúrate de usar App Password si tienes 2FA
   },
+  // Sin esto, un SMTP inalcanzable cuelga la petición HTTP indefinidamente
+  // en vez de fallar rápido (los envíos son fire-and-forget con .catch, pero
+  // eso no ayuda si la promesa nunca se resuelve ni se rechaza).
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 10_000,
 });
 
 // Verificar conexión al iniciar (opcional pero recomendado)
