@@ -25,6 +25,7 @@ import { formatCLP } from "@/lib/utils";
 
 import { useToast } from "@/shared/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
+import RevealOnScroll from "@/components/RevealOnScroll";
 
 // --- IMPORTACIONES DE ASSETS (AJUSTAR EXTENSIONES Y NOMBRES) ---
 import HeroBackground from "@/assets/nuevo-fondo.jpg";
@@ -62,6 +63,7 @@ function VerificationToastEffect() {
 
 function Homepage() {
   const { addToCart } = useCart();
+  const { toast } = useToast();
   const { productos: todosLosProductos, cargando } = useProductosActivos();
   // Tomamos solo los 3 primeros productos para mostrar en la vitrina
   const productos = todosLosProductos.slice(0, 3);
@@ -158,7 +160,7 @@ function Homepage() {
       </div>
 
       {/* --- 2. SECCIÓN PRODUCTOS DISPONIBLES --- */}
-      <div className="mx-auto max-w-6xl p-8 md:p-20">
+      <RevealOnScroll className="mx-auto max-w-6xl p-8 md:p-20">
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-primary md:text-4xl">
             Nuestros Productos y Kits
@@ -237,7 +239,7 @@ function Homepage() {
                             stock: prod.stock,
                             tipo: "producto",
                           });
-                          alert(`¡${prod.nombre} añadido al carrito!`);
+                          toast({ description: `¡${prod.nombre} añadido al carrito!` });
                         }}
                       >
                         {sinStock ? (
@@ -275,10 +277,10 @@ function Homepage() {
             <Link href="/catalogo">Ver Todo el Catálogo</Link>
           </Button>
         </div>
-      </div>
+      </RevealOnScroll>
 
       {/* --- 3. SECCIÓN QUIENES SOMOS --- */}
-      <div className="bg-secondary/30 p-12 md:p-24">
+      <RevealOnScroll className="bg-secondary/30 p-12 md:p-24">
         <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
           <div className="order-2 md:order-1">
             <h2 className="mb-6 text-3xl font-bold text-foreground">
@@ -321,7 +323,7 @@ function Homepage() {
             </div>
           </div>
         </div>
-      </div>
+      </RevealOnScroll>
     </div>
   );
 }

@@ -19,11 +19,13 @@ import { useTaller } from "@/features/talleres/useTalleres";
 import { useInscripcion } from "@/features/inscripcion/useInscripcion";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
+import { useToast } from "@/shared/hooks/use-toast";
 
 function Inscripcion() {
   const { id } = useParams();
   const { taller, cargando } = useTaller(id as string);
   const { mensaje, exito, inscribir } = useInscripcion();
+  const { toast } = useToast();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -43,12 +45,12 @@ function Inscripcion() {
       // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
       setTimeout(() => {
         window.open("https://www.mercadopago.cl/", "_blank");
-        alert(
-          'En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago para el taller "' +
-            taller.nombre +
-            '" por $' +
-            formatCLP(taller.precio),
-        );
+        toast({
+          title: "Modo demostración",
+          description:
+            `En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago ` +
+            `para el taller "${taller.nombre}" por $${formatCLP(taller.precio)}.`,
+        });
       }, 2000);
     }
   };

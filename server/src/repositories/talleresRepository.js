@@ -1,16 +1,27 @@
-import { eq, desc, asc, sql } from 'drizzle-orm';
+import { eq, desc, asc, sql, and } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { talleres } from '../db/schema.js';
 
+// Misma regla de "hay cupo" que ya aplica el service (cupos_totales||10 -
+// cupos_inscritos > 0), expresada en SQL para poder filtrar sin traer todo.
+const condicionConCupos = sql`(COALESCE(NULLIF(${talleres.cupos_totales}, 0), 10) - COALESCE(${talleres.cupos_inscritos}, 0)) > 0`;
+
+const condicionesActivos = (filtros) => {
+  const condiciones = [eq(talleres.activo, 1)];
+  if (filtros?.tipo) condiciones.push(eq(talleres.tipo, filtros.tipo));
+  if (filtros?.soloConCupos) condiciones.push(condicionConCupos);
+  return and(...condiciones);
+};
+
 export const talleresRepository = {
-  getActivos: (paginacion) => {
-    let q = db.select().from(talleres).where(eq(talleres.activo, 1)).orderBy(asc(talleres.fecha));
+  getActivos: (paginacion, filtros) => {
+    let q = db.select().from(talleres).where(condicionesActivos(filtros)).orderBy(asc(talleres.fecha));
     if (paginacion) q = q.limit(paginacion.limit).offset(paginacion.offset);
     return q;
   },
 
-  contarActivos: async () => {
-    const filas = await db.select({ total: sql`COUNT(*)` }).from(talleres).where(eq(talleres.activo, 1));
+  contarActivos: async (filtros) => {
+    const filas = await db.select({ total: sql`COUNT(*)` }).from(talleres).where(condicionesActivos(filtros));
     return filas[0].total;
   },
 

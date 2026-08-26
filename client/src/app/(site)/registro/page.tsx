@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, UserPlus } from "lucide-react";
+import { useToast } from "@/shared/hooks/use-toast";
 
 function Registro() {
   const [nombre, setNombre] = useState(""); // CORREGIDO
@@ -28,6 +29,7 @@ function Registro() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
 
 
@@ -81,7 +83,7 @@ function Registro() {
 
     try {
       const res = await authService.registerCliente(userData);
-      alert(res.data.message);
+      toast({ title: "Registro exitoso", description: res.data.message });
       router.push("/login-cliente");
     } catch (err) {
       setError(

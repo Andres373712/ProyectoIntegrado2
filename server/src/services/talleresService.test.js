@@ -40,6 +40,15 @@ describe('talleresService — forma de respuesta', () => {
     expect(taller.cupos_inscritos).toBe(3);
   });
 
+  it('getActivos reenvía los filtros tal cual al repositorio', async () => {
+    talleresRepository.getActivos.mockResolvedValue([]);
+    const filtros = { tipo: 'B2C', soloConCupos: true };
+
+    await talleresService.getActivos(undefined, filtros);
+
+    expect(talleresRepository.getActivos).toHaveBeenCalledWith(undefined, filtros);
+  });
+
   it('getById devuelve undefined si el repositorio no encuentra nada', async () => {
     talleresRepository.getById.mockResolvedValue(undefined);
     await expect(talleresService.getById(999)).resolves.toBeUndefined();

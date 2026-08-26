@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
+import { useToast } from "@/shared/hooks/use-toast";
 
 function NuevaPassword() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { token } = useParams(); // Obtenemos el token de la URL
   const router = useRouter();
+  const { toast } = useToast();
 
   // Validación visual (actualizada con . y ,)
   const hasMinLength = password.length >= 8;
@@ -33,7 +35,7 @@ function NuevaPassword() {
     authService
       .resetPassword(token as string, password)
       .then((res) => {
-        alert(res.data.message);
+        toast({ title: "Contraseña actualizada", description: res.data.message });
         router.push("/login-cliente");
       })
       .catch((err) =>

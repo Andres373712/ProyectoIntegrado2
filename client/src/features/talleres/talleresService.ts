@@ -1,8 +1,14 @@
 import apiClient from "@/shared/lib/apiClient";
 import type { Taller } from "@/types/taller";
 
+export interface FiltrosTalleres {
+  tipo?: string;
+  disponible?: boolean;
+}
+
 export const talleresService = {
-  getActivos: () => apiClient.get<Taller[]>("/api/talleres/activos"),
+  getActivos: (filtros?: FiltrosTalleres) =>
+    apiClient.get<Taller[]>("/api/talleres/activos", { params: filtros }),
   getTodos: () => apiClient.get<Taller[]>("/api/talleres/todos"),
   getById: (id: string | number) => apiClient.get<Taller>(`/api/taller/${id}`),
   crear: (formData: FormData) => apiClient.post("/api/talleres", formData),

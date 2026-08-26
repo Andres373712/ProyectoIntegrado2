@@ -12,10 +12,12 @@ import Link from "next/link";
 import { usePedido } from "@/features/carrito/usePedido";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP } from "@/lib/utils";
+import { useToast } from "@/shared/hooks/use-toast";
 
 function Carrito() {
   const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { mensaje, exito, confirmarPedido } = usePedido();
+  const { toast } = useToast();
 
   // Estados para el formulario de checkout
   const [nombre, setNombre] = useState("");
@@ -48,10 +50,12 @@ function Carrito() {
       // NUEVO: Redirigir automáticamente a MercadoPago después de 2 segundos
       setTimeout(() => {
         window.open("https://www.mercadopago.cl/", "_blank");
-        alert(
-          "En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago con el monto de $" +
-            formatCLP(total),
-        );
+        toast({
+          title: "Modo demostración",
+          description:
+            `En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago ` +
+            `con el monto de $${formatCLP(total)}.`,
+        });
       }, 2000);
     }
   };
@@ -104,9 +108,11 @@ function Carrito() {
                   onClick={() => {
                     // Simular redirección a MercadoPago
                     window.open("https://www.mercadopago.cl/", "_blank");
-                    alert(
-                      "En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago.",
-                    );
+                    toast({
+                      title: "Modo demostración",
+                      description:
+                        "En un sistema real, aquí se abriría tu enlace de pago personalizado de MercadoPago.",
+                    });
                   }}
                   className="h-14 w-full bg-blue-500 text-lg font-bold hover:bg-blue-600"
                 >

@@ -13,11 +13,20 @@ import {
 import { talleresService } from "@/features/talleres/talleresService";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
+import FiltrosTalleres from "@/components/FiltrosTalleres";
+import RevealOnScroll from "@/components/RevealOnScroll";
 
 // Server Component: sin interactividad propia (solo lectura + <Link>), se
 // obtienen los talleres en el servidor en vez de con un hook + loading state.
-async function Catalogo() {
-  const { data: talleres } = await talleresService.getActivos();
+// El filtrado (tipo/disponibilidad) es la única parte interactiva, y vive en
+// la isla cliente <FiltrosTalleres />, que solo mueve los searchParams.
+async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
+  const params = await searchParams;
+  const tipo = typeof params.tipo === "string" ? params.tipo : undefined;
+  const disponible = params.disponible === "true" ? true : undefined;
+  const hayFiltrosActivos = Boolean(tipo || disponible);
+
+  const { data: talleres } = await talleresService.getActivos({ tipo, disponible });
 
   return (
     <div className="min-h-screen bg-background p-8 text-foreground md:p-12">
@@ -31,8 +40,10 @@ async function Catalogo() {
           </p>
         </div>
 
+        <FiltrosTalleres />
+
         {talleres.length > 0 && (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <RevealOnScroll className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {talleres.map((taller) => {
               // CÁLCULO DE CUPOS
               const cuposDisponibles =
@@ -114,12 +125,14 @@ async function Catalogo() {
                 </Card>
               );
             })}
-          </div>
+          </RevealOnScroll>
         )}
 
         {talleres.length === 0 && (
           <p className="text-center text-lg text-foreground/70">
-            No hay talleres activos en este momento.
+            {hayFiltrosActivos
+              ? "No hay talleres que coincidan con estos filtros."
+              : "No hay talleres activos en este momento."}
           </p>
         )}
       </div>

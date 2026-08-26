@@ -1,5 +1,6 @@
 // Lógica pura del carrito, separada del estado de React para que sea
 // testeable sin necesidad de montar el Context.
+import { toast } from "@/shared/hooks/use-toast";
 
 export interface CartItem {
   id: number;
@@ -20,7 +21,11 @@ export function addToCart(cart: CartItem[], product: Omit<CartItem, "cantidad">)
       product.tipo === "producto" &&
       existingItem.cantidad >= (product.stock ?? Infinity)
     ) {
-      alert("No puedes añadir más unidades de las disponibles en stock.");
+      toast({
+        title: "Sin stock suficiente",
+        description: "No puedes añadir más unidades de las disponibles en stock.",
+        variant: "destructive",
+      });
       return cart;
     }
     return cart.map((item) =>

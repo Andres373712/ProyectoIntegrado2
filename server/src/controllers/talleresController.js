@@ -1,14 +1,23 @@
 import { talleresService } from '../services/talleresService.js';
 import { parsePaginacion } from '../utils/pagination.js';
 
+// Ambos son opcionales: sin ?tipo/?disponible, se comporta igual que antes.
+const parseFiltros = (query) => {
+  const filtros = {};
+  if (query.tipo) filtros.tipo = query.tipo;
+  if (query.disponible === 'true') filtros.soloConCupos = true;
+  return Object.keys(filtros).length ? filtros : undefined;
+};
+
 export const talleresController = {
   // Sin ?page/?pageSize: mismo comportamiento de siempre (array completo).
   // Con ambos: LIMIT/OFFSET en la consulta + header X-Total-Count.
   getActivos: async (req, res) => {
     try {
       const paginacion = parsePaginacion(req.query);
-      if (paginacion) res.set('X-Total-Count', String(await talleresService.contarActivos()));
-      res.json(await talleresService.getActivos(paginacion));
+      const filtros = parseFiltros(req.query);
+      if (paginacion) res.set('X-Total-Count', String(await talleresService.contarActivos(filtros)));
+      res.json(await talleresService.getActivos(paginacion, filtros));
     } catch (error) {
       console.error('Error talleres activos:', error);
       res.status(500).json({ message: 'Error al cargar talleres' });

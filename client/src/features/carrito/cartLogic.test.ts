@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("@/shared/hooks/use-toast", () => ({ toast: vi.fn() }));
+
+import { toast } from "@/shared/hooks/use-toast";
 import { addToCart, removeFromCart, updateQuantity, computeTotal, computeCount } from "./cartLogic";
 import type { CartItem } from "./cartLogic";
+
+beforeEach(() => {
+  vi.mocked(toast).mockClear();
+});
 
 const producto = (overrides: Partial<CartItem> = {}) => ({
   id: 1,
@@ -30,14 +38,13 @@ describe("addToCart", () => {
   });
 
   it("no supera el stock disponible para productos, y avisa", () => {
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
     const carritoLleno: CartItem[] = [{ ...producto(), cantidad: 3 }]; // ya en el tope del stock
 
     const cart = addToCart(carritoLleno, producto());
 
     expect(cart).toEqual(carritoLleno); // sin cambios
-    expect(alertMock).toHaveBeenCalledOnce();
-    alertMock.mockRestore();
+    expect(toast).toHaveBeenCalledOnce();
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ variant: "destructive" }));
   });
 
   it("los talleres no tienen límite de stock", () => {
