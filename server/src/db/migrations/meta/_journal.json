@@ -15,6 +15,13 @@
       "when": 1787761713145,
       "tag": "0001_new_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787780360416,
+      "tag": "0002_small_sugar_man",
+      "breakpoints": true
     }
   ]
 }

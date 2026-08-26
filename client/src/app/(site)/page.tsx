@@ -20,12 +20,14 @@ import "slick-carousel/slick/slick-theme.css";
 import { ShoppingCart, Ban } from "lucide-react";
 import { useCart } from "@/features/carrito/CartContext";
 import { useProductosActivos } from "@/features/productos/useProductos";
+import { useTestimoniosActivos } from "@/features/testimonios/useTestimonios";
 import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP } from "@/lib/utils";
 
 import { useToast } from "@/shared/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import StarRating from "@/components/StarRating";
 
 // --- IMPORTACIONES DE ASSETS (AJUSTAR EXTENSIONES Y NOMBRES) ---
 import HeroBackground from "@/assets/nuevo-fondo.jpg";
@@ -67,6 +69,7 @@ function Homepage() {
   const { productos: todosLosProductos, cargando } = useProductosActivos();
   // Tomamos solo los 3 primeros productos para mostrar en la vitrina
   const productos = todosLosProductos.slice(0, 3);
+  const { testimonios } = useTestimoniosActivos();
 
   // Configuración del Carrusel (Hero)
   const sliderSettings = {
@@ -284,6 +287,41 @@ function Homepage() {
           </Button>
         </div>
       </RevealOnScroll>
+
+      {/* --- 2.5 SECCIÓN COMENTARIOS Y RECOMENDACIONES --- */}
+      {testimonios.length > 0 && (
+        <RevealOnScroll className="bg-white p-8 md:p-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-12 text-center">
+              <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+                Lo que dicen nuestras clientas
+              </span>
+              <h2 className="mb-4 mt-3 text-3xl font-semibold text-foreground md:text-4xl">
+                Comentarios y Recomendaciones
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              {testimonios.slice(0, 3).map((t) => (
+                <div
+                  key={t.id}
+                  className="flex flex-col rounded-xl border bg-card p-6 shadow-sm transition-shadow duration-300 hover:shadow-md"
+                >
+                  <StarRating value={t.calificacion} readOnly size={18} />
+                  <p className="mt-4 flex-1 text-foreground/90">
+                    &ldquo;{t.comentario}&rdquo;
+                  </p>
+                  <div className="mt-6">
+                    <p className="font-serif font-semibold">{t.nombre}</p>
+                    {t.curso && (
+                      <p className="text-sm text-muted-foreground">{t.curso}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </RevealOnScroll>
+      )}
 
       {/* --- 3. SECCIÓN QUIENES SOMOS --- */}
       <RevealOnScroll className="bg-secondary/30 p-12 md:p-24">

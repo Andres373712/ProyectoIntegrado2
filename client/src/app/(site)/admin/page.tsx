@@ -11,6 +11,7 @@ import {
   Users,
   CalendarDays,
   ArrowRight,
+  MessageSquareQuote,
 } from "lucide-react";
 import { useDashboardData } from "@/features/admin/useDashboardData";
 
@@ -134,6 +135,13 @@ function AdminDashboard() {
               link="/admin/mensajes"
               icon={BookOpenText}
               color="bg-blue-600"
+            />
+            <ActionCard
+              title="Comentarios y Recomendaciones"
+              description="Carga y administra los testimonios de clientas que se muestran en el sitio público."
+              link="/admin/testimonios"
+              icon={MessageSquareQuote}
+              color="bg-pink-600"
             />
           </div>
         </div>

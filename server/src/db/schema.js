@@ -96,6 +96,16 @@ export const pedidoItems = sqliteTable('pedido_items', {
   precio_unitario: integer('precio_unitario').notNull(),
 });
 
+export const testimonios = sqliteTable('testimonios', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  nombre: text('nombre').notNull(),
+  curso: text('curso'),
+  comentario: text('comentario').notNull(),
+  calificacion: integer('calificacion').default(5),
+  activo: integer('activo').default(1),
+  fecha_creacion: text('fecha_creacion').default('CURRENT_TIMESTAMP'),
+});
+
 export const admin = sqliteTable('admin', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   email: text('email').notNull().unique(),

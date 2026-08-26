@@ -10,6 +10,7 @@ import mensajesRoutes from './routes/mensajes.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import inscripcionRoutes from './routes/inscripcion.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import testimoniosRoutes from './routes/testimonios.routes.js';
 
 export const app = express();
 
@@ -25,5 +26,6 @@ app.use('/api', mensajesRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', inscripcionRoutes);
 app.use('/api', authRoutes);
+app.use('/api', testimoniosRoutes);
 
 app.use(errorHandler);
