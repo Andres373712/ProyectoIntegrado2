@@ -13,16 +13,21 @@ vi.mock('../repositories/clientesRepository.js', () => ({
     actualizarParaRegistro: vi.fn(),
     getByTokenVerificacion: vi.fn(),
     marcarVerificado: vi.fn(),
+    getByTokenRecuperacion: vi.fn(),
+    guardarTokenRecuperacion: vi.fn(),
+    actualizarPassword: vi.fn(),
   },
 }));
 vi.mock('../../emailService.js', () => ({
   enviarEmailVerificacion: vi.fn().mockResolvedValue(undefined),
+  enviarEmailRecuperacion: vi.fn().mockResolvedValue(undefined),
 }));
 
 const { adminRepository } = await import('../repositories/adminRepository.js');
 const { clientesRepository } = await import('../repositories/clientesRepository.js');
 const { authService } = await import('./authService.js');
 const { HttpError } = await import('../utils/httpError.js');
+const { enviarEmailRecuperacion } = await import('../../emailService.js');
 
 describe('authService.loginAdmin', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -145,5 +150,61 @@ describe('authService.registrarCliente', () => {
     });
     expect(resultado).toEqual({ actualizada: false });
     expect(clientesRepository.crearParaRegistro).toHaveBeenCalled();
+  });
+});
+
+describe('authService.forgotPassword', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('no hace nada (ni envía correo) si el email no está registrado', async () => {
+    clientesRepository.getByEmail.mockResolvedValue(undefined);
+    await authService.forgotPassword('nadie@x.com');
+    expect(clientesRepository.guardarTokenRecuperacion).not.toHaveBeenCalled();
+    expect(enviarEmailRecuperacion).not.toHaveBeenCalled();
+  });
+
+  it('no hace nada si la cuenta existe pero nunca se registró (sin password)', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1, email: 'x@x.com', password_hash: null });
+    await authService.forgotPassword('x@x.com');
+    expect(clientesRepository.guardarTokenRecuperacion).not.toHaveBeenCalled();
+    expect(enviarEmailRecuperacion).not.toHaveBeenCalled();
+  });
+
+  it('genera token, lo guarda y envía el correo si la cuenta tiene password', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({ id: 5, email: 'x@x.com', password_hash: 'hash' });
+    await authService.forgotPassword('x@x.com');
+    expect(clientesRepository.guardarTokenRecuperacion).toHaveBeenCalledWith(
+      5,
+      expect.objectContaining({ token: expect.any(String), expiracion: expect.any(String) }),
+    );
+    expect(enviarEmailRecuperacion).toHaveBeenCalledWith('x@x.com', expect.any(String));
+  });
+});
+
+describe('authService.resetPassword', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lanza 400 si el token no existe', async () => {
+    clientesRepository.getByTokenRecuperacion.mockResolvedValue(undefined);
+    await expect(authService.resetPassword('token-falso', 'Nueva123!')).rejects.toMatchObject({ status: 400 });
+    expect(clientesRepository.actualizarPassword).not.toHaveBeenCalled();
+  });
+
+  it('lanza 400 si el token ya expiró', async () => {
+    clientesRepository.getByTokenRecuperacion.mockResolvedValue({
+      id: 1,
+      expiracion_recuperacion: new Date(Date.now() - 1000).toISOString(),
+    });
+    await expect(authService.resetPassword('token-viejo', 'Nueva123!')).rejects.toMatchObject({ status: 400 });
+    expect(clientesRepository.actualizarPassword).not.toHaveBeenCalled();
+  });
+
+  it('actualiza la contraseña si el token es válido y no ha expirado', async () => {
+    clientesRepository.getByTokenRecuperacion.mockResolvedValue({
+      id: 9,
+      expiracion_recuperacion: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    await authService.resetPassword('token-valido', 'Nueva123!');
+    expect(clientesRepository.actualizarPassword).toHaveBeenCalledWith(9, expect.any(String));
   });
 });

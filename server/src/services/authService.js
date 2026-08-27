@@ -4,7 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { adminRepository } from '../repositories/adminRepository.js';
 import { clientesRepository } from '../repositories/clientesRepository.js';
 import { HttpError } from '../utils/httpError.js';
-import { enviarEmailVerificacion } from '../../emailService.js';
+import { enviarEmailVerificacion, enviarEmailRecuperacion } from '../../emailService.js';
+
+const UNA_HORA_MS = 60 * 60 * 1000;
 
 const firmarToken = (payload) => jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
@@ -68,5 +70,30 @@ export const authService = {
     if (!cliente) return false;
     await clientesRepository.marcarVerificado(cliente.id);
     return true;
+  },
+
+  forgotPassword: async (email) => {
+    const emailNormalizado = email.toLowerCase().trim();
+    const cliente = await clientesRepository.getByEmail(emailNormalizado);
+    // Solo se envía el correo si existe una cuenta CON contraseña (evita
+    // filtrar por temporización/efectos secundarios si el email existe o no:
+    // el controller responde siempre el mismo mensaje sin importar el resultado).
+    if (cliente && cliente.password_hash) {
+      const token = uuidv4();
+      const expiracion = new Date(Date.now() + UNA_HORA_MS).toISOString();
+      await clientesRepository.guardarTokenRecuperacion(cliente.id, { token, expiracion });
+      await enviarEmailRecuperacion(cliente.email, token);
+    }
+  },
+
+  resetPassword: async (token, nuevaPassword) => {
+    const cliente = await clientesRepository.getByTokenRecuperacion(token);
+    const expirado = !cliente?.expiracion_recuperacion || new Date(cliente.expiracion_recuperacion).getTime() < Date.now();
+    if (!cliente || expirado) {
+      throw new HttpError(400, 'El enlace es inválido o ya expiró. Solicita uno nuevo.');
+    }
+
+    const passwordHash = await bcrypt.hash(nuevaPassword, 10);
+    await clientesRepository.actualizarPassword(cliente.id, passwordHash);
   },
 };

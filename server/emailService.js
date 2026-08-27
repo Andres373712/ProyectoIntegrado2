@@ -1,9 +1,19 @@
 import nodemailer from 'nodemailer';
 import 'dotenv/config';
+import { FRONTEND_URL, API_URL } from './src/config.js';
 
-// Configuración del transportador (Gmail)
+// Configuración del transportador.
+// OJO: "service: 'gmail'" (como estaba antes) ignora por completo
+// EMAIL_HOST/EMAIL_PORT — nodemailer fuerza smtp.gmail.com:465 con
+// secure:true pase lo que pase en las variables de entorno. Railway bloquea
+// (o tiene problemas con) el puerto 465 saliente, de ahí los ESOCKET en los
+// logs aunque EMAIL_PORT=587 estuviera configurado: nunca se estaba usando.
+// Construir el transporte a mano respeta EMAIL_HOST/EMAIL_PORT de verdad.
+const EMAIL_PORT = Number(process.env.EMAIL_PORT) || 587;
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: EMAIL_PORT,
+  secure: EMAIL_PORT === 465, // 465 = TLS implícito; 587 (recomendado) = STARTTLS (secure:false)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS, // Asegúrate de usar App Password si tienes 2FA
@@ -58,7 +68,11 @@ export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
 
 // 2. Verificación de cuenta
 export async function enviarEmailVerificacion(datosClienta, verificationToken) {
-  const verificationURL = `http://localhost:5173/verificar-cuenta/${verificationToken}`;
+  // La verificación la resuelve el backend directamente (GET /api/auth/verificar/:token
+  // en server/src/routes/auth.routes.js), que luego redirige al frontend — no es
+  // una ruta del frontend, así que el link debe apuntar al backend (API_URL), no a
+  // "localhost:5173" (puerto de Vite que este proyecto ni usa; el frontend es Next.js).
+  const verificationURL = `${API_URL}/api/auth/verificar/${verificationToken}`;
 
   try {
     await transporter.sendMail({
@@ -84,7 +98,15 @@ export async function enviarEmailVerificacion(datosClienta, verificationToken) {
 
 // 3. Recuperación de contraseña
 export async function enviarEmailRecuperacion(email, token) {
-  const resetURL = `http://localhost:5173/reset-password/${token}`;
+  // A diferencia de la verificación, el reset de contraseña SÍ lo resuelve una
+  // página del frontend (client/src/app/(site)/reset-password/[token]/page.tsx),
+  // que pide la nueva contraseña y llama a POST /api/auth/reset-password.
+  // Por eso este link va a FRONTEND_URL, no a API_URL.
+  // NOTA: al día de este fix, esa ruta todavía no existe en el backend (ver
+  // server/src/routes/auth.routes.js) — esta función tampoco se llama desde
+  // ningún lado todavía. Falta implementar el endpoint antes de que este email
+  // sirva de algo.
+  const resetURL = `${FRONTEND_URL}/reset-password/${token}`;
 
   try {
     await transporter.sendMail({

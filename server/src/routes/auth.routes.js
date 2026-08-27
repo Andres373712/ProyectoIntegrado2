@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authController } from '../controllers/authController.js';
 import { loginLimiter } from '../middlewares/rateLimit.js';
 import { validate } from '../middlewares/validate.js';
-import { registroClienteSchema } from '../validators/auth.schema.js';
+import { registroClienteSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/auth.schema.js';
 
 const router = Router();
 
@@ -13,5 +13,20 @@ router.post('/login', loginLimiter, authController.loginAdmin);
 router.post('/auth/register-cliente', validate(registroClienteSchema), authController.registrarCliente);
 router.post('/auth/login-cliente', loginLimiter, authController.loginCliente);
 router.get('/auth/verificar/:token', authController.verificarToken);
+
+// Mismo limiter que el login: son los endpoints más golpeables por fuerza
+// bruta / spam de correos de todo el módulo de auth.
+router.post(
+  '/auth/forgot-password',
+  loginLimiter,
+  validate(forgotPasswordSchema),
+  authController.forgotPassword,
+);
+router.post(
+  '/auth/reset-password',
+  loginLimiter,
+  validate(resetPasswordSchema),
+  authController.resetPassword,
+);
 
 export default router;

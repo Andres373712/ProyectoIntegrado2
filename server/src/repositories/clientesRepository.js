@@ -56,4 +56,21 @@ export const clientesRepository = {
 
   marcarVerificado: (id) =>
     db.update(clientes).set({ verificado: 1, token_verificacion: null }).where(eq(clientes.id, id)),
+
+  getByTokenRecuperacion: async (token) => {
+    const filas = await db.select().from(clientes).where(eq(clientes.token_recuperacion, token));
+    return filas[0];
+  },
+
+  guardarTokenRecuperacion: (id, { token, expiracion }) =>
+    db
+      .update(clientes)
+      .set({ token_recuperacion: token, expiracion_recuperacion: expiracion })
+      .where(eq(clientes.id, id)),
+
+  actualizarPassword: (id, passwordHash) =>
+    db
+      .update(clientes)
+      .set({ password_hash: passwordHash, token_recuperacion: null, expiracion_recuperacion: null })
+      .where(eq(clientes.id, id)),
 };
