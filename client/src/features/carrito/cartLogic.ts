@@ -11,7 +11,13 @@ export interface CartItem {
   [key: string]: unknown;
 }
 
-export function addToCart(cart: CartItem[], product: Omit<CartItem, "cantidad">): CartItem[] {
+// El "& { stock?: number }" es necesario porque Omit sobre un tipo con índice
+// de firma ([key: string]: unknown) pierde el tipo específico de "stock" —
+// sin esto, TypeScript ve product.stock como "unknown" en vez de "number".
+export function addToCart(
+  cart: CartItem[],
+  product: Omit<CartItem, "cantidad"> & { stock?: number },
+): CartItem[] {
   const existingItem = cart.find(
     (item) => item.id === product.id && item.tipo === product.tipo,
   );

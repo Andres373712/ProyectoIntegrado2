@@ -19,8 +19,21 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
+interface TallerFormState {
+  nombre: string;
+  descripcion: string;
+  fecha: string;
+  tipo: string;
+  precio: number;
+  activo: boolean;
+  imageUrl: string | null;
+  lugar: string;
+  cupos_totales: number;
+  cupos_inscritos: number;
+}
+
 function EditarTaller() {
-  const [taller, setTaller] = useState({
+  const [taller, setTaller] = useState<TallerFormState>({
     nombre: "",
     descripcion: "",
     fecha: "",
@@ -49,11 +62,21 @@ function EditarTaller() {
           const fechaDB = new Date(response.data.fecha);
           fechaFormateada = fechaDB.toISOString().slice(0, 16);
         }
-        // Aseguramos que cupos_totales tenga un valor
         const datos = response.data;
-        if (!datos.cupos_totales) datos.cupos_totales = 10;
 
-        setTaller({ ...datos, fecha: fechaFormateada });
+        setTaller({
+          nombre: datos.nombre ?? "",
+          descripcion: datos.descripcion ?? "",
+          fecha: fechaFormateada,
+          tipo: datos.tipo ?? "B2C",
+          precio: datos.precio ?? 0,
+          activo: Boolean(datos.activo ?? true),
+          imageUrl: datos.imageUrl ?? null,
+          lugar: datos.lugar ?? "",
+          // Aseguramos que cupos_totales tenga un valor
+          cupos_totales: datos.cupos_totales || 10,
+          cupos_inscritos: datos.cupos_inscritos ?? 0,
+        });
         setCargando(false);
       })
       .catch((error) => {
