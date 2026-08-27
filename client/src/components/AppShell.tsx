@@ -141,13 +141,13 @@ function Navegacion() {
             ) : (
               <div className="flex items-center space-x-4 border-l border-border pl-6">
                 <Link
-                  href="/login"
+                  href="/login-cliente"
                   className="text-xs uppercase tracking-wider text-foreground/70 transition-colors hover:text-foreground"
                 >
                   Ingresar
                 </Link>
                 <Link
-                  href="/registro"
+                  href="/registro-cliente"
                   className="rounded-full bg-primary px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-md transition-transform hover:scale-105"
                 >
                   Registrarse
@@ -211,14 +211,14 @@ function Navegacion() {
           {!token && (
             <>
               <Link
-                href="/login"
+                href="/login-cliente"
                 onClick={() => setMenuOpen(false)}
                 className="block py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Ingresar
               </Link>
               <Link
-                href="/registro"
+                href="/registro-cliente"
                 onClick={() => setMenuOpen(false)}
                 className="block py-2 text-sm font-bold text-foreground"
               >
