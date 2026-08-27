@@ -8,7 +8,8 @@ import { fileURLToPath } from 'url';
 import * as schema from './schema.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(process.cwd(), 'tmm_bienestar.sqlite');
+const DB_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
+const DB_PATH = path.join(DB_DIR, 'tmm_bienestar.sqlite');
 const MIGRATIONS_FOLDER = path.join(__dirname, 'migrations');
 
 const sqlite = new Database(DB_PATH);
