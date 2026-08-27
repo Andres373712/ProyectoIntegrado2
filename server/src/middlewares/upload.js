@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
+export const UPLOADS_DIR = path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..', '..'), 'uploads');
 
 const EXTENSIONES_PERMITIDAS = {
   'image/jpeg': '.jpg',
