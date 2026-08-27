@@ -1,45 +1,37 @@
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import 'dotenv/config';
 import { FRONTEND_URL, API_URL } from './src/config.js';
 
-// Configuración del transportador.
-// OJO: "service: 'gmail'" (como estaba antes) ignora por completo
-// EMAIL_HOST/EMAIL_PORT — nodemailer fuerza smtp.gmail.com:465 con
-// secure:true pase lo que pase en las variables de entorno. Railway bloquea
-// (o tiene problemas con) el puerto 465 saliente, de ahí los ESOCKET en los
-// logs aunque EMAIL_PORT=587 estuviera configurado: nunca se estaba usando.
-// Construir el transporte a mano respeta EMAIL_HOST/EMAIL_PORT de verdad.
-const EMAIL_PORT = Number(process.env.EMAIL_PORT) || 587;
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: EMAIL_PORT,
-  secure: EMAIL_PORT === 465, // 465 = TLS implícito; 587 (recomendado) = STARTTLS (secure:false)
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Asegúrate de usar App Password si tienes 2FA
-  },
-  // Sin esto, un SMTP inalcanzable cuelga la petición HTTP indefinidamente
-  // en vez de fallar rápido (los envíos son fire-and-forget con .catch, pero
-  // eso no ayuda si la promesa nunca se resuelve ni se rechaza).
-  connectionTimeout: 10_000,
-  greetingTimeout: 10_000,
-  socketTimeout: 10_000,
-});
+// Antes este archivo usaba nodemailer + SMTP directo contra Gmail. Railway
+// bloquea el SMTP saliente (puertos 25/465/587) por completo en los planes
+// Trial/Hobby — solo se habilita desde el plan Pro (ver docs.railway.com/
+// networking/outbound-networking) — así que ningún ajuste de puerto lo iba
+// a arreglar. Se cambió a la API HTTP de SendGrid, que no depende de esos
+// puertos.
+//
+// EMAIL_USER debe ser una dirección verificada como "Single Sender" en el
+// dashboard de SendGrid (Settings → Sender Authentication → Single Sender
+// Verification) — SendGrid rechaza el envío si el remitente no está
+// verificado. Sin un dominio propio autenticado, esta es la única forma de
+// enviar a destinatarios arbitrarios (no solo a la propia cuenta); SendGrid
+// mismo advierte que es "solo para pruebas" — antes de depender de esto en
+// serio conviene comprar un dominio y pasar a autenticación de dominio.
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Verificar conexión al iniciar (opcional pero recomendado)
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error de configuración de email:', error);
-  } else {
-    console.log('Servidor de correo listo (Gmail)');
-  }
-});
+const EMAIL_USER = process.env.EMAIL_USER;
+
+async function enviar(mailOptions) {
+  // sgMail.send lanza si la respuesta no es 2xx (a diferencia de nodemailer,
+  // que resuelve igual con algunos errores del servidor) — el patrón
+  // try/catch de cada función de abajo ya está preparado para eso.
+  await sgMail.send(mailOptions);
+}
 
 // 1. Confirmación de inscripción
 export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
   try {
     const mailOptions = {
-      from: `"TMM Bienestar" <${process.env.EMAIL_USER}>`,
+      from: { email: EMAIL_USER, name: 'TMM Bienestar' },
       to: datosClienta.email,
       subject: `¡Tu cupo está confirmado! - ${datosTaller.nombre}`,
       html: `
@@ -59,10 +51,10 @@ export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    await enviar(mailOptions);
     console.log(`Confirmación enviada a ${datosClienta.email}`);
   } catch (error) {
-    console.error('Error enviando confirmación:', error);
+    console.error('Error enviando confirmación:', error.response?.body || error);
   }
 }
 
@@ -75,8 +67,8 @@ export async function enviarEmailVerificacion(datosClienta, verificationToken) {
   const verificationURL = `${API_URL}/api/auth/verificar/${verificationToken}`;
 
   try {
-    await transporter.sendMail({
-      from: `"TMM Bienestar" <${process.env.EMAIL_USER}>`,
+    await enviar({
+      from: { email: EMAIL_USER, name: 'TMM Bienestar' },
       to: datosClienta.email,
       subject: 'Activa tu cuenta - TMM Bienestar y Conexión',
       html: `
@@ -92,7 +84,7 @@ export async function enviarEmailVerificacion(datosClienta, verificationToken) {
     });
     console.log(`Verificación enviada a ${datosClienta.email}`);
   } catch (error) {
-    console.error('Error verificación:', error);
+    console.error('Error verificación:', error.response?.body || error);
   }
 }
 
@@ -102,15 +94,11 @@ export async function enviarEmailRecuperacion(email, token) {
   // página del frontend (client/src/app/(site)/reset-password/[token]/page.tsx),
   // que pide la nueva contraseña y llama a POST /api/auth/reset-password.
   // Por eso este link va a FRONTEND_URL, no a API_URL.
-  // NOTA: al día de este fix, esa ruta todavía no existe en el backend (ver
-  // server/src/routes/auth.routes.js) — esta función tampoco se llama desde
-  // ningún lado todavía. Falta implementar el endpoint antes de que este email
-  // sirva de algo.
   const resetURL = `${FRONTEND_URL}/reset-password/${token}`;
 
   try {
-    await transporter.sendMail({
-      from: `"TMM Soporte" <${process.env.EMAIL_USER}>`,
+    await enviar({
+      from: { email: EMAIL_USER, name: 'TMM Soporte' },
       to: email,
       subject: 'Recupera tu contraseña - TMM Bienestar',
       html: `
@@ -125,7 +113,7 @@ export async function enviarEmailRecuperacion(email, token) {
       `,
     });
   } catch (error) {
-    console.error('Error recuperación:', error);
+    console.error('Error recuperación:', error.response?.body || error);
   }
 }
 
@@ -138,8 +126,8 @@ export async function enviarEmailPedido(cliente, productos, total, pedidoId) {
   `).join('');
 
   try {
-    await transporter.sendMail({
-      from: `"TMM Bienestar" <${process.env.EMAIL_USER}>`,
+    await enviar({
+      from: { email: EMAIL_USER, name: 'TMM Bienestar' },
       to: cliente.email,
       subject: `Pedido #${pedidoId} recibido - TMM`,
       html: `
@@ -151,7 +139,7 @@ export async function enviarEmailPedido(cliente, productos, total, pedidoId) {
       `,
     });
   } catch (error) {
-    console.error('Error email pedido:', error);
+    console.error('Error email pedido:', error.response?.body || error);
   }
 }
 
@@ -161,9 +149,9 @@ export async function enviarEmailContacto(datosFormulario) {
 
   try {
     // Email al administrador (tú)
-    await transporter.sendMail({
-      from: `"Web Contacto" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Tu correo
+    await enviar({
+      from: { email: EMAIL_USER, name: 'Web Contacto' },
+      to: EMAIL_USER, // Tu correo
       replyTo: email, // Para que puedas responder directamente
       subject: `Nuevo mensaje de ${nombre}`,
       html: `
@@ -181,8 +169,8 @@ export async function enviarEmailContacto(datosFormulario) {
     });
 
     // Auto-respuesta al usuario
-    await transporter.sendMail({
-      from: `"TMM Bienestar" <${process.env.EMAIL_USER}>`,
+    await enviar({
+      from: { email: EMAIL_USER, name: 'TMM Bienestar' },
       to: email,
       subject: '¡Recibimos tu mensaje!',
       html: `
@@ -198,7 +186,7 @@ export async function enviarEmailContacto(datosFormulario) {
 
     console.log(`Contacto: mensaje de ${nombre} (${email}) procesado correctamente`);
   } catch (error) {
-    console.error('Error crítico en enviarEmailContacto:', error);
+    console.error('Error crítico en enviarEmailContacto:', error.response?.body || error);
     throw error; // Importante: propagar el error para que el backend lo capture
   }
 }
