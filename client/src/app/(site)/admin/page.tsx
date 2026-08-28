@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   BookOpenText,
   ShoppingBag,
+  ShoppingCart,
   Users,
   CalendarDays,
   ArrowRight,
@@ -76,9 +77,7 @@ function AdminDashboard() {
   if (cargando)
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted">
-        <p className="animate-pulse text-lg text-muted-foreground">
-          Cargando panel de control...
-        </p>
+        <p className="animate-pulse text-lg text-muted-foreground">Cargando panel de control...</p>
       </div>
     );
 
@@ -120,9 +119,7 @@ function AdminDashboard() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* --- Sección 2: Accesos Directos (Gestión) --- */}
         <div className="space-y-6 lg:col-span-2">
-          <h2 className="mb-4 text-xl font-bold text-foreground">
-            Gestión Rápida
-          </h2>
+          <h2 className="mb-4 text-xl font-bold text-foreground">Gestión Rápida</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <ActionCard
               title="Gestionar Talleres"
@@ -137,6 +134,13 @@ function AdminDashboard() {
               link="/admin/productos"
               icon={ShoppingBag}
               color="bg-green-600"
+            />
+            <ActionCard
+              title="Pedidos"
+              description="Revisa los pedidos del carrito: cliente, productos, total y estado de cada compra."
+              link="/admin/pedidos"
+              icon={ShoppingCart}
+              color="bg-purple-600"
             />
             <ActionCard
               title="Base de Clientas (CRM)"
