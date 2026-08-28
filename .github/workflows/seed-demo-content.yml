@@ -1,0 +1,45 @@
+name: Seed Demo Content
+
+# Disparo manual desde la pestaña "Actions" de GitHub (botón "Run workflow"),
+# sin necesidad de terminal local: corre scripts/seedDemoContent.js contra
+# la URL que se indique, usando el runner de GitHub (que sí tiene salida a
+# internet, a diferencia de shells detrás de proxys corporativos/allowlist).
+#
+# Requiere un secret del repo llamado SEED_ADMIN_PASSWORD con la contraseña
+# real de la cuenta admin (Settings -> Secrets and variables -> Actions ->
+# New repository secret). Nunca se expone en los logs porque los secrets de
+# GitHub Actions se enmascaran automáticamente.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'URL del backend a poblar (incluye https://, sin / al final)'
+        required: true
+        default: 'https://proyectointegrado2-production.up.railway.app'
+      admin_email:
+        description: 'Email del admin'
+        required: true
+        default: 'carolina@tmm.cl'
+
+jobs:
+  seed:
+    name: Crear talleres y productos de demostración
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Ejecutar script de siembra
+        env:
+          SEED_API_URL: ${{ github.event.inputs.api_url }}
+          SEED_ADMIN_EMAIL: ${{ github.event.inputs.admin_email }}
+          SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+        run: node scripts/seedDemoContent.js
