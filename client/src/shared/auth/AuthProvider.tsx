@@ -7,56 +7,80 @@ interface TokenPayload {
   id?: number;
   email?: string;
   rol?: string;
+  nombre?: string;
 }
 
 interface AuthContextValue {
   token: string | null;
   rol: string | null;
+  email: string | null;
   listo: boolean;
   isAdmin: boolean;
+  isCliente: boolean;
+  hasRole: (...roles: string[]) => boolean;
   login: (token: string) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function decodificarRol(token: string): string | null {
+function decodificarPayload(token: string): TokenPayload {
   try {
-    return jwtDecode<TokenPayload>(token).rol ?? null;
+    return jwtDecode<TokenPayload>(token);
   } catch (error) {
     console.error("Error decodificando token:", error);
-    return null;
+    return {};
   }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [rol, setRol] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("tmm_token");
     if (stored) {
+      const payload = decodificarPayload(stored);
       setToken(stored);
-      setRol(decodificarRol(stored));
+      setRol(payload.rol ?? null);
+      setEmail(payload.email ?? null);
     }
     setListo(true);
   }, []);
 
   const login = useCallback((nuevoToken: string) => {
     localStorage.setItem("tmm_token", nuevoToken);
+    const payload = decodificarPayload(nuevoToken);
     setToken(nuevoToken);
-    setRol(decodificarRol(nuevoToken));
+    setRol(payload.rol ?? null);
+    setEmail(payload.email ?? null);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem("tmm_token");
     setToken(null);
     setRol(null);
+    setEmail(null);
   }, []);
 
+  const hasRole = useCallback((...roles: string[]) => rol !== null && roles.includes(rol), [rol]);
+
   return (
-    <AuthContext.Provider value={{ token, rol, listo, isAdmin: rol === "admin", login, logout }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        rol,
+        email,
+        listo,
+        isAdmin: rol === "admin",
+        isCliente: rol === "cliente",
+        hasRole,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

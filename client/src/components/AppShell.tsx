@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/shared/auth/AuthProvider";
 
 import { useCart } from "@/features/carrito/CartContext";
-import { ShoppingCart, Menu, X } from "lucide-react"; // Iconos
+import { ShoppingCart, Menu, X, UserCircle } from "lucide-react"; // Iconos
 
 import logoTMM from "@/assets/logo.jpg";
 import Footer from "@/components/Footer";
@@ -17,7 +17,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 function Navegacion() {
   const router = useRouter();
   const pathname = usePathname();
-  const { token, isAdmin, logout } = useAuth();
+  const { token, isAdmin, isCliente, logout } = useAuth();
   const { count } = useCart();
 
   const [visible, setVisible] = React.useState(true);
@@ -131,6 +131,15 @@ function Navegacion() {
                     Admin
                   </Link>
                 )}
+                {isCliente && (
+                  <Link
+                    href="/mi-cuenta"
+                    className="flex items-center gap-1 text-xs uppercase tracking-wider text-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    <UserCircle size={16} />
+                    Mi Cuenta
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="text-[10px] font-bold text-destructive hover:underline"
@@ -208,7 +217,37 @@ function Navegacion() {
             Contacto
           </Link>
           <hr className="border-border" />
-          {!token && (
+          {token ? (
+            <>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
+                >
+                  Admin
+                </Link>
+              )}
+              {isCliente && (
+                <Link
+                  href="/mi-cuenta"
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
+                >
+                  Mi Cuenta
+                </Link>
+              )}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="block w-full py-2 text-left text-sm font-bold text-destructive hover:underline"
+              >
+                Salir
+              </button>
+            </>
+          ) : (
             <>
               <Link
                 href="/login-cliente"

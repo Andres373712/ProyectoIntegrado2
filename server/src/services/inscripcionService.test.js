@@ -88,6 +88,26 @@ describe('inscripcionService.inscribir', () => {
     await expect(inscripcionService.inscribir(DATOS)).resolves.toBeUndefined();
     expect(enviarEmailConfirmacion).toHaveBeenCalled();
   });
+
+  it('con un cliente autenticado (req.user), liga la inscripción a su id sin resolver por email', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+
+    await inscripcionService.inscribir(DATOS, { id: 77, email: 'otro@correo.com', rol: 'cliente' });
+
+    expect(clientesRepository.getByEmail).not.toHaveBeenCalled();
+    expect(clientesRepository.crearDesdeInscripcion).not.toHaveBeenCalled();
+    expect(inscripcionesRepository.crear).toHaveBeenCalledWith({ clienteId: 77, tallerId: 1 });
+  });
+
+  it('ignora req.user si su rol no es "cliente" (ej. un admin) y sigue el flujo por email', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 5 });
+
+    await inscripcionService.inscribir(DATOS, { id: 1, rol: 'admin' });
+
+    expect(clientesRepository.getByEmail).toHaveBeenCalledWith(DATOS.email);
+    expect(inscripcionesRepository.crear).toHaveBeenCalledWith({ clienteId: 5, tallerId: 1 });
+  });
 });
 
 describe('HttpError', () => {

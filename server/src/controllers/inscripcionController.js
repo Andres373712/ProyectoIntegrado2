@@ -4,7 +4,7 @@ import { HttpError } from '../utils/httpError.js';
 export const inscripcionController = {
   inscribir: async (req, res) => {
     try {
-      await inscripcionService.inscribir(req.body);
+      await inscripcionService.inscribir(req.body, req.user);
       res.status(201).json({ message: 'Inscripción exitosa' });
     } catch (error) {
       if (error instanceof HttpError) {
