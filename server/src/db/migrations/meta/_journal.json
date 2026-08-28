@@ -22,6 +22,13 @@
       "when": 1787780360416,
       "tag": "0002_small_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787927695913,
+      "tag": "0003_moaning_revanche",
+      "breakpoints": true
     }
   ]
 }

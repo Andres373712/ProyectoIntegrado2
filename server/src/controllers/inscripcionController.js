@@ -14,4 +14,19 @@ export const inscripcionController = {
       res.status(500).json({ message: 'Error al inscribir' });
     }
   },
+
+  // Cancelación anónima por link de correo (sin login) — GET porque el link
+  // se hace clic directamente desde el email, no envía body.
+  cancelarPorToken: async (req, res) => {
+    try {
+      const resultado = await inscripcionService.cancelarPorToken(req.params.token);
+      res.status(200).json(resultado);
+    } catch (error) {
+      if (error instanceof HttpError) {
+        return res.status(error.status).json({ message: error.message });
+      }
+      console.error('Error cancelación por token:', error);
+      res.status(500).json({ message: 'Error al cancelar la inscripción' });
+    }
+  },
 };

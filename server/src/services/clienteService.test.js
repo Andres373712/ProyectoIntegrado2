@@ -4,21 +4,11 @@ vi.mock('../repositories/inscripcionesRepository.js', () => ({
   inscripcionesRepository: {
     getPorClienteId: vi.fn(),
     getPorIdYCliente: vi.fn(),
-    eliminarPorId: vi.fn(),
+    cancelarInscripcionAtomica: vi.fn(),
   },
-}));
-vi.mock('../repositories/talleresRepository.js', () => ({
-  talleresRepository: { decrementarCuposInscritos: vi.fn() },
-}));
-// db.transaction de better-sqlite3 es síncrono: ejecuta el callback y
-// devuelve su resultado directamente.
-vi.mock('../db/client.js', () => ({
-  db: { transaction: vi.fn((cb) => cb()) },
 }));
 
 const { inscripcionesRepository } = await import('../repositories/inscripcionesRepository.js');
-const { talleresRepository } = await import('../repositories/talleresRepository.js');
-const { db } = await import('../db/client.js');
 const { clienteService } = await import('./clienteService.js');
 const { HttpError } = await import('../utils/httpError.js');
 
@@ -96,8 +86,7 @@ describe('clienteService.cancelarInscripcion', () => {
       status: 404,
       message: 'Inscripción no encontrada',
     });
-    expect(inscripcionesRepository.eliminarPorId).not.toHaveBeenCalled();
-    expect(talleresRepository.decrementarCuposInscritos).not.toHaveBeenCalled();
+    expect(inscripcionesRepository.cancelarInscripcionAtomica).not.toHaveBeenCalled();
   });
 
   it('busca la inscripción filtrando por el cliente autenticado (no por id solo)', async () => {
@@ -108,14 +97,12 @@ describe('clienteService.cancelarInscripcion', () => {
     expect(inscripcionesRepository.getPorIdYCliente).toHaveBeenCalledWith(55, 1);
   });
 
-  it('borra la inscripción y decrementa cupos_inscritos del taller dentro de una transacción', async () => {
+  it('delega en cancelarInscripcionAtomica (borrar + decrementar cupos) con el id y el taller correctos', async () => {
     inscripcionesRepository.getPorIdYCliente.mockResolvedValue({ id: 55, tallerId: 10 });
 
     await clienteService.cancelarInscripcion(1, 55);
 
-    expect(db.transaction).toHaveBeenCalledTimes(1);
-    expect(inscripcionesRepository.eliminarPorId).toHaveBeenCalledWith(55);
-    expect(talleresRepository.decrementarCuposInscritos).toHaveBeenCalledWith(10);
+    expect(inscripcionesRepository.cancelarInscripcionAtomica).toHaveBeenCalledWith(55, 10);
   });
 });
 

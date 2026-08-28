@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+process.env.JWT_SECRET = 'clave-de-test-no-usar-en-produccion';
+
 vi.mock('../repositories/talleresRepository.js', () => ({
   talleresRepository: {
     getById: vi.fn(),
@@ -13,7 +15,12 @@ vi.mock('../repositories/clientesRepository.js', () => ({
   },
 }));
 vi.mock('../repositories/inscripcionesRepository.js', () => ({
-  inscripcionesRepository: { crear: vi.fn() },
+  inscripcionesRepository: {
+    crear: vi.fn(),
+    existeInscripcion: vi.fn(),
+    getPorId: vi.fn(),
+    cancelarInscripcionAtomica: vi.fn(),
+  },
 }));
 vi.mock('../../emailService.js', () => ({
   enviarEmailConfirmacion: vi.fn().mockResolvedValue(undefined),
@@ -31,15 +38,18 @@ const { inscripcionesRepository } = await import('../repositories/inscripcionesR
 const { enviarEmailConfirmacion } = await import('../../emailService.js');
 const { inscripcionService } = await import('./inscripcionService.js');
 const { HttpError } = await import('../utils/httpError.js');
+const jwt = (await import('jsonwebtoken')).default;
 
 const DATOS = { tallerId: 1, nombre: 'Ana', email: 'ana@test.com', telefono: '123', intereses: 'B2C' };
 
 describe('inscripcionService.inscribir', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Por defecto "hay cupo": la mayoría de los tests no ejercitan la
-    // condición de carrera y esperan que la inscripción se cree.
+    // Por defecto "hay cupo" y "todavía no está inscrito": la mayoría de los
+    // tests no ejercitan la condición de carrera ni el chequeo de duplicado,
+    // y esperan que la inscripción se cree.
     talleresRepository.incrementarCuposInscritos.mockReturnValue(true);
+    inscripcionesRepository.existeInscripcion.mockResolvedValue(false);
   });
 
   it('lanza 404 si el taller no existe', async () => {
@@ -156,6 +166,138 @@ describe('inscripcionService.inscribir', () => {
     await inscripcionService.inscribir(DATOS);
 
     expect(db.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('lanza 409 y no crea nada si el cliente ya está inscrito en ese taller', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 42 });
+    inscripcionesRepository.existeInscripcion.mockResolvedValue(true);
+
+    await expect(inscripcionService.inscribir(DATOS)).rejects.toMatchObject({
+      status: 409,
+      message: 'Ya estás inscrito en este taller',
+    });
+
+    expect(inscripcionesRepository.existeInscripcion).toHaveBeenCalledWith(42, 1);
+    expect(inscripcionesRepository.crear).not.toHaveBeenCalled();
+    expect(talleresRepository.incrementarCuposInscritos).not.toHaveBeenCalled();
+    expect(enviarEmailConfirmacion).not.toHaveBeenCalled();
+  });
+
+  it('el chequeo de duplicado corre DESPUÉS de resolver el clienteId (por email), no antes', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue(undefined);
+    clientesRepository.crearDesdeInscripcion.mockResolvedValue({ id: 99 });
+
+    await inscripcionService.inscribir(DATOS);
+
+    expect(inscripcionesRepository.existeInscripcion).toHaveBeenCalledWith(99, 1);
+  });
+
+  it('permite inscribirse a un taller distinto aunque ya esté inscrito en otro (mismo cliente)', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 2, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 42 });
+    inscripcionesRepository.existeInscripcion.mockResolvedValue(false);
+
+    await expect(inscripcionService.inscribir({ ...DATOS, tallerId: 2 })).resolves.toBeUndefined();
+
+    expect(inscripcionesRepository.existeInscripcion).toHaveBeenCalledWith(42, 2);
+    expect(inscripcionesRepository.crear).toHaveBeenCalledWith({ clienteId: 42, tallerId: 2 });
+  });
+
+  it('si el INSERT falla igual por el índice único (condición de carrera), traduce el error a 409 en vez de un 500', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 42 });
+    inscripcionesRepository.existeInscripcion.mockResolvedValue(false);
+    const errorConstraint = new Error('UNIQUE constraint failed: inscripciones.cliente_id, inscripciones.taller_id');
+    errorConstraint.code = 'SQLITE_CONSTRAINT_UNIQUE';
+    inscripcionesRepository.crear.mockImplementation(() => {
+      throw errorConstraint;
+    });
+
+    await expect(inscripcionService.inscribir(DATOS)).rejects.toMatchObject({
+      status: 409,
+      message: 'Ya estás inscrito en este taller',
+    });
+    expect(enviarEmailConfirmacion).not.toHaveBeenCalled();
+  });
+
+  it('propaga cualquier otro error de la transacción sin traducirlo a 409', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 42 });
+    inscripcionesRepository.existeInscripcion.mockResolvedValue(false);
+    inscripcionesRepository.crear.mockImplementation(() => {
+      throw new Error('fallo inesperado de disco');
+    });
+
+    await expect(inscripcionService.inscribir(DATOS)).rejects.toThrow('fallo inesperado de disco');
+  });
+
+  it('firma un token de cancelación con el id de la inscripción recién creada y lo pasa al email de confirmación', async () => {
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 42 });
+    inscripcionesRepository.crear.mockReturnValue(777);
+
+    await inscripcionService.inscribir(DATOS);
+
+    expect(enviarEmailConfirmacion).toHaveBeenCalledTimes(1);
+    const [, , tokenCancelacion] = enviarEmailConfirmacion.mock.calls[0];
+    expect(typeof tokenCancelacion).toBe('string');
+    const payload = jwt.verify(tokenCancelacion, process.env.JWT_SECRET);
+    expect(payload).toMatchObject({ tipo: 'cancelar-inscripcion', inscripcionId: 777 });
+  });
+});
+
+describe('inscripcionService.cancelarPorToken', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const firmar = (payload, opciones) => jwt.sign(payload, process.env.JWT_SECRET, opciones);
+
+  it('lanza 400 si el token es inválido', async () => {
+    await expect(inscripcionService.cancelarPorToken('token-basura')).rejects.toMatchObject({ status: 400 });
+    expect(inscripcionesRepository.getPorId).not.toHaveBeenCalled();
+  });
+
+  it('lanza 400 si el token está expirado', async () => {
+    const token = firmar({ tipo: 'cancelar-inscripcion', inscripcionId: 1 }, { expiresIn: -1 });
+
+    await expect(inscripcionService.cancelarPorToken(token)).rejects.toMatchObject({ status: 400 });
+    expect(inscripcionesRepository.getPorId).not.toHaveBeenCalled();
+  });
+
+  it('lanza 400 si el token es válido pero de otro propósito (tipo distinto)', async () => {
+    const token = firmar({ tipo: 'otra-cosa', inscripcionId: 1 });
+
+    await expect(inscripcionService.cancelarPorToken(token)).rejects.toMatchObject({ status: 400 });
+    expect(inscripcionesRepository.getPorId).not.toHaveBeenCalled();
+  });
+
+  it('cancela la inscripción y devuelve nombre y taller cuando el token es válido', async () => {
+    const token = firmar({ tipo: 'cancelar-inscripcion', inscripcionId: 55 });
+    inscripcionesRepository.getPorId.mockResolvedValue({
+      id: 55,
+      tallerId: 10,
+      taller: 'Yoga restaurativo',
+      nombreCliente: 'Ana',
+    });
+
+    const resultado = await inscripcionService.cancelarPorToken(token);
+
+    expect(inscripcionesRepository.getPorId).toHaveBeenCalledWith(55);
+    expect(inscripcionesRepository.cancelarInscripcionAtomica).toHaveBeenCalledWith(55, 10);
+    expect(resultado).toEqual({
+      message: 'Inscripción cancelada correctamente',
+      nombre: 'Ana',
+      taller: 'Yoga restaurativo',
+    });
+  });
+
+  it('responde con un mensaje claro (no un 500) si el token ya fue usado antes (la inscripción ya no existe)', async () => {
+    const token = firmar({ tipo: 'cancelar-inscripcion', inscripcionId: 55 });
+    inscripcionesRepository.getPorId.mockResolvedValue(undefined);
+
+    await expect(inscripcionService.cancelarPorToken(token)).rejects.toMatchObject({ status: 404 });
+    expect(inscripcionesRepository.cancelarInscripcionAtomica).not.toHaveBeenCalled();
   });
 });
 

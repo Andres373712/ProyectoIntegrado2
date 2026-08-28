@@ -38,6 +38,16 @@ export const upload = multer({
  *
  * Los GIF se copian sin tocar: podrían ser animados, y sharp solo procesa
  * el primer frame por defecto (convertirlos rompería la animación).
+ *
+ * El mimetype que llega en req.file.mimetype es el que declaró el cliente
+ * (Content-Type), no el contenido real del archivo: es trivial subir un
+ * .html o .js renombrado con Content-Type: image/gif. Los formatos que sí
+ * se reprocesan con sharp (jpeg/png/webp) quedan validados de rebote,
+ * porque sharp falla si el buffer no es realmente ese formato. Los GIF, al
+ * copiarse tal cual para no romper la animación, necesitan esa misma
+ * validación por separado: se le pide a sharp la metadata real del buffer
+ * (sin recodificarlo) y se exige que el formato detectado sea 'gif' antes
+ * de escribirlo a disco.
  */
 export async function procesarImagen(req, res, next) {
   if (!req.file) return next();
@@ -48,6 +58,15 @@ export async function procesarImagen(req, res, next) {
     const destino = path.join(UPLOADS_DIR, filename);
 
     if (req.file.mimetype === 'image/gif') {
+      let metadata;
+      try {
+        metadata = await sharp(req.file.buffer).metadata();
+      } catch {
+        throw new Error('El archivo no es un GIF válido.');
+      }
+      if (metadata.format !== 'gif') {
+        throw new Error('El archivo no es un GIF válido.');
+      }
       await fs.promises.writeFile(destino, req.file.buffer);
     } else {
       let pipeline = sharp(req.file.buffer).resize({

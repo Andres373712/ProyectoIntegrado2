@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // Refleja exactamente las tablas creadas hoy en server/db.js (mismos nombres
 // de columna, incl. "imageurl" en minúscula) — no es un rediseño de esquema.
@@ -56,6 +56,12 @@ export const inscripciones = sqliteTable(
   (table) => [
     index('inscripciones_cliente_id_idx').on(table.cliente_id),
     index('inscripciones_taller_id_idx').on(table.taller_id),
+    // Red de seguridad a nivel de base de datos contra doble inscripción del
+    // mismo cliente al mismo taller: el chequeo previo en el service
+    // (existeInscripcion) cubre el caso normal (no concurrente) con un
+    // mensaje claro; este índice único es la fuente de verdad real contra
+    // dos inserciones concurrentes con el mismo cliente_id+taller_id.
+    uniqueIndex('inscripciones_cliente_id_taller_id_unique').on(table.cliente_id, table.taller_id),
   ],
 );
 

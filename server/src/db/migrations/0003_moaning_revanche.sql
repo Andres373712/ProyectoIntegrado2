@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `inscripciones_cliente_id_taller_id_unique` ON `inscripciones` (`cliente_id`,`taller_id`);

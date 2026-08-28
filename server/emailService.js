@@ -28,8 +28,15 @@ async function enviar(mailOptions) {
 }
 
 // 1. Confirmación de inscripción
-export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
+// "tokenCancelacion" es opcional (firmado por inscripcionService.inscribir
+// con { tipo: 'cancelar-inscripcion', inscripcionId }): cuando viene, el
+// email incluye un link a la página de cancelación anónima del frontend
+// (client/src/app/(site)/cancelar-inscripcion/[token]/page.tsx), que resuelve
+// GET /api/cancelar-inscripcion/:token sin requerir login.
+export async function enviarEmailConfirmacion(datosClienta, datosTaller, tokenCancelacion) {
   try {
+    const linkCancelacion = tokenCancelacion ? `${FRONTEND_URL}/cancelar-inscripcion/${tokenCancelacion}` : null;
+
     const mailOptions = {
       from: { email: EMAIL_USER, name: 'TMM Bienestar' },
       to: datosClienta.email,
@@ -47,6 +54,12 @@ export async function enviarEmailConfirmacion(datosClienta, datosTaller) {
           </ul>
           <p>¡Nos vemos pronto!</p>
           <p><strong>Carolina López<br>TMM Bienestar y Conexión</strong></p>
+          ${linkCancelacion ? `
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+          <p style="font-size: 13px; color: #666;">¿No puedes asistir?
+            <a href="${linkCancelacion}" style="color: #E4007C;">Cancela tu inscripción aquí</a>
+          </p>
+          ` : ''}
         </div>
       `,
     };

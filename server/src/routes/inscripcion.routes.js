@@ -13,4 +13,10 @@ router.post(
   inscripcionController.inscribir,
 );
 
+// Pública, sin auth: se llega acá haciendo clic en el link del email de
+// confirmación (ver emailService.enviarEmailConfirmacion), no desde una
+// sesión iniciada — la identidad la garantiza la firma del token, no un JWT
+// de sesión.
+router.get('/cancelar-inscripcion/:token', inscripcionController.cancelarPorToken);
+
 export default router;
