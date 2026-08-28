@@ -18,6 +18,12 @@ vi.mock('../repositories/inscripcionesRepository.js', () => ({
 vi.mock('../../emailService.js', () => ({
   enviarEmailConfirmacion: vi.fn().mockResolvedValue(undefined),
 }));
+// db.transaction de better-sqlite3 es síncrono: ejecuta el callback y
+// devuelve su resultado directamente (sin promesa). El mock reproduce eso
+// para que el service pueda probarse sin una base de datos real.
+vi.mock('../db/client.js', () => ({
+  db: { transaction: vi.fn((cb) => cb()) },
+}));
 
 const { talleresRepository } = await import('../repositories/talleresRepository.js');
 const { clientesRepository } = await import('../repositories/clientesRepository.js');
@@ -31,6 +37,9 @@ const DATOS = { tallerId: 1, nombre: 'Ana', email: 'ana@test.com', telefono: '12
 describe('inscripcionService.inscribir', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Por defecto "hay cupo": la mayoría de los tests no ejercitan la
+    // condición de carrera y esperan que la inscripción se cree.
+    talleresRepository.incrementarCuposInscritos.mockReturnValue(true);
   });
 
   it('lanza 404 si el taller no existe', async () => {
@@ -107,6 +116,46 @@ describe('inscripcionService.inscribir', () => {
 
     expect(clientesRepository.getByEmail).toHaveBeenCalledWith(DATOS.email);
     expect(inscripcionesRepository.crear).toHaveBeenCalledWith({ clienteId: 5, tallerId: 1 });
+  });
+
+  it('llena el último cupo exacto: el UPDATE atómico se aplica y crea la inscripción', async () => {
+    // Un cupo libre según el chequeo previo (fast-path) Y según el UPDATE
+    // atómico (fuente de verdad) — caso normal de "queda justo un cupo".
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 4, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1 });
+    talleresRepository.incrementarCuposInscritos.mockReturnValue(true);
+
+    await expect(inscripcionService.inscribir(DATOS)).resolves.toBeUndefined();
+
+    expect(talleresRepository.incrementarCuposInscritos).toHaveBeenCalledWith(1);
+    expect(inscripcionesRepository.crear).toHaveBeenCalledWith({ clienteId: 1, tallerId: 1 });
+  });
+
+  it('condición de carrera: si el UPDATE atómico no afecta filas (ya no había cupo real) lanza 409 y no crea la inscripción, aunque el chequeo previo con getById haya visto cupo libre', async () => {
+    // Simula dos inscripciones concurrentes que "vieron" el mismo taller con
+    // cupo libre antes de que cualquiera incrementara: el chequeo previo
+    // pasa, pero la sentencia UPDATE atómica (mockeada para devolver "no se
+    // aplicó ninguna fila", como pasaría si otra inscripción ya se quedó con
+    // el último cupo) es la que realmente decide.
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 4, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1 });
+    talleresRepository.incrementarCuposInscritos.mockReturnValue(false);
+
+    await expect(inscripcionService.inscribir(DATOS)).rejects.toMatchObject({
+      status: 409,
+      message: 'Sin cupos',
+    });
+    expect(inscripcionesRepository.crear).not.toHaveBeenCalled();
+  });
+
+  it('crear-inscripción e incrementar-cupos corren dentro de db.transaction', async () => {
+    const { db } = await import('../db/client.js');
+    talleresRepository.getById.mockResolvedValue({ id: 1, cupos_inscritos: 0, cupos_totales: 5 });
+    clientesRepository.getByEmail.mockResolvedValue({ id: 1 });
+
+    await inscripcionService.inscribir(DATOS);
+
+    expect(db.transaction).toHaveBeenCalledTimes(1);
   });
 });
 

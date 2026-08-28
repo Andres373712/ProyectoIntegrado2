@@ -75,9 +75,35 @@ export const talleresRepository = {
 
   eliminar: (id) => db.delete(talleres).where(eq(talleres.id, id)),
 
-  incrementarCuposInscritos: (id) =>
-    db
+  // Incrementa cupos_inscritos en una única sentencia UPDATE atómica: el
+  // WHERE reevalúa "hay cupo" contra el estado actual de la fila en el mismo
+  // paso que el incremento, así que dos inscripciones concurrentes para el
+  // último cupo no pueden pasar ambas — SQLite serializa los UPDATE sobre la
+  // misma fila. Se ejecuta con `.run()` (no se awaitea) para que funcione
+  // tanto suelta como dentro de un `db.transaction(...)` síncrono de
+  // better-sqlite3. Devuelve true solo si la fila realmente cambió
+  // (`changes > 0`) — esa es la señal real de "quedaba cupo", no el chequeo
+  // previo con getById (que puede quedar desactualizado entre el chequeo y
+  // el incremento).
+  incrementarCuposInscritos: (id) => {
+    const resultado = db
       .update(talleres)
       .set({ cupos_inscritos: sql`${talleres.cupos_inscritos} + 1` })
-      .where(eq(talleres.id, id)),
+      .where(and(eq(talleres.id, id), condicionConCupos))
+      .run();
+    return resultado.changes > 0;
+  },
+
+  // Simétrico al anterior: decrementa sin bajar de 0 (MAX(...,0) es la forma
+  // escalar de MAX en SQLite cuando se le pasan 2+ argumentos, no la
+  // agregada). También síncrono vía `.run()` para poder usarse dentro de una
+  // transacción de better-sqlite3.
+  decrementarCuposInscritos: (id) => {
+    const resultado = db
+      .update(talleres)
+      .set({ cupos_inscritos: sql`MAX(${talleres.cupos_inscritos} - 1, 0)` })
+      .where(eq(talleres.id, id))
+      .run();
+    return resultado.changes > 0;
+  },
 };

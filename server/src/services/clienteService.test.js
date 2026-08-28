@@ -1,11 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../repositories/inscripcionesRepository.js', () => ({
-  inscripcionesRepository: { getPorClienteId: vi.fn() },
+  inscripcionesRepository: {
+    getPorClienteId: vi.fn(),
+    getPorIdYCliente: vi.fn(),
+    eliminarPorId: vi.fn(),
+  },
+}));
+vi.mock('../repositories/talleresRepository.js', () => ({
+  talleresRepository: { decrementarCuposInscritos: vi.fn() },
+}));
+// db.transaction de better-sqlite3 es síncrono: ejecuta el callback y
+// devuelve su resultado directamente.
+vi.mock('../db/client.js', () => ({
+  db: { transaction: vi.fn((cb) => cb()) },
 }));
 
 const { inscripcionesRepository } = await import('../repositories/inscripcionesRepository.js');
+const { talleresRepository } = await import('../repositories/talleresRepository.js');
+const { db } = await import('../db/client.js');
 const { clienteService } = await import('./clienteService.js');
+const { HttpError } = await import('../utils/httpError.js');
 
 describe('clienteService.getMisInscripciones', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -68,5 +83,46 @@ describe('clienteService.getMisInscripciones', () => {
     inscripcionesRepository.getPorClienteId.mockResolvedValue([]);
 
     await expect(clienteService.getMisInscripciones(999)).resolves.toEqual([]);
+  });
+});
+
+describe('clienteService.cancelarInscripcion', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lanza 404 si la inscripción no existe o no pertenece al cliente', async () => {
+    inscripcionesRepository.getPorIdYCliente.mockResolvedValue(undefined);
+
+    await expect(clienteService.cancelarInscripcion(1, 55)).rejects.toMatchObject({
+      status: 404,
+      message: 'Inscripción no encontrada',
+    });
+    expect(inscripcionesRepository.eliminarPorId).not.toHaveBeenCalled();
+    expect(talleresRepository.decrementarCuposInscritos).not.toHaveBeenCalled();
+  });
+
+  it('busca la inscripción filtrando por el cliente autenticado (no por id solo)', async () => {
+    inscripcionesRepository.getPorIdYCliente.mockResolvedValue({ id: 55, tallerId: 10 });
+
+    await clienteService.cancelarInscripcion(1, 55);
+
+    expect(inscripcionesRepository.getPorIdYCliente).toHaveBeenCalledWith(55, 1);
+  });
+
+  it('borra la inscripción y decrementa cupos_inscritos del taller dentro de una transacción', async () => {
+    inscripcionesRepository.getPorIdYCliente.mockResolvedValue({ id: 55, tallerId: 10 });
+
+    await clienteService.cancelarInscripcion(1, 55);
+
+    expect(db.transaction).toHaveBeenCalledTimes(1);
+    expect(inscripcionesRepository.eliminarPorId).toHaveBeenCalledWith(55);
+    expect(talleresRepository.decrementarCuposInscritos).toHaveBeenCalledWith(10);
+  });
+});
+
+describe('HttpError', () => {
+  it('expone status y message', () => {
+    const err = new HttpError(404, 'no encontrado');
+    expect(err.status).toBe(404);
+    expect(err.message).toBe('no encontrado');
   });
 });

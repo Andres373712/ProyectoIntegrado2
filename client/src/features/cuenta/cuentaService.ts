@@ -7,4 +7,5 @@ import apiClient from "@/shared/lib/apiClient";
 export const cuentaService = {
   getInscripciones: () => apiClient.get("/api/cliente/mis-inscripciones"),
   getPedidos: () => apiClient.get("/api/cliente/mis-pedidos"),
+  cancelar: (id: number) => apiClient.delete(`/api/cliente/mis-inscripciones/${id}`),
 };

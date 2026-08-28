@@ -26,14 +26,17 @@ export interface Pedido {
 }
 
 // --- ZONA DE MAPEO (único lugar a ajustar si cambian los nombres de campo del backend) ---
-// Contrato actual esperado de GET /api/cliente/mis-inscripciones:
-//   [{ id, taller_nombre, taller_fecha, taller_lugar, estado }]
+// Contrato real de GET /api/cliente/mis-inscripciones (server/src/services/clienteService.js):
+//   [{ id, tallerId, taller, fecha, lugar, estado, fechaInscripcion }]
+// (el contrato que se asumió al construir esta pantalla usaba taller_nombre/taller_fecha/
+// taller_lugar en snake_case — el backend terminó devolviendo taller/fecha/lugar; se ajusta
+// acá, que es exactamente el único lugar pensado para este tipo de desajuste.)
 function mapInscripcion(raw: any): Inscripcion {
   return {
     id: raw?.id,
-    tallerNombre: raw?.taller_nombre ?? "Taller",
-    tallerFecha: raw?.taller_fecha ?? null,
-    tallerLugar: raw?.taller_lugar ?? "",
+    tallerNombre: raw?.taller ?? "Taller",
+    tallerFecha: raw?.fecha ?? null,
+    tallerLugar: raw?.lugar ?? "",
     estado: raw?.estado ?? "pendiente",
   };
 }
@@ -64,6 +67,11 @@ export function useMiCuenta() {
   const [cargandoInscripciones, setCargandoInscripciones] = useState(true);
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [error, setError] = useState("");
+  // id de la inscripción que se está cancelando ahora mismo (null si ninguna),
+  // para poder deshabilitar solo el botón de esa card mientras el pedido está
+  // en curso, en vez de un loading global.
+  const [cancelandoId, setCancelandoId] = useState<number | null>(null);
+  const [errorCancelacion, setErrorCancelacion] = useState("");
 
   useEffect(() => {
     cuentaService
@@ -97,11 +105,31 @@ export function useMiCuenta() {
       .finally(() => setCargandoPedidos(false));
   }, []);
 
+  // Cancela una inscripción propia y, si el backend confirma, la saca del
+  // estado local sin volver a pedir toda la lista (misma idea que el resto
+  // del carrito/cuenta: actualizar en memoria en vez de refetchear).
+  async function cancelarInscripcion(id: number) {
+    setErrorCancelacion("");
+    setCancelandoId(id);
+    try {
+      await cuentaService.cancelar(id);
+      setInscripciones((prev) => prev.filter((inscripcion) => inscripcion.id !== id));
+    } catch (err) {
+      console.error("Error al cancelar la inscripción:", err);
+      setErrorCancelacion("No pudimos cancelar tu inscripción. Intenta más tarde.");
+    } finally {
+      setCancelandoId(null);
+    }
+  }
+
   return {
     inscripciones,
     pedidos,
     pedidosDisponibles,
     cargando: cargandoInscripciones || cargandoPedidos,
     error,
+    cancelarInscripcion,
+    cancelandoId,
+    errorCancelacion,
   };
 }

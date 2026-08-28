@@ -4,11 +4,20 @@ import axios from "axios";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 // 2. Crear una instancia de Axios pre-configurada
+//
+// OJO: no fijar acá un Content-Type por defecto. Axios ya elige el
+// Content-Type correcto según el tipo de "data" de cada request (JSON para
+// un objeto plano, "multipart/form-data; boundary=..." para un FormData) —
+// pero solo si no hay ya un Content-Type explícito puesto de antemano. Con
+// "application/json" fijo acá, axios trataba TODO como JSON, incluido el
+// FormData que usan las subidas de imagen de talleres y productos:
+// serializaba el FormData con JSON.stringify (un File no tiene propiedades
+// propias, así que quedaba en "{}") y lo mandaba como si fuera JSON. El
+// backend igual respondía 200 (los campos de texto sobrevivían solos), así
+// que el fallo era silencioso: se creaba el taller pero la imagen nunca
+// salía del navegador.
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 /**

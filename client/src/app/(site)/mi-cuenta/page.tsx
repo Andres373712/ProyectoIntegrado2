@@ -31,11 +31,29 @@ function estadoBadgeClass(estado: string) {
 function MiCuentaContenido() {
   const router = useRouter();
   const { email, logout } = useAuth();
-  const { inscripciones, pedidos, pedidosDisponibles, cargando, error } = useMiCuenta();
+  const {
+    inscripciones,
+    pedidos,
+    pedidosDisponibles,
+    cargando,
+    error,
+    cancelarInscripcion,
+    cancelandoId,
+    errorCancelacion,
+  } = useMiCuenta();
 
   const handleLogout = () => {
     logout();
     router.push("/");
+  };
+
+  const handleCancelar = (inscripcion: (typeof inscripciones)[number]) => {
+    // No hay AlertDialog reusable en components/ui todavía — confirm nativo
+    // como fallback simple, según lo pedido.
+    const confirmado = window.confirm(
+      `¿Seguro que quieres cancelar tu inscripción a "${inscripcion.tallerNombre}"?`,
+    );
+    if (confirmado) cancelarInscripcion(inscripcion.id);
   };
 
   return (
@@ -63,6 +81,12 @@ function MiCuentaContenido() {
         {error && (
           <div className="rounded-md border border-red-200 bg-red-100 p-3 text-sm font-bold text-red-700">
             {error}
+          </div>
+        )}
+
+        {errorCancelacion && (
+          <div className="rounded-md border border-red-200 bg-red-100 p-3 text-sm font-bold text-red-700">
+            {errorCancelacion}
           </div>
         )}
 
@@ -100,11 +124,23 @@ function MiCuentaContenido() {
                         </p>
                       )}
                     </div>
-                    <span
-                      className={`inline-block w-fit rounded-full px-3 py-1 text-xs font-bold capitalize ${estadoBadgeClass(inscripcion.estado)}`}
-                    >
-                      {inscripcion.estado}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-block w-fit rounded-full px-3 py-1 text-xs font-bold capitalize ${estadoBadgeClass(inscripcion.estado)}`}
+                      >
+                        {inscripcion.estado}
+                      </span>
+                      {inscripcion.estado === "proximo" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={cancelandoId === inscripcion.id}
+                          onClick={() => handleCancelar(inscripcion)}
+                        >
+                          {cancelandoId === inscripcion.id ? "Cancelando..." : "Cancelar"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -11,5 +11,11 @@ const router = Router();
 // "todavía no existe en el backend"). Agregar mis-pedidos ahora implicaría
 // inventar un sistema de pedidos completo, fuera del alcance de esta tarea.
 router.get('/cliente/mis-inscripciones', protegerRutas, esCliente, clienteController.getMisInscripciones);
+router.delete(
+  '/cliente/mis-inscripciones/:id',
+  protegerRutas,
+  esCliente,
+  clienteController.cancelarInscripcion,
+);
 
 export default router;
