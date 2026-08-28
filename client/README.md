@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TMM Bienestar y Conexión — Frontend
 
-## Getting Started
+Frontend en Next.js 16 (App Router) del sitio de TMM Bienestar y Conexión.
+Consume la API del backend en [`../server`](../server) — ver el
+[README de la raíz](../README.md) para la visión general del proyecto y cómo
+levantar el backend en local.
 
-First, run the development server:
+## Rutas principales
+
+- `/` — landing pública
+- `/catalogo` — catálogo de talleres y `/inscribir/[id]` para inscribirse
+- `/carrito` — carrito de la tienda de productos
+- `/login`, `/registro`, `/login-cliente`, `/registro-cliente` — auth de admin y de cliente
+- `/mi-cuenta` — panel de cliente (inscripciones, pedidos)
+- `/cancelar-inscripcion/[token]` — cancelación de inscripción por link
+- `/forgot-password`, `/reset-password/[token]` — recuperación de contraseña
+- `/admin`, `/admin/talleres`, `/admin/productos`, `/admin/testimonios`, `/admin/mensajes`, `/admin/clientes`, `/admin/cliente/[id]`, `/admin/editar/[id]` — panel de administración
+
+## Variables de entorno
+
+| Variable              | Para qué sirve                                                        | Default                  |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------- |
+| `NEXT_PUBLIC_API_URL`  | URL base de la API del backend, usada por el cliente Axios (`src/shared/lib/apiClient.ts`). | `http://localhost:5000`  |
+
+Definila en `.env.local` para desarrollo local:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+npm run dev        # servidor de desarrollo — http://localhost:3000
+npm run build      # build de producción
+npm run start      # sirve el build de producción
+npm run lint       # ESLint
 
-## Learn More
+npm test           # tests unitarios (Vitest)
+npm run test:e2e   # tests end-to-end (Playwright, en client/e2e/)
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm run test:e2e` levanta por su cuenta una instancia real del backend
+(con una base de datos SQLite descartable, puerto 5100) y el frontend en
+modo desarrollo (puerto 3100) — no hace falta tener nada corriendo de
+antemano. Configuración en `playwright.config.ts`.

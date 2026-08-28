@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (server)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    env:
+      # Los tests corren contra mocks (no levantan un server.js real ni
+      # tocan SendGrid), así que no hace falta un .env real. Se dejan
+      # valores dummy solo por si algún test futuro importa config.js
+      # directamente y necesita que estas variables existan.
+      JWT_SECRET: ci-dummy-jwt-secret
+      DEFAULT_ADMIN_PASSWORD: ci-dummy-admin-password
+      FRONTEND_URL: http://localhost:3000
+      SENDGRID_API_KEY: SG.ci-dummy-key
+      EMAIL_USER: ci-dummy@example.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  frontend:
+    name: Frontend (client)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build

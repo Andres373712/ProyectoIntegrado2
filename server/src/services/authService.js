@@ -10,6 +10,11 @@ const UNA_HORA_MS = 60 * 60 * 1000;
 
 const firmarToken = (payload) => jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
+// Hash "señuelo" contra el que comparar cuando no hay password_hash real
+// (correo inexistente o cuenta sin contraseña). Así bcrypt.compare siempre
+// hace el mismo trabajo y el tiempo de respuesta no delata si el correo existe.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('dummy-password-para-evitar-enumeracion-de-correos', 10);
+
 export const authService = {
   loginAdmin: async ({ email, password }) => {
     const cuenta = await adminRepository.getByEmail(email);
@@ -21,12 +26,19 @@ export const authService = {
 
   loginCliente: async ({ email, password }) => {
     const cliente = await clientesRepository.getByEmail(email);
-    if (!cliente) throw new HttpError(404, 'Correo no registrado.');
-    if (!cliente.password_hash) throw new HttpError(403, 'Debes registrarte primero.');
-    if (!cliente.verificado) throw new HttpError(403, 'Verifica tu correo primero.');
+    // Comparamos siempre contra un hash (real o señuelo) antes de decidir
+    // qué error lanzar: así ni el mensaje ni el tiempo de respuesta revelan
+    // si el correo existe o si la cuenta nunca puso contraseña.
+    const hashParaComparar = cliente?.password_hash ?? DUMMY_PASSWORD_HASH;
+    const valido = await bcrypt.compare(password, hashParaComparar);
 
-    const valido = await bcrypt.compare(password, cliente.password_hash);
-    if (!valido) throw new HttpError(401, 'Contraseña incorrecta.');
+    if (!cliente || !cliente.password_hash || !valido) {
+      throw new HttpError(401, 'Credenciales inválidas');
+    }
+
+    // Llegar aquí ya demuestra que quien pregunta conoce la contraseña real,
+    // así que avisar de la verificación pendiente no filtra nada nuevo.
+    if (!cliente.verificado) throw new HttpError(403, 'Verifica tu correo primero.');
 
     return firmarToken({ id: cliente.id, email: cliente.email, rol: 'cliente' });
   },

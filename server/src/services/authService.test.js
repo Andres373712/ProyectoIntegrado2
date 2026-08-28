@@ -66,34 +66,23 @@ describe('authService.loginAdmin', () => {
 describe('authService.loginCliente', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('lanza 404 si el correo no está registrado', async () => {
+  it('lanza 401 genérico si el correo no está registrado (sin filtrar existencia)', async () => {
     clientesRepository.getByEmail.mockResolvedValue(undefined);
     await expect(authService.loginCliente({ email: 'x@x.com', password: 'y' })).rejects.toMatchObject({
-      status: 404,
+      status: 401,
+      message: 'Credenciales inválidas',
     });
   });
 
-  it('lanza 403 si la cuenta no tiene contraseña (nunca se registró)', async () => {
+  it('lanza el mismo 401 genérico si la cuenta no tiene contraseña (nunca se registró)', async () => {
     clientesRepository.getByEmail.mockResolvedValue({ id: 1, password_hash: null, verificado: 0 });
     await expect(authService.loginCliente({ email: 'x@x.com', password: 'y' })).rejects.toMatchObject({
-      status: 403,
-      message: 'Debes registrarte primero.',
+      status: 401,
+      message: 'Credenciales inválidas',
     });
   });
 
-  it('lanza 403 si la cuenta no está verificada', async () => {
-    clientesRepository.getByEmail.mockResolvedValue({
-      id: 1,
-      password_hash: await bcrypt.hash('x', 10),
-      verificado: 0,
-    });
-    await expect(authService.loginCliente({ email: 'x@x.com', password: 'x' })).rejects.toMatchObject({
-      status: 403,
-      message: 'Verifica tu correo primero.',
-    });
-  });
-
-  it('lanza 401 con la contraseña incorrecta', async () => {
+  it('lanza el mismo 401 genérico con la contraseña incorrecta', async () => {
     clientesRepository.getByEmail.mockResolvedValue({
       id: 1,
       password_hash: await bcrypt.hash('correcta', 10),
@@ -101,7 +90,61 @@ describe('authService.loginCliente', () => {
     });
     await expect(
       authService.loginCliente({ email: 'x@x.com', password: 'incorrecta' }),
-    ).rejects.toMatchObject({ status: 401 });
+    ).rejects.toMatchObject({ status: 401, message: 'Credenciales inválidas' });
+  });
+
+  it('los tres casos "malos" (sin correo, sin password_hash, password incorrecta) dan exactamente el mismo status y mensaje', async () => {
+    clientesRepository.getByEmail.mockResolvedValueOnce(undefined);
+    const errSinCorreo = await authService
+      .loginCliente({ email: 'x@x.com', password: 'y' })
+      .catch((e) => e);
+
+    clientesRepository.getByEmail.mockResolvedValueOnce({ id: 1, password_hash: null, verificado: 0 });
+    const errSinPassword = await authService
+      .loginCliente({ email: 'x@x.com', password: 'y' })
+      .catch((e) => e);
+
+    clientesRepository.getByEmail.mockResolvedValueOnce({
+      id: 1,
+      password_hash: await bcrypt.hash('correcta', 10),
+      verificado: 1,
+    });
+    const errPasswordIncorrecta = await authService
+      .loginCliente({ email: 'x@x.com', password: 'incorrecta' })
+      .catch((e) => e);
+
+    for (const err of [errSinCorreo, errSinPassword, errPasswordIncorrecta]) {
+      expect(err.status).toBe(401);
+      expect(err.message).toBe('Credenciales inválidas');
+    }
+  });
+
+  it('lanza 403 "Verifica tu correo primero" SOLO cuando la contraseña es correcta y la cuenta no está verificada', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({
+      id: 1,
+      password_hash: await bcrypt.hash('correcta', 10),
+      verificado: 0,
+    });
+    await expect(
+      authService.loginCliente({ email: 'x@x.com', password: 'correcta' }),
+    ).rejects.toMatchObject({
+      status: 403,
+      message: 'Verifica tu correo primero.',
+    });
+  });
+
+  it('NO revela "verifica tu correo" si la contraseña es incorrecta en una cuenta no verificada (evita enumeración)', async () => {
+    clientesRepository.getByEmail.mockResolvedValue({
+      id: 1,
+      password_hash: await bcrypt.hash('correcta', 10),
+      verificado: 0,
+    });
+    await expect(
+      authService.loginCliente({ email: 'x@x.com', password: 'incorrecta' }),
+    ).rejects.toMatchObject({
+      status: 401,
+      message: 'Credenciales inválidas',
+    });
   });
 
   it('devuelve token con credenciales válidas y cuenta verificada', async () => {

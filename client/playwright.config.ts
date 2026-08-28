@@ -24,7 +24,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "rm -f tmm_bienestar.sqlite && DEFAULT_ADMIN_PASSWORD=TestAdmin123! FRONTEND_URL=http://localhost:3100 PORT=5100 node server.js",
+        "rm -f tmm_bienestar.sqlite && DEFAULT_ADMIN_PASSWORD=TestAdmin123! JWT_SECRET=clave-de-test-e2e-no-usar-en-produccion FRONTEND_URL=http://localhost:3100 PORT=5100 node server.js",
       cwd: "../server",
       port: 5100,
       reuseExistingServer: false,

@@ -1,4 +1,5 @@
 import { talleresRepository } from '../repositories/talleresRepository.js';
+import { HttpError } from '../utils/httpError.js';
 
 const conFormaDeRespuesta = (t) => ({
   ...t,
@@ -34,5 +35,18 @@ export const talleresService = {
     return talleresRepository.actualizar(id, { ...datos, imageUrl });
   },
 
-  eliminar: (id) => talleresRepository.eliminar(id),
+  // Un taller con inscripciones existentes no se puede borrar por la FK
+  // (inscripciones.taller_id -> talleres.id, sin ON DELETE). Se traduce ese
+  // caso puntual a un HttpError de negocio (mismo status/mensaje que ya
+  // devolvía el controller); cualquier otro error se deja subir tal cual.
+  eliminar: async (id) => {
+    try {
+      await talleresRepository.eliminar(id);
+    } catch (error) {
+      if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        throw new HttpError(500, 'No se puede eliminar (tiene inscripciones)');
+      }
+      throw error;
+    }
+  },
 };
