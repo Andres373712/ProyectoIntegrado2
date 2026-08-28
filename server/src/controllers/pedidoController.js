@@ -1,5 +1,6 @@
 import { pedidoService } from '../services/pedidoService.js';
 import { HttpError } from '../utils/httpError.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const pedidoController = {
   crear: async (req, res) => {
@@ -14,4 +15,8 @@ export const pedidoController = {
       res.status(500).json({ message: 'Error al registrar el pedido' });
     }
   },
+
+  getTodos: asyncHandler(async (req, res) => {
+    res.json(await pedidoService.getTodos());
+  }),
 };
