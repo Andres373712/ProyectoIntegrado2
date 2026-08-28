@@ -5,9 +5,11 @@ import { toast } from "@/shared/hooks/use-toast";
 export interface CartItem {
   id: number;
   tipo: string;
+  nombre: string;
   precio: number;
   cantidad: number;
   stock?: number;
+  imageUrl?: string | null;
   [key: string]: unknown;
 }
 

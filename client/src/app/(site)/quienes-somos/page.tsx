@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,12 @@ import FotoConFallback from "@/components/FotoConFallback";
 
 // Importamos la foto de la fundadora
 import FotoCarolina from "@/assets/carolina.jpg";
+
+export const metadata: Metadata = {
+  title: "Quiénes Somos",
+  description:
+    "Conoce a Carolina López, fundadora de TMM Bienestar y Conexión, y la historia detrás de los talleres de artesanía y bienestar que buscan ayudarte a reconectar contigo misma.",
+};
 
 function QuienesSomos() {
   return (

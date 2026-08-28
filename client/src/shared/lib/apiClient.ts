@@ -25,7 +25,7 @@ const apiClient = axios.create({
  * @param {string} imageUrl - La ruta relativa de la imagen (ej. /uploads/imagen.jpg)
  * @returns {string} La URL completa de la imagen.
  */
-export const getImageUrl = (imageUrl) => {
+export const getImageUrl = (imageUrl?: string | null): string => {
   if (!imageUrl) {
     return "/placeholder.png"; // O una imagen por defecto
   }

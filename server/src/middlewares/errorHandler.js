@@ -7,7 +7,9 @@ import { HttpError } from '../utils/httpError.js';
 // excepción no prevista. También sigue atrapando errores de subida de
 // archivos, para no filtrar nunca un stack trace ni una respuesta en texto
 // plano.
-export function errorHandler(err, req, res, next) {
+// El cuarto parámetro (sin usar) es obligatorio: Express solo reconoce un
+// middleware como manejador de errores por su aridad de 4 argumentos.
+export function errorHandler(err, req, res, _next) {
   if (err instanceof multer.MulterError || err.message?.includes('Tipo de archivo no permitido')) {
     return res.status(400).json({ message: err.message });
   }

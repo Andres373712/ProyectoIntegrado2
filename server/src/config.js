@@ -1,3 +1,15 @@
+// Validación fail-fast: sin JWT_SECRET el servidor arrancaba igual y recién
+// fallaba en el primer login/verificación de token, ya en producción. Se
+// corta acá, antes de que app.listen() empiece a aceptar tráfico.
+const JWT_SECRET_MIN_LENGTH = 16;
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < JWT_SECRET_MIN_LENGTH) {
+  console.error(
+    `Falta configurar JWT_SECRET (o es demasiado corto: mínimo ${JWT_SECRET_MIN_LENGTH} caracteres). ` +
+      'Define la variable de entorno JWT_SECRET antes de arrancar el servidor. Ver .env.example.',
+  );
+  process.exit(1);
+}
+
 export const PORT = process.env.PORT || 5000;
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 

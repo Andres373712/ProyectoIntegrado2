@@ -2,9 +2,14 @@
 
 import { Input } from "@/components/ui/input";
 
-function InputPrecio({ value, onChange, ...props }) {
+interface InputPrecioProps extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
+  value: string | number;
+  onChange: (valor: string) => void;
+}
+
+function InputPrecio({ value, onChange, ...props }: InputPrecioProps) {
   // Formatear el valor para mostrar (agregar puntos)
-  const formatearPrecio = (valor) => {
+  const formatearPrecio = (valor: string | number) => {
     if (!valor) return "";
     // Remover todo excepto números
     const soloNumeros = valor.toString().replace(/\D/g, "");
@@ -13,7 +18,7 @@ function InputPrecio({ value, onChange, ...props }) {
   };
 
   // Manejar cambios en el input
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valorInput = e.target.value;
     // Permitir solo números y puntos
     const valorLimpio = valorInput.replace(/[^\d.]/g, "");

@@ -26,7 +26,7 @@ function NuevaPassword() {
   const isStrong =
     hasMinLength && hasUpper && hasLower && hasNumber && hasSymbol;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isStrong) {
       setError("La contraseña no cumple los requisitos.");
@@ -91,7 +91,7 @@ function NuevaPassword() {
   );
 }
 
-function RequirementItem({ met, text }) {
+function RequirementItem({ met, text }: { met: boolean; text: string }) {
   return (
     <div className={`flex items-center ${met ? "text-green-600" : ""}`}>
       {met ? (

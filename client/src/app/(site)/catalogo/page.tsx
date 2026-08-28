@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,12 @@ import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
 import FiltrosTalleres from "@/components/FiltrosTalleres";
 import RevealOnScroll from "@/components/RevealOnScroll";
+
+export const metadata: Metadata = {
+  title: "Catálogo de Talleres",
+  description:
+    "Explora todos los talleres de bienestar y artesanía disponibles: resina, encuadernación y más, presenciales y online. Revisa cupos, fechas y precios e inscríbete.",
+};
 
 // Server Component: sin interactividad propia (solo lectura + <Link>), se
 // obtienen los talleres en el servidor en vez de con un hook + loading state.

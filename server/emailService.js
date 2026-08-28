@@ -1,6 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import 'dotenv/config';
 import { FRONTEND_URL, API_URL } from './src/config.js';
+import { logger } from './src/utils/logger.js';
 
 // Antes este archivo usaba nodemailer + SMTP directo contra Gmail. Railway
 // bloquea el SMTP saliente (puertos 25/465/587) por completo en los planes
@@ -65,9 +66,9 @@ export async function enviarEmailConfirmacion(datosClienta, datosTaller, tokenCa
     };
 
     await enviar(mailOptions);
-    console.log(`Confirmación enviada a ${datosClienta.email}`);
+    logger.info({ email: datosClienta.email }, 'Confirmación enviada');
   } catch (error) {
-    console.error('Error enviando confirmación:', error.response?.body || error);
+    logger.error({ err: error.response?.body || error }, 'Error enviando confirmación');
   }
 }
 
@@ -95,9 +96,9 @@ export async function enviarEmailVerificacion(datosClienta, verificationToken) {
         </div>
       `,
     });
-    console.log(`Verificación enviada a ${datosClienta.email}`);
+    logger.info({ email: datosClienta.email }, 'Verificación enviada');
   } catch (error) {
-    console.error('Error verificación:', error.response?.body || error);
+    logger.error({ err: error.response?.body || error }, 'Error verificación');
   }
 }
 
@@ -126,7 +127,7 @@ export async function enviarEmailRecuperacion(email, token) {
       `,
     });
   } catch (error) {
-    console.error('Error recuperación:', error.response?.body || error);
+    logger.error({ err: error.response?.body || error }, 'Error recuperación');
   }
 }
 
@@ -152,7 +153,7 @@ export async function enviarEmailPedido(cliente, productos, total, pedidoId) {
       `,
     });
   } catch (error) {
-    console.error('Error email pedido:', error.response?.body || error);
+    logger.error({ err: error.response?.body || error }, 'Error email pedido');
   }
 }
 
@@ -197,9 +198,9 @@ export async function enviarEmailContacto(datosFormulario) {
       `,
     });
 
-    console.log(`Contacto: mensaje de ${nombre} (${email}) procesado correctamente`);
+    logger.info({ nombre, email }, 'Contacto: mensaje procesado correctamente');
   } catch (error) {
-    console.error('Error crítico en enviarEmailContacto:', error.response?.body || error);
+    logger.error({ err: error.response?.body || error }, 'Error crítico en enviarEmailContacto');
     throw error; // Importante: propagar el error para que el backend lo capture
   }
 }

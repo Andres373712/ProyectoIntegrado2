@@ -37,7 +37,7 @@ function LoginClienteInner() {
     }
   }, [searchParams]);
 
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");

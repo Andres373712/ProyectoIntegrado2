@@ -4,11 +4,27 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import * as cartLogic from "@/features/carrito/cartLogic";
 import type { CartItem } from "@/features/carrito/cartLogic";
 
-const CartContext = createContext(undefined);
+interface CartContextValue {
+  cart: CartItem[];
+  addToCart: (product: Omit<CartItem, "cantidad"> & { stock?: number }) => void;
+  removeFromCart: (id: number, tipo: string) => void;
+  updateQuantity: (id: number, tipo: string, amount: number) => void;
+  clearCart: () => void;
+  total: number;
+  count: number;
+}
 
-export const useCart = () => useContext(CartContext);
+const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-export const CartProvider = ({ children }) => {
+export const useCart = (): CartContextValue => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart debe usarse dentro de un <CartProvider>");
+  }
+  return context;
+};
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   // Inicializamos el carrito desde localStorage si existe
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
@@ -21,10 +37,11 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("tmm_cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product) => setCart((prevCart) => cartLogic.addToCart(prevCart, product));
-  const removeFromCart = (id, tipo) =>
+  const addToCart: CartContextValue["addToCart"] = (product) =>
+    setCart((prevCart) => cartLogic.addToCart(prevCart, product));
+  const removeFromCart: CartContextValue["removeFromCart"] = (id, tipo) =>
     setCart((prevCart) => cartLogic.removeFromCart(prevCart, id, tipo));
-  const updateQuantity = (id, tipo, amount) =>
+  const updateQuantity: CartContextValue["updateQuantity"] = (id, tipo, amount) =>
     setCart((prevCart) => cartLogic.updateQuantity(prevCart, id, tipo, amount));
   const clearCart = () => setCart([]);
 

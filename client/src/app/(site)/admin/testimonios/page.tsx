@@ -21,7 +21,8 @@ function AdminTestimonios() {
   const [valores, setValores] = useState(TESTIMONIO_INICIAL);
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [mensaje, setMensaje] = useState("");
-  const { testimonios, fetchTestimonios } = useTestimoniosAdmin();
+  const [listaMensaje, setListaMensaje] = useState("");
+  const { testimonios, error: errorCarga, fetchTestimonios } = useTestimoniosAdmin();
 
   const setCampo = <K extends keyof typeof TESTIMONIO_INICIAL>(
     campo: K,
@@ -66,15 +67,18 @@ function AdminTestimonios() {
   const handleEliminar = async (id: number, nombre: string) => {
     if (!window.confirm(`¿Eliminar el comentario de "${nombre}"?`)) return;
     try {
+      setListaMensaje("");
       await testimoniosService.eliminar(id);
       fetchTestimonios();
     } catch (error) {
-      console.error(error);
+      console.error("Error al eliminar testimonio:", error);
+      setListaMensaje("No pudimos eliminar el testimonio. Intenta más tarde.");
     }
   };
 
   const toggleActivo = async (t: (typeof testimonios)[number]) => {
     try {
+      setListaMensaje("");
       await testimoniosService.actualizar(t.id, {
         nombre: t.nombre,
         curso: t.curso,
@@ -84,7 +88,10 @@ function AdminTestimonios() {
       });
       fetchTestimonios();
     } catch (error) {
-      console.error(error);
+      console.error("Error al cambiar visibilidad del testimonio:", error);
+      setListaMensaje(
+        `No pudimos ${t.activo ? "ocultar" : "mostrar"} el testimonio. Intenta más tarde.`,
+      );
     }
   };
 
@@ -152,6 +159,11 @@ function AdminTestimonios() {
       {/* --- LISTA --- */}
       <div className="mx-auto max-w-4xl rounded-lg border bg-card p-8 shadow-md">
         <h2 className="mb-4 text-2xl font-bold">Testimonios Cargados</h2>
+        {(listaMensaje || errorCarga) && (
+          <p className="mb-4 text-center text-red-500">
+            {listaMensaje || errorCarga}
+          </p>
+        )}
         <div className="space-y-4">
           {testimonios.length > 0 ? (
             testimonios.map((t) => (

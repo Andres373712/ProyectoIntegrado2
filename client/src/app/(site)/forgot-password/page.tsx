@@ -19,7 +19,7 @@ function RecuperarPassword() {
   const [mensaje, setMensaje] = useState("");
   const [enviado, setEnviado] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Nota: Asegúrate de que tu backend tenga esta ruta implementada
     authService

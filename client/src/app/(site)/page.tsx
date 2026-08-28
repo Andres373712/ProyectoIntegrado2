@@ -38,7 +38,7 @@ import FotoCarolina from "@/assets/carolina.jpg";
 // --- FIN ASSETS ---
 
 // useSearchParams exige un límite Suspense para poder prerenderizarse en Next.js.
-function VerificationToastEffect() {
+function VerificationToastEffect(): null {
   const { toast } = useToast();
   const searchParams = useSearchParams();
 

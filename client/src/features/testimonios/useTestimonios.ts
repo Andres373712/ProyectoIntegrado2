@@ -1,42 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { testimoniosService } from "./testimoniosService";
+import { useAsyncData } from "@/shared/hooks/useAsyncData";
 import type { Testimonio } from "@/types/testimonio";
 
+const ERROR_ACTIVOS = "No pudimos cargar los testimonios. Intenta más tarde.";
+const ERROR_ADMIN = "No pudimos cargar los testimonios cargados. Intenta más tarde.";
+
 export function useTestimoniosActivos() {
-  const [testimonios, setTestimonios] = useState<Testimonio[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const { data, loading, error } = useAsyncData<Testimonio[]>(
+    () => testimoniosService.getActivos().then((res) => res.data),
+    [],
+    { initialData: [], errorMessage: ERROR_ACTIVOS },
+  );
 
-  useEffect(() => {
-    testimoniosService
-      .getActivos()
-      .then((response) => {
-        setTestimonios(response.data);
-        setCargando(false);
-      })
-      .catch((error) => {
-        console.error("Error al cargar testimonios:", error);
-        setCargando(false);
-      });
-  }, []);
-
-  return { testimonios, cargando };
+  return { testimonios: data ?? [], cargando: loading, error };
 }
 
 export function useTestimoniosAdmin() {
-  const [testimonios, setTestimonios] = useState<Testimonio[]>([]);
+  const { data, error, refetch } = useAsyncData<Testimonio[]>(
+    () => testimoniosService.getTodos().then((res) => res.data),
+    [],
+    { initialData: [], errorMessage: ERROR_ADMIN },
+  );
 
-  const fetchTestimonios = () => {
-    testimoniosService
-      .getTodos()
-      .then((res) => setTestimonios(res.data))
-      .catch((error) => console.error("Error cargando testimonios:", error));
-  };
-
-  useEffect(() => {
-    fetchTestimonios();
-  }, []);
-
-  return { testimonios, fetchTestimonios };
+  return { testimonios: data ?? [], error, fetchTestimonios: refetch };
 }

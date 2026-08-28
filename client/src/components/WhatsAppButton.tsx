@@ -10,6 +10,7 @@ const WhatsAppButton = () => {
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label="Contactar por WhatsApp"
       className="fixed bottom-4 right-4 z-50 rounded-full bg-green-500 p-3 text-white shadow-lg transition-colors hover:bg-green-600"
     >
       <MessageSquare size={24} />

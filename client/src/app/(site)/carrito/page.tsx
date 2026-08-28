@@ -29,7 +29,7 @@ function Carrito() {
     setMostrarCheckout(true);
   };
 
-  const handleConfirmarPedido = async (e) => {
+  const handleConfirmarPedido = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const exitoso = await confirmarPedido({

@@ -1,0 +1,27 @@
+# Dependencias
+node_modules
+
+# Builds / artefactos generados
+.next
+out
+dist
+build
+*.tsbuildinfo
+
+# Archivos subidos por usuarios
+server/uploads
+
+# Migraciones SQL generadas por drizzle-kit (no se editan a mano)
+server/src/db/migrations/**/*.sql
+
+# Base de datos local
+*.sqlite
+*.sqlite3
+
+# Reportes de tests / cobertura
+coverage
+playwright-report
+test-results
+
+# Logs
+*.log

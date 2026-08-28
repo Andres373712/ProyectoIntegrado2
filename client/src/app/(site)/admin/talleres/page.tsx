@@ -37,10 +37,10 @@ function Admin() {
 
   // --- Estado para la LISTA de talleres ---
   const [listaMensaje, setListaMensaje] = useState("");
-  const { talleres, fetchTalleres } = useTalleresAdmin();
+  const { talleres, error: errorCarga, fetchTalleres } = useTalleresAdmin();
 
   // --- Manejador para CREAR taller ---
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { nombre, descripcion, fecha, precio, lugar } = valores;
 
@@ -75,7 +75,7 @@ function Admin() {
     );
   };
 
-  const handleEliminar = (id, nombreTaller) => {
+  const handleEliminar = (id: number, nombreTaller: string) => {
     if (
       window.confirm(
         `¿Estás segura de que quieres eliminar el taller "${nombreTaller}"?`,
@@ -201,7 +201,11 @@ function Admin() {
         <h2 className="mb-4 text-2xl font-bold">
           Gestionar Talleres Existentes
         </h2>
-        {listaMensaje && <p className="mb-4 text-center">{listaMensaje}</p>}
+        {(listaMensaje || errorCarga) && (
+          <p className="mb-4 text-center text-red-500">
+            {listaMensaje || errorCarga}
+          </p>
+        )}
         <div className="space-y-4">
           {talleres.length > 0 ? (
             talleres.map((taller) => (

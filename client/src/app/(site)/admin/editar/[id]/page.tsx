@@ -86,21 +86,22 @@ function EditarTaller() {
       });
   }, [id]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
-      setTaller((prev) => ({ ...prev, [name]: e.target.checked }));
+      const checked = (e.target as HTMLInputElement).checked;
+      setTaller((prev) => ({ ...prev, [name]: checked }));
     } else {
       setTaller((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSelectChange = (value) =>
+  const handleSelectChange = (value: string) =>
     setTaller((prev) => ({ ...prev, tipo: value }));
-  const handleCheckboxChange = (checked) =>
+  const handleCheckboxChange = (checked: boolean) =>
     setTaller((prev) => ({ ...prev, activo: checked === true }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setMensaje("Actualizando...");
 
@@ -228,7 +229,7 @@ function EditarTaller() {
             id="precio"
             value={taller.precio || 0}
             onChange={(valor) =>
-              setTaller((prev) => ({ ...prev, precio: valor }))
+              setTaller((prev) => ({ ...prev, precio: parseInt(valor, 10) || 0 }))
             }
             required
           />

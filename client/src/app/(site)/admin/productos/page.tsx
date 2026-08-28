@@ -26,10 +26,10 @@ function AdminProductos() {
 
   // --- Estado Lista ---
   const [listaMensaje, setListaMensaje] = useState("");
-  const { productos, fetchProductos } = useProductosAdmin();
+  const { productos, error: errorCarga, fetchProductos } = useProductosAdmin();
 
   // Crear Producto
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { nombre } = valores;
 
@@ -54,7 +54,7 @@ function AdminProductos() {
   };
 
   // Eliminar Producto
-  const handleEliminar = (id, nombreProd) => {
+  const handleEliminar = (id: number, nombreProd: string) => {
     if (window.confirm(`¿Eliminar "${nombreProd}"?`)) {
       productosService
         .eliminar(id)
@@ -62,7 +62,13 @@ function AdminProductos() {
           setListaMensaje(`Producto eliminado.`);
           fetchProductos();
         })
-        .catch(() => setListaMensaje("Error al eliminar."));
+        .catch((error) => {
+          console.error("Error al eliminar producto:", error);
+          setListaMensaje(
+            error?.response?.data?.message ||
+              "No pudimos eliminar el producto. Intenta más tarde.",
+          );
+        });
     }
   };
 
@@ -134,8 +140,10 @@ function AdminProductos() {
       {/* --- LISTA DE PRODUCTOS --- */}
       <div className="mx-auto max-w-4xl rounded-lg border bg-card p-8 shadow-md">
         <h2 className="mb-4 text-2xl font-bold">Inventario Actual</h2>
-        {listaMensaje && (
-          <p className="mb-4 text-center text-red-500">{listaMensaje}</p>
+        {(listaMensaje || errorCarga) && (
+          <p className="mb-4 text-center text-red-500">
+            {listaMensaje || errorCarga}
+          </p>
         )}
 
         <div className="space-y-4">

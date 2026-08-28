@@ -20,7 +20,7 @@ function Contacto() {
   const [feedback, setFeedback] = useState({ message: "", type: "" });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
     // Clear error when user starts typing
@@ -61,7 +61,7 @@ function Contacto() {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {

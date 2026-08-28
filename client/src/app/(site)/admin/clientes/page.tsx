@@ -14,13 +14,17 @@ function AdminClientes() {
   const [tallerSeleccionado, setTallerSeleccionado] = useState(""); // Nuevo estado para el taller
 
   // Manejadores para los inputs
-  const handleBusquedaChange = (e) => setTerminoBusqueda(e.target.value);
-  const handleFechaInicioChange = (e) => setFechaInicio(e.target.value);
-  const handleFechaFinChange = (e) => setFechaFin(e.target.value);
-  const handleTallerChange = (e) => setTallerSeleccionado(e.target.value); // Nuevo manejador
+  const handleBusquedaChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setTerminoBusqueda(e.target.value);
+  const handleFechaInicioChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFechaInicio(e.target.value);
+  const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFechaFin(e.target.value);
+  const handleTallerChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setTallerSeleccionado(e.target.value); // Nuevo manejador
 
   // Manejador para el envío del formulario de búsqueda
-  const handleBuscarSubmit = (e) => {
+  const handleBuscarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchClientes(terminoBusqueda, fechaInicio, fechaFin, tallerSeleccionado); // Incluir taller
   };

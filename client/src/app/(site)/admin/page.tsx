@@ -12,11 +12,27 @@ import {
   CalendarDays,
   ArrowRight,
   MessageSquareQuote,
+  type LucideIcon,
 } from "lucide-react";
 import { useDashboardData } from "@/features/admin/useDashboardData";
 
+interface StatCardProps {
+  title: string;
+  value: React.ReactNode;
+  icon: LucideIcon;
+  color: string;
+}
+
+interface ActionCardProps {
+  title: string;
+  description: string;
+  link: string;
+  icon: LucideIcon;
+  color: string;
+}
+
 // Componente de Tarjeta de Estadística
-const StatCard = ({ title, value, icon: Icon, color }) => (
+const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
   <div className="flex items-center space-x-4 rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
     <div className={`rounded-full p-3 ${color} bg-opacity-10 text-white`}>
       <Icon className={`h-8 w-8 ${color.replace("bg-", "text-")}`} />
@@ -29,7 +45,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
 );
 
 // Componente de Tarjeta de Acción Rápida (Navegación)
-const ActionCard = ({ title, description, link, icon: Icon, color }) => (
+const ActionCard = ({ title, description, link, icon: Icon, color }: ActionCardProps) => (
   <Link
     href={link}
     className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg"

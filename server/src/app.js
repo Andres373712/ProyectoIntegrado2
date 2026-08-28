@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { FRONTEND_URL } from './config.js';
 import { UPLOADS_DIR } from './middlewares/upload.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -17,6 +18,12 @@ import healthRoutes from './routes/health.routes.js';
 
 export const app = express();
 
+// Headers de seguridad estándar (X-Content-Type-Options, X-Frame-Options,
+// HSTS, etc). Se relaja crossOriginResourcePolicy porque el default de
+// helmet ('same-origin') bloquea que el frontend, que vive en otro origen
+// (FRONTEND_URL), cargue las imágenes servidas en /uploads como <img src>:
+// eso no pasa por CORS (que solo cubre fetch/XHR), sino por este header.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 // Los nombres de archivo son únicos por subida (uuid): el mismo nombre

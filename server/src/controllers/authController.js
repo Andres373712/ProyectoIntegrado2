@@ -49,7 +49,7 @@ export const authController = {
       const ok = await authService.verificarToken(req.params.token);
       if (!ok) return res.redirect(`${FRONTEND_URL}/?error=invalid`);
       res.redirect(`${FRONTEND_URL}/?verified=true`);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: 'Error' });
     }
   },

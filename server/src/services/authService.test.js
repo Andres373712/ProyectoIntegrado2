@@ -26,7 +26,6 @@ vi.mock('../../emailService.js', () => ({
 const { adminRepository } = await import('../repositories/adminRepository.js');
 const { clientesRepository } = await import('../repositories/clientesRepository.js');
 const { authService } = await import('./authService.js');
-const { HttpError } = await import('../utils/httpError.js');
 const { enviarEmailRecuperacion } = await import('../../emailService.js');
 
 describe('authService.loginAdmin', () => {

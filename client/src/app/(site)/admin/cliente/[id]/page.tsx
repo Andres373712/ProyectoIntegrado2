@@ -23,7 +23,7 @@ function ClienteDetalle() {
   const [mensajeNota, setMensajeNota] = useState("");
 
   // --- Guardar Nota ---
-  const handleGuardarNota = async (e) => {
+  const handleGuardarNota = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevaNota) return;
     setMensajeNota("Guardando nota...");
@@ -40,12 +40,12 @@ function ClienteDetalle() {
   };
 
   // --- Editar Datos Cliente ---
-  const handleClientaChange = (e) => {
+  const handleClientaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setClienta((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGuardarCliente = async (e) => {
+  const handleGuardarCliente = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensajeCliente("Guardando...");
 

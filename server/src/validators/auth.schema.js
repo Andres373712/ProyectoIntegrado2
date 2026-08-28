@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
-// Los endpoints de login no validaban nada antes (fallaban recién en la
-// consulta a la DB); se mantiene igual de permisivo, solo se exige presencia.
+// El endpoint de login admin no validaba nada antes (fallaba recién en la
+// consulta a la DB). Se exige presencia real de ambos campos (antes el
+// schema usaba z.string().optional(), que no rechazaba ni campos ausentes:
+// aplicarlo tal cual no habría cambiado el comportamiento). No se valida
+// formato de email ni longitud de password acá: ese trabajo ya lo hace la
+// consulta a la DB / bcrypt.compare, y mantenerlo así evita duplicar reglas
+// de negocio en dos capas.
 export const loginSchema = z.object({
-  email: z.string().optional(),
-  password: z.string().optional(),
+  email: z.string({ required_error: 'Faltan credenciales.' }).min(1, 'Faltan credenciales.'),
+  password: z.string({ required_error: 'Faltan credenciales.' }).min(1, 'Faltan credenciales.'),
 });
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/;

@@ -5,6 +5,7 @@ import { inscripcionesRepository } from '../repositories/inscripcionesRepository
 import { HttpError } from '../utils/httpError.js';
 import { enviarEmailConfirmacion } from '../../emailService.js';
 import { db } from '../db/client.js';
+import { logger } from '../utils/logger.js';
 
 // Token de cancelación anónima por link de correo (distinto de los JWT de
 // sesión): firma { tipo, inscripcionId } para que el link del email pueda
@@ -89,7 +90,9 @@ export const inscripcionService = {
     if (!huboCupo) throw new HttpError(409, 'Sin cupos');
 
     const tokenCancelacion = firmarTokenCancelacion(inscripcionId);
-    enviarEmailConfirmacion({ nombre, email }, taller, tokenCancelacion).catch(console.error);
+    enviarEmailConfirmacion({ nombre, email }, taller, tokenCancelacion).catch((error) =>
+      logger.error({ err: error }, 'Error enviando email de confirmación de inscripción'),
+    );
   },
 
   // Cancelación anónima por link de correo (sin login): distinta del flujo
@@ -102,7 +105,7 @@ export const inscripcionService = {
     let payload;
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (error) {
+    } catch {
       throw new HttpError(400, 'El enlace de cancelación es inválido o ya expiró.');
     }
 

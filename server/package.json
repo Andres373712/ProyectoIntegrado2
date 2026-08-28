@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write . --ignore-path ../.prettierignore --ignore-path .gitignore",
+    "format:check": "prettier --check . --ignore-path ../.prettierignore --ignore-path .gitignore"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
@@ -17,16 +20,21 @@
     "drizzle-orm": "^0.45.2",
     "express": "^4.22.2",
     "express-rate-limit": "^7.5.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "jwt-decode": "^4.0.0",
     "multer": "^2.2.0",
+    "pino": "^10.3.1",
     "sharp": "^0.35.4",
     "uuid": "^14.0.2",
-    "validator": "^13.15.35",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "drizzle-kit": "^0.31.10",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
     "vitest": "^4.1.11"
   }
 }

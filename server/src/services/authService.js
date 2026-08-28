@@ -63,6 +63,17 @@ export const authService = {
     }
 
     if (existente && existente.password_hash) {
+      // Nota de auditoría (impacto bajo, decisión consciente de no cambiarlo):
+      // este 409 revela que el email ya tiene cuenta a quien intente
+      // registrarse con él. A diferencia del login, en un formulario de
+      // registro decirle "ya existe una cuenta con este email" a un usuario
+      // real es información útil y esperada (le evita crear una cuenta
+      // duplicada y le sugiere ir a "olvidé mi contraseña"). Para explotarlo
+      // como enumeración, un atacante ya necesita conocer/adivinar el email
+      // de antemano, y el checkout de pedidoService.crearPedido crea clientes
+      // sin password_hash con emails arbitrarios, así que esto no permite
+      // enumerar direcciones nuevas por sí solo. Se documenta acá en vez de
+      // cambiar el mensaje para no degradar la UX de un registro legítimo.
       throw new HttpError(409, 'Ya existe una cuenta con este email.');
     }
 

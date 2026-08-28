@@ -46,7 +46,7 @@ function Registro() {
   const isNameValid = nombre.trim().length > 0 && !/\d/.test(nombre);
   const passwordsMatch = password === confirmPassword && password.length > 0;
 
-  const handleRegistro = async (e) => {
+  const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setCargando(true);
@@ -258,7 +258,7 @@ function Registro() {
   );
 }
 
-function Req({ met, text }) {
+function Req({ met, text }: { met: boolean; text: string }) {
   return (
     <div
       className={`flex items-center gap-2 text-xs ${met ? "font-medium text-green-600" : "text-gray-500"}`}

@@ -31,7 +31,7 @@ function Inscripcion() {
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const exitoso = await inscribir({
       tallerId: id as string,

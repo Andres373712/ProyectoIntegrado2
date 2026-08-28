@@ -4,6 +4,7 @@ import { pedidosRepository } from '../repositories/pedidosRepository.js';
 import { clientesRepository } from '../repositories/clientesRepository.js';
 import { HttpError } from '../utils/httpError.js';
 import { enviarEmailPedido } from '../../emailService.js';
+import { logger } from '../utils/logger.js';
 
 export const pedidoService = {
   // "usuarioAutenticado" es el payload del JWT (req.user) cuando la petición
@@ -75,7 +76,7 @@ export const pedidoService = {
       items.map(({ producto, cantidad }) => ({ nombre: producto.nombre, cantidad, precio: producto.precio })),
       total,
       pedidoId,
-    ).catch(console.error);
+    ).catch((error) => logger.error({ err: error }, 'Error enviando email de pedido'));
 
     return { pedidoId, total };
   },

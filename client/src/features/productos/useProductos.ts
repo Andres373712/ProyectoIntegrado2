@@ -1,42 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { productosService } from "./productosService";
+import { useAsyncData } from "@/shared/hooks/useAsyncData";
 import type { Producto } from "@/types/producto";
 
+const ERROR_ACTIVOS = "No pudimos cargar los productos. Intenta más tarde.";
+const ERROR_ADMIN = "No pudimos cargar el inventario. Intenta más tarde.";
+
 export function useProductosActivos() {
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const { data, loading, error } = useAsyncData<Producto[]>(
+    () => productosService.getActivos().then((res) => res.data),
+    [],
+    { initialData: [], errorMessage: ERROR_ACTIVOS },
+  );
 
-  useEffect(() => {
-    productosService
-      .getActivos()
-      .then((response) => {
-        setProductos(response.data);
-        setCargando(false);
-      })
-      .catch((error) => {
-        console.error("Error al cargar productos:", error);
-        setCargando(false);
-      });
-  }, []);
-
-  return { productos, cargando };
+  return { productos: data ?? [], cargando: loading, error };
 }
 
 export function useProductosAdmin() {
-  const [productos, setProductos] = useState<Producto[]>([]);
+  const { data, error, refetch } = useAsyncData<Producto[]>(
+    () => productosService.getTodos().then((res) => res.data),
+    [],
+    { initialData: [], errorMessage: ERROR_ADMIN },
+  );
 
-  const fetchProductos = () => {
-    productosService
-      .getTodos()
-      .then((res) => setProductos(res.data))
-      .catch((error) => console.error("Error cargando productos:", error));
-  };
-
-  useEffect(() => {
-    fetchProductos();
-  }, []);
-
-  return { productos, fetchProductos };
+  return { productos: data ?? [], error, fetchProductos: refetch };
 }

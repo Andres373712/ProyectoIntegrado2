@@ -24,10 +24,43 @@ function Navegacion() {
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const [menuOpen, setMenuOpen] = React.useState(false);
 
+  const mobileMenuId = "mobile-menu";
+  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
+  const firstMenuItemRef = React.useRef<HTMLAnchorElement>(null);
+  const isFirstRender = React.useRef(true);
+
   const handleLogout = () => {
     logout();
     router.push("/");
   };
+
+  // Cierra el menú móvil con la tecla Escape
+  React.useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
+
+  // Mueve el foco al abrir/cerrar el menú móvil
+  React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (menuOpen) {
+      firstMenuItemRef.current?.focus();
+    } else {
+      menuButtonRef.current?.focus();
+    }
+  }, [menuOpen]);
 
   // Efecto Scroll
   React.useEffect(() => {
@@ -45,12 +78,12 @@ function Navegacion() {
     return () => window.removeEventListener("scroll", controlNavbar);
   }, [lastScrollY]);
 
-  const isActive = (path) => pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   // --- CAMBIO CLAVE: Estilo uniforme para activo e inactivo ---
   // Todos son blancos. El activo tiene un subrayado blanco simple.
   // Eliminamos 'font-bold' del activo para que no cambie el tamaño/grosor.
-  const linkClass = (path) =>
+  const linkClass = (path: string) =>
     `text-xs uppercase tracking-widest font-medium transition-all duration-200
          text-foreground/70 hover:text-foreground
          ${isActive(path) ? "border-b-2 border-[#E4007C] pb-1 text-foreground" : ""}`;
@@ -108,6 +141,7 @@ function Navegacion() {
             {/* Carrito */}
             <Link
               href="/carrito"
+              aria-label="Ver carrito"
               className="group relative text-foreground/70 transition-colors hover:text-foreground"
             >
               <ShoppingCart
@@ -167,7 +201,7 @@ function Navegacion() {
 
           {/* --- BOTÓN MÓVIL --- */}
           <div className="ml-auto flex items-center gap-4 md:hidden">
-            <Link href="/carrito" className="relative text-foreground">
+            <Link href="/carrito" aria-label="Ver carrito" className="relative text-foreground">
               <ShoppingCart size={20} />
               {count > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#E4007C] text-[9px] text-white">
@@ -176,7 +210,11 @@ function Navegacion() {
               )}
             </Link>
             <button
+              ref={menuButtonRef}
               onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={menuOpen}
+              aria-controls={mobileMenuId}
               className="text-foreground hover:text-foreground/70"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -187,8 +225,12 @@ function Navegacion() {
 
       {/* --- MENÚ MÓVIL DESPLEGABLE --- */}
       {menuOpen && (
-        <div className="absolute top-14 w-full space-y-4 border-t border-border bg-background p-4 shadow-lg animate-in slide-in-from-top-5 md:hidden">
+        <div
+          id={mobileMenuId}
+          className="absolute top-14 w-full space-y-4 border-t border-border bg-background p-4 shadow-lg animate-in slide-in-from-top-5 md:hidden"
+        >
           <Link
+            ref={firstMenuItemRef}
             href="/"
             onClick={() => setMenuOpen(false)}
             className="block py-2 text-sm uppercase tracking-wider text-foreground hover:text-foreground/70"
@@ -271,7 +313,7 @@ function Navegacion() {
   );
 }
 
-const AppShell = ({ children }) => {
+const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Navegacion />

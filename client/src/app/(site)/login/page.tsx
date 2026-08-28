@@ -25,7 +25,7 @@ function Login() {
   const router = useRouter();
   const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 

@@ -1,18 +1,23 @@
 import { Router } from 'express';
 import { authController } from '../controllers/authController.js';
-import { loginLimiter } from '../middlewares/rateLimit.js';
+import { loginLimiter, registroLimiter } from '../middlewares/rateLimit.js';
 import { validate } from '../middlewares/validate.js';
-import { registroClienteSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/auth.schema.js';
+import { loginSchema, registroClienteSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/auth.schema.js';
 
 const router = Router();
 
 // Nota: "/login" (admin) vive fuera de "/auth/*", igual que en el server.js
 // original — no es un error, es el contrato existente.
-router.post('/login', loginLimiter, authController.loginAdmin);
+router.post('/login', loginLimiter, validate(loginSchema), authController.loginAdmin);
 
-router.post('/auth/register-cliente', validate(registroClienteSchema), authController.registrarCliente);
+router.post(
+  '/auth/register-cliente',
+  registroLimiter,
+  validate(registroClienteSchema),
+  authController.registrarCliente,
+);
 router.post('/auth/login-cliente', loginLimiter, authController.loginCliente);
-router.get('/auth/verificar/:token', authController.verificarToken);
+router.get('/auth/verificar/:token', registroLimiter, authController.verificarToken);
 
 // Mismo limiter que el login: son los endpoints más golpeables por fuerza
 // bruta / spam de correos de todo el módulo de auth.
