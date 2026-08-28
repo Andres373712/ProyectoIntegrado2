@@ -1,6 +1,6 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { pedidos, pedidoItems } from '../db/schema.js';
+import { pedidos, pedidoItems, clientes, productos } from '../db/schema.js';
 
 export const pedidosRepository = {
   // Se usa .run() (sync, vía better-sqlite3) en vez de .returning()/await:
@@ -20,8 +20,7 @@ export const pedidosRepository = {
 
   crearItems: (items, tx = db) => {
     for (const item of items) {
-      tx
-        .insert(pedidoItems)
+      tx.insert(pedidoItems)
         .values({
           pedido_id: item.pedidoId,
           producto_id: item.productoId,
@@ -33,5 +32,68 @@ export const pedidosRepository = {
   },
 
   getPorClienteId: (clienteId) =>
-    db.select().from(pedidos).where(eq(pedidos.cliente_id, clienteId)).orderBy(desc(pedidos.fecha_pedido)),
+    db
+      .select()
+      .from(pedidos)
+      .where(eq(pedidos.cliente_id, clienteId))
+      .orderBy(desc(pedidos.fecha_pedido)),
+
+  // Vista de admin: todos los pedidos con datos del cliente y sus líneas de
+  // producto. Se arma con dos consultas (pedidos+cliente, luego items+
+  // producto agrupados en memoria) en vez de un único JOIN de 3 tablas, para
+  // no duplicar la fila del pedido por cada item que tenga.
+  getTodos: async () => {
+    const listaPedidos = await db
+      .select({
+        id: pedidos.id,
+        total: pedidos.total,
+        estado: pedidos.estado,
+        fechaPedido: pedidos.fecha_pedido,
+        clienteNombre: clientes.nombre,
+        clienteEmail: clientes.email,
+        clienteTelefono: clientes.telefono,
+      })
+      .from(pedidos)
+      .leftJoin(clientes, eq(pedidos.cliente_id, clientes.id))
+      .orderBy(desc(pedidos.fecha_pedido));
+
+    if (listaPedidos.length === 0) return [];
+
+    const idsPedidos = listaPedidos.map((p) => p.id);
+    const items = await db
+      .select({
+        pedidoId: pedidoItems.pedido_id,
+        productoId: pedidoItems.producto_id,
+        cantidad: pedidoItems.cantidad,
+        precioUnitario: pedidoItems.precio_unitario,
+        productoNombre: productos.nombre,
+      })
+      .from(pedidoItems)
+      .leftJoin(productos, eq(pedidoItems.producto_id, productos.id))
+      .where(inArray(pedidoItems.pedido_id, idsPedidos));
+
+    const itemsPorPedido = new Map();
+    for (const item of items) {
+      if (!itemsPorPedido.has(item.pedidoId)) itemsPorPedido.set(item.pedidoId, []);
+      itemsPorPedido.get(item.pedidoId).push({
+        productoId: item.productoId,
+        nombre: item.productoNombre || `Producto eliminado (id ${item.productoId})`,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario,
+      });
+    }
+
+    return listaPedidos.map((pedido) => ({
+      id: pedido.id,
+      total: pedido.total,
+      estado: pedido.estado,
+      fechaPedido: pedido.fechaPedido,
+      cliente: {
+        nombre: pedido.clienteNombre,
+        email: pedido.clienteEmail,
+        telefono: pedido.clienteTelefono,
+      },
+      items: itemsPorPedido.get(pedido.id) || [],
+    }));
+  },
 };
