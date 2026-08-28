@@ -1,4 +1,5 @@
 import apiClient from "@/shared/lib/apiClient";
+import type { PedidoAdmin } from "@/types/pedido";
 
 export interface PedidoItem {
   id: number;
@@ -15,9 +16,9 @@ export interface PedidoData {
   total: number;
 }
 
-// NOTA: POST /api/pedido todavía no existe en el backend (ver diagnóstico,
-// sección "Funcionalidades a medio construir"). Este servicio queda listo
-// para cuando se implemente el endpoint.
 export const pedidosService = {
   crear: (datos: PedidoData) => apiClient.post("/api/pedido", datos),
+
+  // Uso exclusivo del panel de admin (requiere token de admin).
+  getTodos: () => apiClient.get<PedidoAdmin[]>("/api/pedidos/todos"),
 };
