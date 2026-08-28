@@ -29,7 +29,10 @@ export const pedidoService = {
     }
 
     // 2. Total recalculado server-side — el total que venga en el body se ignora.
-    const total = items.reduce((acumulado, { producto, cantidad }) => acumulado + producto.precio * cantidad, 0);
+    const total = items.reduce(
+      (acumulado, { producto, cantidad }) => acumulado + producto.precio * cantidad,
+      0,
+    );
 
     // 3. Resolver cliente (mismo criterio que inscripcionService.inscribir).
     let clienteId;
@@ -38,7 +41,12 @@ export const pedidoService = {
     } else {
       let cliente = await clientesRepository.getByEmail(email);
       if (!cliente) {
-        cliente = await clientesRepository.crearDesdeInscripcion({ nombre, email, telefono, intereses: null });
+        cliente = await clientesRepository.crearDesdeInscripcion({
+          nombre,
+          email,
+          telefono,
+          intereses: null,
+        });
       }
       clienteId = cliente.id;
     }
@@ -73,11 +81,17 @@ export const pedidoService = {
 
     enviarEmailPedido(
       { nombre, email },
-      items.map(({ producto, cantidad }) => ({ nombre: producto.nombre, cantidad, precio: producto.precio })),
+      items.map(({ producto, cantidad }) => ({
+        nombre: producto.nombre,
+        cantidad,
+        precio: producto.precio,
+      })),
       total,
       pedidoId,
     ).catch((error) => logger.error({ err: error }, 'Error enviando email de pedido'));
 
     return { pedidoId, total };
   },
+
+  getTodos: () => pedidosRepository.getTodos(),
 };

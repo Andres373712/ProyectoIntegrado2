@@ -17,6 +17,7 @@ vi.mock('../repositories/pedidosRepository.js', () => ({
   pedidosRepository: {
     crear: vi.fn(),
     crearItems: vi.fn(),
+    getTodos: vi.fn(),
   },
 }));
 vi.mock('../repositories/clientesRepository.js', () => ({
@@ -165,5 +166,26 @@ describe('pedidoService.crearPedido', () => {
       expect.objectContaining({ clienteId: 77 }),
       expect.anything(),
     );
+  });
+});
+
+describe('pedidoService.getTodos', () => {
+  it('delega en pedidosRepository.getTodos y devuelve su resultado tal cual', async () => {
+    const listaEsperada = [
+      {
+        id: 10,
+        total: 13000,
+        estado: 'pendiente',
+        fechaPedido: '2026-08-27T00:00:00.000Z',
+        cliente: { nombre: 'Ana', email: 'ana@test.com', telefono: '123' },
+        items: [{ productoId: 1, nombre: 'Aceite esencial', cantidad: 2, precioUnitario: 5000 }],
+      },
+    ];
+    pedidosRepository.getTodos.mockResolvedValue(listaEsperada);
+
+    const resultado = await pedidoService.getTodos();
+
+    expect(pedidosRepository.getTodos).toHaveBeenCalledTimes(1);
+    expect(resultado).toBe(listaEsperada);
   });
 });
