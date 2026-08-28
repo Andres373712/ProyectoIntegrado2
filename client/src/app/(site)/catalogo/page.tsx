@@ -16,6 +16,7 @@ import { getImageUrl } from "@/shared/lib/apiClient";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
 import FiltrosTalleres from "@/components/FiltrosTalleres";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import CatalogoProductos from "@/components/CatalogoProductos";
 
 export const metadata: Metadata = {
   title: "Catálogo de Talleres",
@@ -148,6 +149,13 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
               : "No hay talleres activos en este momento."}
           </p>
         )}
+
+        {/* El botón "Ver Todo el Catálogo" de la portada trae a la gente
+            acá esperando ver también los productos, no solo talleres — antes
+            esta página solo mostraba talleres y el catálogo de productos no
+            existía en ningún lugar público más allá de los 3 destacados en
+            la portada. */}
+        <CatalogoProductos />
       </div>
     </div>
   );

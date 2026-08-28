@@ -21,7 +21,7 @@ const PRODUCTO_INICIAL = {
 };
 
 function AdminProductos() {
-  const { valores, setCampo, setImagen, mensaje, enviar } =
+  const { valores, setCampo, imagen, setImagen, imagenPreviewUrl, mensaje, setMensaje, enviar } =
     useFormularioCrud(PRODUCTO_INICIAL);
 
   // --- Estado Lista ---
@@ -32,6 +32,15 @@ function AdminProductos() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { nombre } = valores;
+
+    // Mismo criterio que ya aplica admin/talleres: un producto sin foto se ve
+    // genérico en la vitrina y el catálogo (cae al placeholder), así que la
+    // imagen pasa a ser obligatoria acá también, no solo en talleres.
+    if (!imagen) {
+      setMensaje("⚠️ Por favor selecciona una imagen para el producto.");
+      setTimeout(() => setMensaje(""), 4000);
+      return;
+    }
 
     enviar(
       productosService.crear,
@@ -125,8 +134,22 @@ function AdminProductos() {
             <Input
               id="file-input-prod"
               type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => setImagen(e.target.files[0])}
+              required
             />
+            {imagenPreviewUrl && (
+              <div className="relative mt-3 h-32 w-32 overflow-hidden rounded-md border bg-muted">
+                <Image
+                  src={imagenPreviewUrl}
+                  alt="Vista previa de la imagen seleccionada"
+                  fill
+                  unoptimized
+                  sizes="128px"
+                  className="object-cover"
+                />
+              </div>
+            )}
           </div>
           <Button type="submit" className="w-full">
             Guardar Producto

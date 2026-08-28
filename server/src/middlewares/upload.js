@@ -8,6 +8,16 @@ import sharp from 'sharp';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOADS_DIR = path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..', '..'), 'uploads');
 
+// Sin esto, la carpeta "uploads" solo existe por casualidad (quedó creada a
+// mano en el checkout local de siempre). En un volumen de Railway recién
+// montado (o cualquier entorno nuevo) no existe ningún "uploads/" dentro de
+// RAILWAY_VOLUME_MOUNT_PATH, y sharp.toFile()/fs.writeFile() fallan con
+// ENOENT al intentar escribir ahí — la subida de imagen de talleres o
+// productos responde 500 aunque el resto del formulario sea válido. Crearla
+// (si ya existe, no hace nada) apenas se carga este módulo, antes de que
+// llegue cualquier subida.
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
 const EXTENSIONES_PERMITIDAS = {
   'image/jpeg': '.jpg',
   'image/png': '.png',

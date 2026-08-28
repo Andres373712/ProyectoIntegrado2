@@ -32,7 +32,7 @@ const TALLER_INICIAL = {
 };
 
 function Admin() {
-  const { valores, setCampo, imagen, setImagen, mensaje, setMensaje, enviar } =
+  const { valores, setCampo, imagen, setImagen, imagenPreviewUrl, mensaje, setMensaje, enviar } =
     useFormularioCrud(TALLER_INICIAL);
 
   // --- Estado para la LISTA de talleres ---
@@ -186,9 +186,22 @@ function Admin() {
             <Input
               id="file-input"
               type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => setImagen(e.target.files[0])}
               required
             />
+            {imagenPreviewUrl && (
+              <div className="relative mt-3 h-32 w-32 overflow-hidden rounded-md border bg-muted">
+                <Image
+                  src={imagenPreviewUrl}
+                  alt="Vista previa de la imagen seleccionada"
+                  fill
+                  unoptimized
+                  sizes="128px"
+                  className="object-cover"
+                />
+              </div>
+            )}
           </div>
           <Button type="submit" className="h-11 w-full text-lg">
             Guardar Taller

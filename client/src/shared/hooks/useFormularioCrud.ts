@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 /**
  * Estado + ciclo de vida compartido por los formularios de alta con imagen
@@ -13,20 +13,42 @@ export function useFormularioCrud<T extends Record<string, unknown>>(valoresInic
   const [imagen, setImagen] = useState<File | null>(null);
   const [mensaje, setMensaje] = useState("");
 
+  // Vista previa local del archivo elegido, antes de subirlo — así el admin
+  // confirma que es la imagen correcta sin tener que guardar primero para
+  // recién verla en la lista. Se genera con URL.createObjectURL (vive solo
+  // en el navegador) y se libera cuando cambia o se limpia, para no acumular
+  // URLs de objeto sin usar.
+  const [imagenPreviewUrl, setImagenPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
   const setCampo = useCallback(<K extends keyof T>(campo: K, valor: T[K]) => {
     setValores((prev) => ({ ...prev, [campo]: valor }));
+  }, []);
+
+  const setImagenConPreview = useCallback((archivo: File | null) => {
+    setImagen(archivo);
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const url = archivo ? URL.createObjectURL(archivo) : null;
+    previewUrlRef.current = url;
+    setImagenPreviewUrl(url);
   }, []);
 
   const reset = useCallback(
     (fileInputId?: string) => {
       setValores(valoresIniciales);
-      setImagen(null);
+      setImagenConPreview(null);
       if (fileInputId) {
         const input = document.getElementById(fileInputId) as HTMLInputElement | null;
         if (input) input.value = "";
       }
     },
-    [valoresIniciales],
+    [valoresIniciales, setImagenConPreview],
   );
 
   const enviar = useCallback(
@@ -54,5 +76,15 @@ export function useFormularioCrud<T extends Record<string, unknown>>(valoresInic
     [valores, imagen, reset],
   );
 
-  return { valores, setCampo, imagen, setImagen, mensaje, setMensaje, enviar, reset };
+  return {
+    valores,
+    setCampo,
+    imagen,
+    setImagen: setImagenConPreview,
+    imagenPreviewUrl,
+    mensaje,
+    setMensaje,
+    enviar,
+    reset,
+  };
 }

@@ -4,30 +4,19 @@ import React, { useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 
 // --- IMPORTACIONES DE CARRUSEL E ICONOS ---
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { ShoppingCart, Ban } from "lucide-react";
-import { useCart } from "@/features/carrito/CartContext";
 import { useProductosActivos } from "@/features/productos/useProductos";
 import { useTestimoniosActivos } from "@/features/testimonios/useTestimonios";
-import { getImageUrl } from "@/shared/lib/apiClient";
-import { formatCLP } from "@/lib/utils";
 
 import { useToast } from "@/shared/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import StarRating from "@/components/StarRating";
+import { GrillaProductos } from "@/components/CatalogoProductos";
 
 // --- IMPORTACIONES DE ASSETS (AJUSTAR EXTENSIONES Y NOMBRES) ---
 import HeroBackground from "@/assets/nuevo-fondo.jpg";
@@ -64,8 +53,6 @@ function VerificationToastEffect(): null {
 }
 
 function Homepage() {
-  const { addToCart } = useCart();
-  const { toast } = useToast();
   const { productos: todosLosProductos, cargando } = useProductosActivos();
   // Tomamos solo los 3 primeros productos para mostrar en la vitrina
   const productos = todosLosProductos.slice(0, 3);
@@ -184,95 +171,13 @@ function Homepage() {
           <p className="text-center text-muted-foreground">
             Cargando productos...
           </p>
+        ) : productos.length > 0 ? (
+          <GrillaProductos productos={productos} />
         ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {productos.length > 0 ? (
-              productos.map((prod) => {
-                const sinStock = prod.stock <= 0;
-
-                return (
-                  <Card
-                    key={prod.id}
-                    className="flex flex-col justify-between overflow-hidden border-none shadow-md transition-shadow duration-300 hover:shadow-xl"
-                  >
-                    <CardHeader className="p-0">
-                      <div className="relative h-56 w-full">
-                        <Image
-                          src={getImageUrl(prod.imageUrl)}
-                          alt={prod.nombre}
-                          fill
-                          unoptimized
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 384px"
-                          className={`object-cover transition-transform duration-500 hover:scale-105 ${sinStock ? "opacity-60 grayscale" : ""}`}
-                        />
-                        {sinStock && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                            <span className="-rotate-12 transform rounded bg-destructive px-4 py-2 text-lg font-bold text-white shadow-lg">
-                              AGOTADO
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="p-6">
-                      <CardTitle className="mb-2 text-xl">
-                        {prod.nombre}
-                      </CardTitle>
-                      <CardDescription className="mb-4 line-clamp-2 text-sm">
-                        {prod.descripcion}
-                      </CardDescription>
-                      <div className="flex items-end justify-between">
-                        <p className="text-2xl font-bold text-primary">
-                          ${formatCLP(prod.precio)}
-                        </p>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {sinStock
-                            ? "Sin stock"
-                            : `Disponibles: ${prod.stock}`}
-                        </p>
-                      </div>
-                    </CardContent>
-
-                    <CardFooter className="p-6 pt-0">
-                      <Button
-                        className="w-full gap-2 font-semibold"
-                        disabled={sinStock}
-                        variant={sinStock ? "secondary" : "default"}
-                        onClick={() => {
-                          addToCart({
-                            id: prod.id,
-                            nombre: prod.nombre,
-                            precio: prod.precio,
-                            imageUrl: prod.imageUrl,
-                            stock: prod.stock,
-                            tipo: "producto",
-                          });
-                          toast({ description: `¡${prod.nombre} añadido al carrito!` });
-                        }}
-                      >
-                        {sinStock ? (
-                          <>
-                            <Ban className="h-4 w-4" /> No Disponible
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="h-4 w-4" /> Añadir al
-                            Carrito
-                          </>
-                        )}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                );
-              })
-            ) : (
-              <div className="col-span-3 rounded-lg bg-secondary/30 py-12 text-center">
-                <p className="text-lg text-muted-foreground">
-                  Pronto tendremos productos disponibles.
-                </p>
-              </div>
-            )}
+          <div className="rounded-lg bg-secondary/30 py-12 text-center">
+            <p className="text-lg text-muted-foreground">
+              Pronto tendremos productos disponibles.
+            </p>
           </div>
         )}
 
