@@ -10,10 +10,23 @@ export const pedidosRepository = {
   // operaciones del mismo pedido. "tx" permite pasar la transacción activa;
   // por defecto usa "db" para poder llamarse también fuera de una
   // transacción si hiciera falta.
+  // OJO: "fecha_pedido" se fija acá explícitamente (ISO 8601) en vez de
+  // confiar en el default de la columna — el default de schema.js/la
+  // migración es la cadena literal 'CURRENT_TIMESTAMP' (string, no la
+  // función SQL homónima), así que sin esto cada pedido quedaba con el
+  // texto "CURRENT_TIMESTAMP" en vez de una fecha real (se veía como
+  // "Invalid Date" en el panel de admin). El resto de tablas con el mismo
+  // patrón de default queda con el mismo problema latente; no se toca acá
+  // para no ampliar el alcance de este cambio.
   crear: ({ clienteId, total, estado }, tx = db) => {
     const resultado = tx
       .insert(pedidos)
-      .values({ cliente_id: clienteId, total, estado: estado || 'pendiente' })
+      .values({
+        cliente_id: clienteId,
+        total,
+        estado: estado || 'pendiente',
+        fecha_pedido: new Date().toISOString(),
+      })
       .run();
     return resultado.lastInsertRowid;
   },
