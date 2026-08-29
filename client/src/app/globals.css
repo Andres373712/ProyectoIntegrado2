@@ -10,8 +10,7 @@
 @layer base {
   :root {
     /* Paleta "Cálido Elevado": crema cálido en vez de blanco puro, tinte
-       cálido en negros/grises. El fucsia de marca (#E4007C) se usa suelto
-       como acento puntual en botones/CTA, no como token global. */
+       cálido en negros/grises. */
     --background: 30 25% 98%;
     --foreground: 20 10% 12%;
     --card: 0 0% 100%;
@@ -32,6 +31,38 @@
     --input: 30 15% 88%;
     --ring: 20 8% 12%;
     --radius: 0.5rem;
+
+    /* --- Fase 0 del rediseño: tokens que faltaban ---
+       Antes convivían tres paletas sin relación: esta ("Cálido Elevado"),
+       una legacy de Tailwind (tmm-*, ver abajo) y un "arcoíris" ad-hoc de
+       bg-indigo-600/bg-green-600/etc. hardcodeado en el panel de admin.
+       Ver la auditoría de diseño para el detalle completo. */
+
+    /* Fucsia de marca (#E4007C), ahora tokenizado en vez de usarse suelto
+       como literal repetido en cada componente. */
+    --brand: 327 100% 45%;
+    --brand-foreground: 0 0% 100%;
+
+    /* Estados semánticos: hoy "pagado"/"pendiente"/etc. se resuelven con
+       clases Tailwind sueltas (bg-green-100, bg-amber-100...) definidas por
+       componente. Estos tokens les dan una fuente única, en la misma
+       familia cálida que el resto de la paleta. */
+    --success: 142 35% 32%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 75% 42%;
+    --warning-foreground: 20 10% 12%;
+
+    /* Categorías del panel de admin: reemplazan el arcoíris de colores
+       Tailwind por defecto (indigo/green/purple/orange/blue/pink) por una
+       familia de 6 tonos emparentados entre sí (misma banda de saturación
+       y luminosidad) y con la marca. */
+    --admin-a: 327 45% 40%; /* Talleres */
+    --admin-b: 15 45% 40%; /* Productos */
+    --admin-c: 200 35% 38%; /* Pedidos */
+    --admin-d: 265 30% 42%; /* Clientas (CRM) */
+    --admin-e: 90 25% 34%; /* Mensajes */
+    --admin-f: 38 55% 42%; /* Testimonios */
+    --admin-foreground: 0 0% 98%;
   }
 
   .dark {
@@ -54,6 +85,23 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Mismos tonos de marca/estado/admin: son acentos puntuales (botones,
+       badges, íconos), no fondos de página, así que no necesitan una
+       variante distinta para modo oscuro. */
+    --brand: 327 100% 45%;
+    --brand-foreground: 0 0% 100%;
+    --success: 142 35% 32%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 75% 42%;
+    --warning-foreground: 20 10% 12%;
+    --admin-a: 327 45% 40%;
+    --admin-b: 15 45% 40%;
+    --admin-c: 200 35% 38%;
+    --admin-d: 265 30% 42%;
+    --admin-e: 90 25% 34%;
+    --admin-f: 38 55% 42%;
+    --admin-foreground: 0 0% 98%;
   }
 }
 

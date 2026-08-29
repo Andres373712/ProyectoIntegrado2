@@ -86,7 +86,7 @@ function Navegacion() {
   const linkClass = (path: string) =>
     `text-xs uppercase tracking-widest font-medium transition-all duration-200
          text-foreground/70 hover:text-foreground
-         ${isActive(path) ? "border-b-2 border-[#E4007C] pb-1 text-foreground" : ""}`;
+         ${isActive(path) ? "border-b-2 border-brand pb-1 text-foreground" : ""}`;
 
   return (
     <nav
@@ -97,7 +97,7 @@ function Navegacion() {
           {/* --- LOGO --- */}
           <div className="flex h-full flex-shrink-0 items-center">
             <Link href="/" className="group flex h-full items-center gap-3 py-2">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-[#E4007C] bg-white transition-colors">
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-brand bg-white transition-colors">
                 <Image
                   src={logoTMM}
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -149,7 +149,7 @@ function Navegacion() {
                 className="transition-transform group-hover:scale-110"
               />
               {count > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 animate-pulse items-center justify-center rounded-full border border-background bg-[#E4007C] text-[9px] font-bold text-white">
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 animate-pulse items-center justify-center rounded-full border border-background bg-brand text-[9px] font-bold text-brand-foreground">
                   {count}
                 </span>
               )}
@@ -204,7 +204,7 @@ function Navegacion() {
             <Link href="/carrito" aria-label="Ver carrito" className="relative text-foreground">
               <ShoppingCart size={20} />
               {count > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#E4007C] text-[9px] text-white">
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[9px] text-brand-foreground">
                   {count}
                 </span>
               )}

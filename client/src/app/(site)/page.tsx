@@ -26,6 +26,15 @@ import CarouselImg3 from "@/assets/carousel-3.jpeg";
 import FotoCarolina from "@/assets/carolina.jpg";
 // --- FIN ASSETS ---
 
+// Algunos testimonios se cargaron con comillas propias ya incluidas en el
+// texto (p. ej. "\"me encantó\""); como el bloque de abajo siempre envuelve
+// el comentario en comillas tipográficas, sin esto se veían dobles
+// (""texto""). Quita cualquier comilla recta o tipográfica en los bordes
+// antes de envolverlo.
+function limpiarComillas(texto: string): string {
+  return texto.replace(/^["'“”‘’]+|["'“”‘’]+$/g, "").trim();
+}
+
 // useSearchParams exige un límite Suspense para poder prerenderizarse en Next.js.
 function VerificationToastEffect(): null {
   const { toast } = useToast();
@@ -106,7 +115,7 @@ function Homepage() {
               <div className="pt-4">
                 <Button
                   asChild
-                  className="rounded-full border-none bg-[#E4007C] px-8 py-6 text-lg text-white shadow-lg transition-transform hover:scale-105 hover:bg-[#c8006c]"
+                  className="rounded-full border-none bg-brand px-8 py-6 text-lg text-brand-foreground shadow-lg transition-transform hover:scale-105 hover:bg-brand/90"
                 >
                   <Link href="/catalogo">Explorar Talleres</Link>
                 </Button>
@@ -155,7 +164,7 @@ function Homepage() {
       {/* --- 2. SECCIÓN PRODUCTOS DISPONIBLES --- */}
       <RevealOnScroll className="mx-auto max-w-6xl p-8 md:p-20">
         <div className="mb-12 text-center">
-          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+          <span className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
             Para llevar a casa
           </span>
           <h2 className="mb-4 mt-3 text-3xl font-semibold text-foreground md:text-4xl">
@@ -198,7 +207,7 @@ function Homepage() {
         <RevealOnScroll className="bg-white p-8 md:p-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
-              <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+              <span className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
                 Lo que dicen nuestras clientas
               </span>
               <h2 className="mb-4 mt-3 text-3xl font-semibold text-foreground md:text-4xl">
@@ -213,7 +222,7 @@ function Homepage() {
                 >
                   <StarRating value={t.calificacion} readOnly size={18} />
                   <p className="mt-4 flex-1 text-foreground/90">
-                    &ldquo;{t.comentario}&rdquo;
+                    &ldquo;{limpiarComillas(t.comentario)}&rdquo;
                   </p>
                   <div className="mt-6">
                     <p className="font-serif font-semibold">{t.nombre}</p>
@@ -232,7 +241,7 @@ function Homepage() {
       <RevealOnScroll className="bg-secondary/30 p-12 md:p-24">
         <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
           <div className="order-2 md:order-1">
-            <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+            <span className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
               Nuestra historia
             </span>
             <h2 className="mb-6 mt-3 text-3xl font-semibold text-foreground">
@@ -247,7 +256,7 @@ function Homepage() {
             <Button
               asChild
               variant="link"
-              className="p-0 text-lg font-bold text-[#E4007C] hover:underline"
+              className="p-0 text-lg font-bold text-brand hover:underline"
             >
               <Link href="/quienes-somos">Leer nuestra historia completa →</Link>
             </Button>
@@ -255,7 +264,7 @@ function Homepage() {
           <div className="order-1 flex justify-center md:order-2">
             <div className="relative h-64 w-64 md:h-80 md:w-80">
               {/* Círculo decorativo detrás */}
-              <div className="absolute inset-0 translate-x-4 translate-y-4 transform rounded-full bg-[#E4007C]/10"></div>
+              <div className="absolute inset-0 translate-x-4 translate-y-4 transform rounded-full bg-brand/10"></div>
               {/* Imagen de Carolina */}
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl">
                 <Image

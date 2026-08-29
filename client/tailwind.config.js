@@ -19,13 +19,35 @@ module.exports = {
     },
     extend: {
       colors: {
-        // --- Colores Personalizados TMM ---
-        "tmm-pink": "#FFB6C1",
-        "tmm-blue": "#ADD8E6",
-        "tmm-mint": "#98FB98",
-        "tmm-dark": "#333333",
-        "tmm-teal": "#008080",
-        "tmm-gold": "#D4AF37",
+        // --- Marca y estados semánticos (rediseño Fase 0 + Fase 1) ---
+        // Antes #E4007C se repetía hardcodeado en varios componentes y los
+        // estados usaban clases sueltas (bg-green-100, bg-amber-100...); la
+        // paleta legacy tmm-* (usada en 3 archivos) ya fue migrada a estos
+        // tokens y se retiró de aquí.
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+
+        // --- Categorías del panel de admin (Fase 0 del rediseño) ---
+        // Reemplazan el arcoíris ad-hoc (bg-indigo-600, bg-green-600,
+        // bg-purple-600, bg-orange-600, bg-blue-600, bg-pink-600) de las
+        // ActionCard de /admin por una familia de tonos emparentados entre
+        // sí. El mapeo categoría → token se aplica en la Fase 1.
+        "admin-a": { DEFAULT: "hsl(var(--admin-a))", foreground: "hsl(var(--admin-foreground))" },
+        "admin-b": { DEFAULT: "hsl(var(--admin-b))", foreground: "hsl(var(--admin-foreground))" },
+        "admin-c": { DEFAULT: "hsl(var(--admin-c))", foreground: "hsl(var(--admin-foreground))" },
+        "admin-d": { DEFAULT: "hsl(var(--admin-d))", foreground: "hsl(var(--admin-foreground))" },
+        "admin-e": { DEFAULT: "hsl(var(--admin-e))", foreground: "hsl(var(--admin-foreground))" },
+        "admin-f": { DEFAULT: "hsl(var(--admin-f))", foreground: "hsl(var(--admin-foreground))" },
 
         // --- Colores Base de Shadcn (para que 'border-border' exista) ---
         border: "hsl(var(--border))",

@@ -15,10 +15,10 @@ import { Loader2, AlertTriangle, ShoppingBag } from "lucide-react";
 import { formatCLP, formatFechaCL } from "@/lib/utils";
 
 const ESTILO_ESTADO: Record<string, string> = {
-  pendiente: "bg-amber-100 text-amber-800",
-  pagado: "bg-green-100 text-green-800",
-  enviado: "bg-blue-100 text-blue-800",
-  cancelado: "bg-red-100 text-red-800",
+  pendiente: "bg-warning/10 text-warning",
+  pagado: "bg-success/10 text-success",
+  enviado: "bg-admin-c/10 text-admin-c",
+  cancelado: "bg-destructive/10 text-destructive",
 };
 
 function EstadoBadge({ estado }: { estado: string }) {

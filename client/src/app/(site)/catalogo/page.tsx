@@ -40,7 +40,7 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
     <div className="min-h-screen bg-background p-8 text-foreground md:p-12">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
-          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+          <span className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
             Catálogo
           </span>
           <h1 className="mb-4 mt-3 text-4xl font-semibold text-foreground md:text-5xl">
@@ -73,11 +73,11 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
                       </CardTitle>
                       {/* ETIQUETA DE CUPOS (MODIFICADA) */}
                       {!agotado ? (
-                        <span className="whitespace-nowrap rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-bold text-green-700">
+                        <span className="whitespace-nowrap rounded-full border border-success/20 bg-success/10 px-2 py-1 text-xs font-bold text-success">
                           ¡Cupos disponibles! {/* <-- CAMBIO AQUÍ */}
                         </span>
                       ) : (
-                        <span className="whitespace-nowrap rounded-full border border-red-200 bg-red-100 px-2 py-1 text-xs font-bold text-red-700">
+                        <span className="whitespace-nowrap rounded-full border border-destructive/20 bg-destructive/10 px-2 py-1 text-xs font-bold text-destructive">
                           Agotado
                         </span>
                       )}
@@ -125,7 +125,7 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
                     ) : (
                       <Button
                         asChild
-                        className="w-full bg-[#E4007C] text-white hover:bg-[#c8006c]"
+                        className="w-full bg-brand text-brand-foreground hover:bg-brand/90"
                       >
                         <Link href={`/inscribir/${taller.id}`}>
                           Inscribirme Ahora

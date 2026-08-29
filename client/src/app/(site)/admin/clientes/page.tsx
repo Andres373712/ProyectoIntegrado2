@@ -43,7 +43,7 @@ function AdminClientes() {
       <div className="mx-auto max-w-5xl">
         {" "}
         {/* Ampliado un poco el ancho */}
-        <h1 className="mb-6 text-3xl font-bold text-tmm-dark">
+        <h1 className="mb-6 text-3xl font-bold text-foreground">
           Gestión de Clientas
         </h1>
         {/* --- Formulario de Filtros --- */}
@@ -109,7 +109,7 @@ function AdminClientes() {
           {/* Botones */}
           <button
             type="submit"
-            className="h-[42px] self-end rounded-lg bg-tmm-pink px-4 py-2 text-white hover:opacity-90"
+            className="h-[42px] self-end rounded-lg bg-brand px-4 py-2 text-brand-foreground hover:bg-brand/90"
           >
             {" "}
             Filtrar{" "}

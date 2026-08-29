@@ -21,7 +21,7 @@ export default function StarRating({
           <Star
             key={n}
             size={size}
-            className={n <= value ? "fill-[#E4007C] text-[#E4007C]" : "fill-none text-muted-foreground/40"}
+            className={n <= value ? "fill-brand text-brand" : "fill-none text-muted-foreground/40"}
           />
         ) : (
           <button
@@ -33,7 +33,7 @@ export default function StarRating({
           >
             <Star
               size={size}
-              className={n <= value ? "fill-[#E4007C] text-[#E4007C]" : "fill-none text-muted-foreground/40"}
+              className={n <= value ? "fill-brand text-brand" : "fill-none text-muted-foreground/40"}
             />
           </button>
         ),

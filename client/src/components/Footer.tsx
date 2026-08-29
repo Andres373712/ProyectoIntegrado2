@@ -3,13 +3,13 @@ import { Facebook, Instagram, Twitter } from "lucide-react"; // Assuming you hav
 
 const Footer = () => {
   return (
-    <footer className="bg-black py-8 text-white">
+    <footer className="bg-foreground py-8 text-primary-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* About Section */}
           <div>
             <h3 className="mb-4 font-serif text-lg font-semibold">TMM Bienestar</h3>
-            <p className="text-gray-400">
+            <p className="text-primary-foreground/60">
               Transformando vidas a través de la conexión y el bienestar.
             </p>
           </div>
@@ -19,29 +19,29 @@ const Footer = () => {
             <h3 className="mb-4 text-lg font-bold">Enlaces Rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="hover:text-gray-300">
+                <Link href="/" className="text-primary-foreground/80 hover:text-primary-foreground">
                   Inicio
                 </Link>
               </li>
               <li>
-                <Link href="/quienes-somos" className="hover:text-gray-300">
+                <Link href="/quienes-somos" className="text-primary-foreground/80 hover:text-primary-foreground">
                   Nosotros
                 </Link>
               </li>
               <li>
-                <Link href="/catalogo" className="hover:text-gray-300">
+                <Link href="/catalogo" className="text-primary-foreground/80 hover:text-primary-foreground">
                   Catálogo
                 </Link>
               </li>
               <li>
-                <Link href="/contacto" className="hover:text-gray-300">
+                <Link href="/contacto" className="text-primary-foreground/80 hover:text-primary-foreground">
                   Contacto
                 </Link>
               </li>
               <li>
                 <Link
                   href="/terminos-y-condiciones"
-                  className="hover:text-gray-300"
+                  className="text-primary-foreground/80 hover:text-primary-foreground"
                 >
                   Términos y Condiciones
                 </Link>
@@ -57,7 +57,7 @@ const Footer = () => {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-gray-300"
+                className="text-primary-foreground/80 hover:text-primary-foreground"
               >
                 <Facebook size={24} />
               </a>
@@ -65,7 +65,7 @@ const Footer = () => {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-gray-300"
+                className="text-primary-foreground/80 hover:text-primary-foreground"
               >
                 <Instagram size={24} />
               </a>
@@ -73,7 +73,7 @@ const Footer = () => {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-gray-300"
+                className="text-primary-foreground/80 hover:text-primary-foreground"
               >
                 <Twitter size={24} />
               </a>
@@ -81,7 +81,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-800 pt-8 text-center text-gray-400">
+        <div className="mt-8 border-t border-primary-foreground/10 pt-8 text-center text-primary-foreground/60">
           <p>
             &copy; {new Date().getFullYear()} TMM Bienestar. Todos los derechos
             reservados.

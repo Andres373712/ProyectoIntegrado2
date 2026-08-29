@@ -75,7 +75,7 @@ export function GrillaProductos({ productos }: { productos: ReturnType<typeof us
 
             <CardFooter className="p-6 pt-0">
               <Button
-                className="w-full gap-2 font-semibold"
+                className={`w-full gap-2 font-semibold ${sinStock ? "" : "bg-brand text-brand-foreground hover:bg-brand/90"}`}
                 disabled={sinStock}
                 variant={sinStock ? "secondary" : "default"}
                 onClick={() => {
@@ -115,7 +115,7 @@ export function CatalogoProductos() {
   return (
     <section className="mt-20">
       <div className="mb-12 text-center">
-        <span className="text-xs font-bold uppercase tracking-[0.15em] text-[#E4007C]">
+        <span className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
           Para llevar a casa
         </span>
         <h2 className="mb-4 mt-3 text-3xl font-semibold text-foreground md:text-4xl">

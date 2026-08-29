@@ -28,7 +28,7 @@ function CancelarInscripcion() {
   }, [token]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-tmm-blue p-8">
+    <div className="flex min-h-screen items-center justify-center bg-muted p-8">
       <div className="w-full max-w-md rounded-lg bg-white p-10 text-center shadow-lg">
         {estado === "cargando" && (
           <p className="text-xl">Procesando cancelación...</p>
@@ -61,7 +61,7 @@ function CancelarInscripcion() {
 
         <Link
           href="/"
-          className="inline-block rounded-lg bg-tmm-pink px-6 py-3 font-bold text-white hover:opacity-90"
+          className="inline-block rounded-lg bg-brand px-6 py-3 font-bold text-brand-foreground hover:bg-brand/90"
         >
           Volver al Catálogo
         </Link>

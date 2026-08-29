@@ -145,7 +145,7 @@ function ClienteDetalle() {
             )}
             <button
               type="submit"
-              className="rounded-lg bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-600"
+              className="rounded-lg bg-success px-4 py-2 font-bold text-success-foreground hover:bg-success/90"
             >
               {" "}
               Guardar Cambios{" "}
@@ -157,7 +157,7 @@ function ClienteDetalle() {
         <div className="grid gap-8 md:grid-cols-2">
           {/* Columna 1: Historial de Talleres */}
           <div className="rounded-lg bg-card p-8 shadow-md">
-            <h2 className="mb-4 text-2xl font-bold text-tmm-dark">
+            <h2 className="mb-4 text-2xl font-bold text-foreground">
               Historial de Trazabilidad
             </h2>
             <div className="max-h-96 space-y-4 overflow-y-auto">
@@ -165,7 +165,7 @@ function ClienteDetalle() {
                 historial.map((taller, index) => (
                   <div
                     key={index}
-                    className="rounded border-l-4 border-tmm-pink bg-muted p-4"
+                    className="rounded border-l-4 border-brand bg-muted p-4"
                   >
                     <h3 className="text-lg font-bold">{taller.nombre}</h3>
                     <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ function ClienteDetalle() {
 
           {/* Columna 2: Notas de Fidelización */}
           <div className="rounded-lg bg-card p-8 shadow-md">
-            <h2 className="mb-4 text-2xl font-bold text-tmm-dark">
+            <h2 className="mb-4 text-2xl font-bold text-foreground">
               Notas de Fidelización
             </h2>
             <form onSubmit={handleGuardarNota} className="mb-6">
@@ -200,7 +200,7 @@ function ClienteDetalle() {
               ></textarea>
               <button
                 type="submit"
-                className="mt-2 w-full rounded-lg bg-tmm-pink py-2 font-bold text-white hover:opacity-90"
+                className="mt-2 w-full rounded-lg bg-brand py-2 font-bold text-brand-foreground hover:bg-brand/90"
               >
                 Guardar Nota
               </button>

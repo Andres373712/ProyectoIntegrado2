@@ -12,6 +12,7 @@ import {
   Users,
   CalendarDays,
   ArrowRight,
+  Mail,
   MessageSquareQuote,
   type LucideIcon,
 } from "lucide-react";
@@ -35,7 +36,7 @@ interface ActionCardProps {
 // Componente de Tarjeta de Estadística
 const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
   <div className="flex items-center space-x-4 rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
-    <div className={`rounded-full p-3 ${color} bg-opacity-10 text-white`}>
+    <div className={`rounded-full p-3 ${color}/10 text-white`}>
       <Icon className={`h-8 w-8 ${color.replace("bg-", "text-")}`} />
     </div>
     <div>
@@ -100,19 +101,19 @@ function AdminDashboard() {
           title="Clientas Registradas"
           value={data.totalClientas}
           icon={Users}
-          color="bg-pink-500"
+          color="bg-admin-d"
         />
         <StatCard
           title="Talleres Activos"
           value={data.totalTalleresActivos}
           icon={BookOpenText}
-          color="bg-indigo-500"
+          color="bg-admin-a"
         />
         <StatCard
           title="Próximos Eventos"
           value={data.eventosCalendario.length}
           icon={CalendarDays}
-          color="bg-green-500"
+          color="bg-brand"
         />
       </div>
 
@@ -126,42 +127,42 @@ function AdminDashboard() {
               description="Crea nuevos talleres, edita la información, sube fotos y controla los cupos."
               link="/admin/talleres"
               icon={BookOpenText}
-              color="bg-indigo-600"
+              color="bg-admin-a"
             />
             <ActionCard
               title="Inventario de Productos"
               description="Administra tu stock de kits, insumos y productos físicos para la venta."
               link="/admin/productos"
               icon={ShoppingBag}
-              color="bg-green-600"
+              color="bg-admin-b"
             />
             <ActionCard
               title="Pedidos"
               description="Revisa los pedidos del carrito: cliente, productos, total y estado de cada compra."
               link="/admin/pedidos"
               icon={ShoppingCart}
-              color="bg-purple-600"
+              color="bg-admin-c"
             />
             <ActionCard
               title="Base de Clientas (CRM)"
               description="Consulta la lista de asistentes, revisa su historial y añade notas de seguimiento."
               link="/admin/clientes"
               icon={Users}
-              color="bg-orange-600"
+              color="bg-admin-d"
             />
             <ActionCard
               title="Mensajes de Contacto"
               description="Revisa los mensajes y preguntas enviadas por los visitantes desde el formulario de contacto."
               link="/admin/mensajes"
-              icon={BookOpenText}
-              color="bg-blue-600"
+              icon={Mail}
+              color="bg-admin-e"
             />
             <ActionCard
               title="Comentarios y Recomendaciones"
               description="Carga y administra los testimonios de clientas que se muestran en el sitio público."
               link="/admin/testimonios"
               icon={MessageSquareQuote}
-              color="bg-pink-600"
+              color="bg-admin-f"
             />
           </div>
         </div>
@@ -181,7 +182,7 @@ function AdminDashboard() {
                 right: "",
               }}
               height="400px"
-              eventColor="#E4007C" // Color fucsia corporativo
+              eventColor="hsl(var(--brand))" // Token de marca (--brand en globals.css)
             />
           </div>
         </div>
