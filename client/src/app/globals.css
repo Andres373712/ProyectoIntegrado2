@@ -49,8 +49,12 @@
        familia cálida que el resto de la paleta. */
     --success: 142 35% 32%;
     --success-foreground: 0 0% 98%;
-    --warning: 38 75% 42%;
-    --warning-foreground: 20 10% 12%;
+    /* 34% de luminosidad (no 42%): a 42% el texto sobre blanco quedaba en
+       3.36:1, por debajo del mínimo 4.5:1 de WCAG AA para texto normal
+       (se usa como texto, no solo como fondo, en el badge "pendiente" de
+       /admin/pedidos). A 34% sube a ~4.9:1 sin perder el tono ámbar. */
+    --warning: 38 75% 34%;
+    --warning-foreground: 0 0% 98%;
 
     /* Categorías del panel de admin: reemplazan el arcoíris de colores
        Tailwind por defecto (indigo/green/purple/orange/blue/pink) por una
@@ -93,8 +97,8 @@
     --brand-foreground: 0 0% 100%;
     --success: 142 35% 32%;
     --success-foreground: 0 0% 98%;
-    --warning: 38 75% 42%;
-    --warning-foreground: 20 10% 12%;
+    --warning: 38 75% 34%;
+    --warning-foreground: 0 0% 98%;
     --admin-a: 327 45% 40%;
     --admin-b: 15 45% 40%;
     --admin-c: 200 35% 38%;

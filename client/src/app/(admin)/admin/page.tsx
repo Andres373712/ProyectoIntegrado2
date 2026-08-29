@@ -5,7 +5,6 @@ import Link from "next/link";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import {
-  LayoutDashboard,
   BookOpenText,
   ShoppingBag,
   ShoppingCart,
@@ -77,20 +76,18 @@ function AdminDashboard() {
 
   if (cargando)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted">
+      <div className="flex h-64 items-center justify-center">
         <p className="animate-pulse text-lg text-muted-foreground">Cargando panel de control...</p>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-muted p-6 md:p-10">
+    <div>
       {/* --- Encabezado --- */}
+      {/* El título "Panel de Control" ya lo muestra la topbar del admin;
+          acá solo queda el saludo, específico de esta página. */}
       <header className="mb-10">
-        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-foreground md:text-4xl">
-          <LayoutDashboard className="h-8 w-8 text-primary" />
-          Panel de Control
-        </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground">
           Bienvenida, Carolina. Aquí tienes el resumen de tu negocio hoy.
         </p>
       </header>

@@ -193,7 +193,16 @@ function AdminTestimonios() {
                     <Button variant="outline" size="sm" onClick={() => iniciarEdicion(t)}>
                       Editar
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toggleActivo(t)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleActivo(t)}
+                      aria-label={
+                        t.activo
+                          ? `Ocultar testimonio de ${t.nombre}`
+                          : `Mostrar testimonio de ${t.nombre}`
+                      }
+                    >
                       {t.activo ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                     <Button
