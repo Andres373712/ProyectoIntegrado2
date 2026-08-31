@@ -10,6 +10,7 @@ import {
   Users,
   Mail,
   MessageSquareQuote,
+  BarChart3,
   ExternalLink,
   LogOut,
   type LucideIcon,
@@ -33,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/clientes", label: "Clientas (CRM)", icon: Users, accent: "text-admin-d" },
   { href: "/admin/mensajes", label: "Mensajes", icon: Mail, accent: "text-admin-e" },
   { href: "/admin/testimonios", label: "Testimonios", icon: MessageSquareQuote, accent: "text-admin-f" },
+  { href: "/admin/reportes", label: "Reportes", icon: BarChart3, accent: "text-brand" },
 ];
 
 /**

@@ -90,6 +90,9 @@ describe('Matriz de autorización: rutas admin-only', () => {
     ['get', '/api/dashboard-data'],
     ['get', '/api/pedidos/todos'],
     ['get', '/api/clientes'],
+    ['get', '/api/reportes/ventas'],
+    ['get', '/api/reportes/clientas-recurrentes'],
+    ['get', '/api/reportes/productos-top'],
   ];
 
   it.each(rutasAdmin)('%s %s responde 401 sin token', async (metodo, ruta) => {

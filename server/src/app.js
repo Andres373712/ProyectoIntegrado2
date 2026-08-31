@@ -15,6 +15,7 @@ import testimoniosRoutes from './routes/testimonios.routes.js';
 import clienteRoutes from './routes/cliente.routes.js';
 import clientesAdminRoutes from './routes/clientes.routes.js';
 import pedidoRoutes from './routes/pedido.routes.js';
+import reportesRoutes from './routes/reportes.routes.js';
 import healthRoutes from './routes/health.routes.js';
 
 export const app = express();
@@ -51,6 +52,7 @@ app.use('/api', testimoniosRoutes);
 app.use('/api', clienteRoutes);
 app.use('/api', clientesAdminRoutes);
 app.use('/api', pedidoRoutes);
+app.use('/api', reportesRoutes);
 app.use(healthRoutes);
 
 app.use(errorHandler);
