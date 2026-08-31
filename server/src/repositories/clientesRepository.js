@@ -1,6 +1,17 @@
-import { eq } from 'drizzle-orm';
+import { eq, and, or, like, gte, lte, inArray, desc, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { clientes } from '../db/schema.js';
+import { clientes, inscripciones } from '../db/schema.js';
+
+// Columnas seguras para exponer fuera del backend (admin/CRM, "Mi Cuenta"):
+// nunca password_hash, token_verificacion ni token_recuperacion.
+const CAMPOS_PUBLICOS = {
+  id: clientes.id,
+  nombre: clientes.nombre,
+  email: clientes.email,
+  telefono: clientes.telefono,
+  intereses: clientes.intereses,
+  fecha_registro: clientes.fecha_registro,
+};
 
 export const clientesRepository = {
   getByEmail: async (email) => {
@@ -8,10 +19,60 @@ export const clientesRepository = {
     return filas[0];
   },
 
+  // Antes seleccionaba todas las columnas (incluidas password_hash y los
+  // tokens) — sin callers hasta ahora, así que no había fuga real, pero
+  // exponerlo tal cual al CRM de admin sí lo sería. Restringido a los campos
+  // públicos del cliente.
   getById: async (id) => {
-    const filas = await db.select().from(clientes).where(eq(clientes.id, id));
+    const filas = await db.select(CAMPOS_PUBLICOS).from(clientes).where(eq(clientes.id, id));
     return filas[0];
   },
+
+  // Listado del CRM de admin con filtros todos opcionales. tallerId filtra a
+  // quienes tienen alguna inscripción en ese taller; total_inscripciones
+  // siempre cuenta TODAS las inscripciones de cada clienta devuelta (no solo
+  // las del taller filtrado) — es una cifra de contexto general, no del
+  // filtro aplicado.
+  getConFiltros: async ({ buscar, fechaInicio, fechaFin, tallerId } = {}) => {
+    const condiciones = [];
+    if (buscar) {
+      const patron = `%${buscar}%`;
+      condiciones.push(or(like(clientes.nombre, patron), like(clientes.email, patron)));
+    }
+    if (fechaInicio) condiciones.push(gte(clientes.fecha_registro, fechaInicio));
+    if (fechaFin) condiciones.push(lte(clientes.fecha_registro, fechaFin));
+
+    if (tallerId) {
+      const inscritas = await db
+        .select({ clienteId: inscripciones.cliente_id })
+        .from(inscripciones)
+        .where(eq(inscripciones.taller_id, Number(tallerId)));
+      const idsInscritas = [...new Set(inscritas.map((f) => f.clienteId))];
+      if (idsInscritas.length === 0) return [];
+      condiciones.push(inArray(clientes.id, idsInscritas));
+    }
+
+    let consulta = db.select(CAMPOS_PUBLICOS).from(clientes).orderBy(desc(clientes.id));
+    if (condiciones.length > 0) consulta = consulta.where(and(...condiciones));
+    const filasClientes = await consulta;
+    if (filasClientes.length === 0) return [];
+
+    const idsClientes = filasClientes.map((c) => c.id);
+    const conteos = await db
+      .select({ clienteId: inscripciones.cliente_id, total: sql`COUNT(*)` })
+      .from(inscripciones)
+      .where(inArray(inscripciones.cliente_id, idsClientes))
+      .groupBy(inscripciones.cliente_id);
+    const totalPorCliente = new Map(conteos.map((c) => [c.clienteId, c.total]));
+
+    return filasClientes.map((c) => ({ ...c, total_inscripciones: totalPorCliente.get(c.id) || 0 }));
+  },
+
+  // Campos editables desde la ficha de la clienta en el CRM de admin. Email
+  // tiene UNIQUE en la tabla — un duplicado sube como
+  // SQLITE_CONSTRAINT_UNIQUE, lo traduce clientesAdminService.
+  actualizarDatosAdmin: (id, { nombre, email, telefono, intereses }) =>
+    db.update(clientes).set({ nombre, email, telefono, intereses }).where(eq(clientes.id, id)),
 
   getByTokenVerificacion: async (token) => {
     const filas = await db
