@@ -17,11 +17,29 @@ import {
 } from "lucide-react";
 import { useDashboardData } from "@/features/admin/useDashboardData";
 
+type ColorClave = "bg-admin-a" | "bg-admin-b" | "bg-admin-c" | "bg-admin-d" | "bg-admin-e" | "bg-admin-f" | "bg-brand";
+
+// Tailwind genera CSS solo para clases que aparecen como texto literal
+// completo en el código fuente — no puede evaluar `${color}/10` en tiempo de
+// build. Antes ese template literal armaba "bg-admin-d/10" en runtime sin que
+// esa cadena existiera nunca escrita en ningún archivo, así que el fondo de
+// las StatCard/ActionCard quedaba sin color (transparente). Este mapa escribe
+// cada combinación completa como string literal para que el scanner las vea.
+const COLOR_CLASSES: Record<ColorClave, { bg: string; bgSoft: string; text: string }> = {
+  "bg-admin-a": { bg: "bg-admin-a", bgSoft: "bg-admin-a/10", text: "text-admin-a" },
+  "bg-admin-b": { bg: "bg-admin-b", bgSoft: "bg-admin-b/10", text: "text-admin-b" },
+  "bg-admin-c": { bg: "bg-admin-c", bgSoft: "bg-admin-c/10", text: "text-admin-c" },
+  "bg-admin-d": { bg: "bg-admin-d", bgSoft: "bg-admin-d/10", text: "text-admin-d" },
+  "bg-admin-e": { bg: "bg-admin-e", bgSoft: "bg-admin-e/10", text: "text-admin-e" },
+  "bg-admin-f": { bg: "bg-admin-f", bgSoft: "bg-admin-f/10", text: "text-admin-f" },
+  "bg-brand": { bg: "bg-brand", bgSoft: "bg-brand/10", text: "text-brand" },
+};
+
 interface StatCardProps {
   title: string;
   value: React.ReactNode;
   icon: LucideIcon;
-  color: string;
+  color: ColorClave;
 }
 
 interface ActionCardProps {
@@ -29,47 +47,53 @@ interface ActionCardProps {
   description: string;
   link: string;
   icon: LucideIcon;
-  color: string;
+  color: ColorClave;
 }
 
 // Componente de Tarjeta de Estadística
-const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => (
-  <div className="flex items-center space-x-4 rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
-    <div className={`rounded-full p-3 ${color}/10 text-white`}>
-      <Icon className={`h-8 w-8 ${color.replace("bg-", "text-")}`} />
+const StatCard = ({ title, value, icon: Icon, color }: StatCardProps) => {
+  const clases = COLOR_CLASSES[color];
+  return (
+    <div className="flex items-center space-x-4 rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+      <div className={`rounded-full p-3 ${clases.bgSoft} text-white`}>
+        <Icon className={`h-8 w-8 ${clases.text}`} />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <h3 className="text-2xl font-bold text-foreground">{value}</h3>
+      </div>
     </div>
-    <div>
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-    </div>
-  </div>
-);
+  );
+};
 
 // Componente de Tarjeta de Acción Rápida (Navegación)
-const ActionCard = ({ title, description, link, icon: Icon, color }: ActionCardProps) => (
-  <Link
-    href={link}
-    className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
-  >
-    <div
-      className={`absolute right-0 top-0 p-3 opacity-10 transition-opacity group-hover:opacity-20`}
+const ActionCard = ({ title, description, link, icon: Icon, color }: ActionCardProps) => {
+  const clases = COLOR_CLASSES[color];
+  return (
+    <Link
+      href={link}
+      className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg"
     >
-      <Icon className={`h-24 w-24 ${color.replace("bg-", "text-")}`} />
-    </div>
-    <div className="relative z-10">
       <div
-        className={`h-12 w-12 rounded-lg ${color} mb-4 flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110`}
+        className={`absolute right-0 top-0 p-3 opacity-10 transition-opacity group-hover:opacity-20`}
       >
-        <Icon className="h-6 w-6" />
+        <Icon className={`h-24 w-24 ${clases.text}`} />
       </div>
-      <h3 className="mb-2 text-lg font-bold text-foreground">{title}</h3>
-      <p className="mb-4 text-sm text-muted-foreground">{description}</p>
-      <span className="flex items-center text-sm font-medium text-primary group-hover:underline">
-        Ir a gestionar <ArrowRight className="ml-1 h-4 w-4" />
-      </span>
-    </div>
-  </Link>
-);
+      <div className="relative z-10">
+        <div
+          className={`h-12 w-12 rounded-lg ${clases.bg} mb-4 flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <h3 className="mb-2 text-lg font-bold text-foreground">{title}</h3>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+        <span className="flex items-center text-sm font-medium text-primary group-hover:underline">
+          Ir a gestionar <ArrowRight className="ml-1 h-4 w-4" />
+        </span>
+      </div>
+    </Link>
+  );
+};
 
 function AdminDashboard() {
   const { data, cargando } = useDashboardData();

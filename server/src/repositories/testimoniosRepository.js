@@ -30,6 +30,9 @@ export const testimoniosRepository = {
     return filas[0];
   },
 
+  // fecha_creacion se fija acá explícitamente (mismo motivo que
+  // pedidosRepository.crear con fecha_pedido): el default de schema.js es la
+  // cadena literal 'CURRENT_TIMESTAMP', no la función SQL homónima.
   crear: (datos) =>
     db.insert(testimonios).values({
       nombre: datos.nombre,
@@ -37,6 +40,7 @@ export const testimoniosRepository = {
       comentario: datos.comentario,
       calificacion: datos.calificacion,
       activo: 1,
+      fecha_creacion: new Date().toISOString(),
     }),
 
   actualizar: (id, datos) =>

@@ -9,10 +9,13 @@ export const inscripcionesRepository = {
   // insert sin `.run()`/await nunca llega a ejecutarse si nadie lo espera.
   // Devuelve el id insertado (mismo patrón que pedidosRepository.crear) para
   // que el service pueda firmar un token de cancelación referido a esta fila.
+  // fecha_inscripcion se fija acá explícitamente (mismo motivo que
+  // pedidosRepository.crear con fecha_pedido): el default de schema.js es la
+  // cadena literal 'CURRENT_TIMESTAMP', no la función SQL homónima.
   crear: ({ clienteId, tallerId }) => {
     const resultado = db
       .insert(inscripciones)
-      .values({ cliente_id: clienteId, taller_id: tallerId })
+      .values({ cliente_id: clienteId, taller_id: tallerId, fecha_inscripcion: new Date().toISOString() })
       .run();
     return resultado.lastInsertRowid;
   },

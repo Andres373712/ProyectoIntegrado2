@@ -16,7 +16,10 @@ router.post(
   validate(registroClienteSchema),
   authController.registrarCliente,
 );
-router.post('/auth/login-cliente', loginLimiter, authController.loginCliente);
+// Mismo body que /login (email+password) — reusa loginSchema en vez de
+// duplicarlo. Antes era la única ruta de auth sin validate(): un body vacío
+// llegaba hasta bcrypt.compare(undefined, ...) y tiraba 500 en vez de 400.
+router.post('/auth/login-cliente', loginLimiter, validate(loginSchema), authController.loginCliente);
 router.get('/auth/verificar/:token', registroLimiter, authController.verificarToken);
 
 // Mismo limiter que el login: son los endpoints más golpeables por fuerza

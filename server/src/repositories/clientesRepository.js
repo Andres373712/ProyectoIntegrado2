@@ -21,10 +21,14 @@ export const clientesRepository = {
     return filas[0];
   },
 
+  // fecha_registro se fija acá explícitamente (igual que pedidosRepository.crear
+  // con fecha_pedido): el default de schema.js es la cadena literal
+  // 'CURRENT_TIMESTAMP', no la función SQL homónima, así que sin esto la
+  // columna queda con ese texto en vez de una fecha real.
   crearDesdeInscripcion: async ({ nombre, email, telefono, intereses }) => {
     const resultado = await db
       .insert(clientes)
-      .values({ nombre, email, telefono, intereses })
+      .values({ nombre, email, telefono, intereses, fecha_registro: new Date().toISOString() })
       .returning({ id: clientes.id });
     return resultado[0];
   },
@@ -39,6 +43,7 @@ export const clientesRepository = {
       verificado: 0,
       acepta_terminos: 1,
       rol: 'cliente',
+      fecha_registro: new Date().toISOString(),
     }),
 
   actualizarParaRegistro: (id, { nombre, telefono, passwordHash, tokenVerificacion }) =>

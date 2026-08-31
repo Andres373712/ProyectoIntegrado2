@@ -64,8 +64,8 @@ export const talleresRepository = {
         fecha: datos.fecha,
         tipo: datos.tipo,
         precio: datos.precio,
-        // Se mantiene el mismo comportamiento que antes: se guarda el valor
-        // crudo recibido (string "true"/"false" desde FormData), sin normalizar.
+        // datos.activo ya llega normalizado a 0/1 desde tallerActualizarSchema
+        // (ver taller.schema.js) — nunca el string crudo "true"/"false".
         activo: datos.activo,
         imageurl: datos.imageUrl,
         lugar: datos.lugar,
