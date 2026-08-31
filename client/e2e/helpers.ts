@@ -43,3 +43,31 @@ export async function crearTallerViaApi(
   expect(creado, `No se encontró el taller recién creado "${nombre}" en /talleres/activos`).toBeTruthy();
   return creado;
 }
+
+/** Crea un producto directo por API (sin pasar por la UI), igual que crearTallerViaApi. */
+export async function crearProductoViaApi(
+  request: APIRequestContext,
+  overrides: Record<string, string> = {},
+) {
+  const loginResp = await request.post(`${API_URL}/api/login`, {
+    data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  const { token } = await loginResp.json();
+
+  const nombre = overrides.nombre ?? `Producto E2E ${Date.now()}`;
+
+  const resp = await request.post(`${API_URL}/api/productos`, {
+    headers: { Authorization: `Bearer ${token}` },
+    multipart: {
+      nombre,
+      precio: overrides.precio ?? "8000",
+      stock: overrides.stock ?? "3",
+    },
+  });
+  expect(resp.ok()).toBeTruthy();
+
+  const activos = await (await request.get(`${API_URL}/api/productos/activos`)).json();
+  const creado = activos.find((p: { nombre: string }) => p.nombre === nombre);
+  expect(creado, `No se encontró el producto recién creado "${nombre}" en /productos/activos`).toBeTruthy();
+  return creado;
+}

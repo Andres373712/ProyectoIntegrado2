@@ -60,7 +60,12 @@ function Carrito() {
     }
   };
 
-  if (cart.length === 0) {
+  // "exito" excluido a propósito: handleConfirmarPedido pone exito=true y
+  // vacía el carrito (clearCart) en el mismo evento tras un checkout
+  // exitoso, así que sin esta excepción esta guarda ganaba siempre y la
+  // pantalla de "¡Pedido Confirmado!" de más abajo nunca llegaba a
+  // renderizarse — el usuario veía "carrito vacío" en vez de la confirmación.
+  if (cart.length === 0 && !exito) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center bg-background p-8 pt-24 text-center">
         <div className="mb-4 rounded-full bg-muted p-6">
