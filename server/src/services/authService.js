@@ -118,5 +118,18 @@ export const authService = {
 
     const passwordHash = await bcrypt.hash(nuevaPassword, 10);
     await clientesRepository.actualizarPassword(cliente.id, passwordHash);
+
+    // Completar un reset por link de correo ya demuestra control real de la
+    // casilla — al menos tanta prueba como el link de verificación original.
+    // Sin esto, una cuenta cuyo email de verificación nunca llegó (p. ej. por
+    // una falla de SendGrid al registrarse, que enviarEmailVerificacion traga
+    // en silencio) quedaba sin ninguna vía de recuperación real: se podía
+    // cambiar la contraseña acá pero el login seguía bloqueado con 403
+    // "Verifica tu correo primero", y un segundo intento de registro con el
+    // mismo email caía en el 409 "Ya existe una cuenta" — un callejón sin
+    // salida. Esta es la vía de reintento: forgot-password + reset-password.
+    if (!cliente.verificado) {
+      await clientesRepository.marcarVerificado(cliente.id);
+    }
   },
 };

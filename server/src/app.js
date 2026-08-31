@@ -18,6 +18,16 @@ import healthRoutes from './routes/health.routes.js';
 
 export const app = express();
 
+// Railway pone un único proxy inverso delante de este servidor. Sin esto,
+// Express toma la conexión TCP directa (la del proxy) como "req.ip" para
+// TODAS las requests, así que express-rate-limit contaba a todo el mundo
+// junto contra el mismo cupo (10 intentos de login para el sitio entero, no
+// por persona) — cualquiera podía agotarlo y bloquear el login para todos.
+// El valor 1 le dice a Express "confía en un solo hop de proxy": usa la
+// primera IP de X-Forwarded-For, que Railway sí controla (no la puede
+// falsificar un cliente externo).
+app.set('trust proxy', 1);
+
 // Headers de seguridad estándar (X-Content-Type-Options, X-Frame-Options,
 // HSTS, etc). Se relaja crossOriginResourcePolicy porque el default de
 // helmet ('same-origin') bloquea que el frontend, que vive en otro origen

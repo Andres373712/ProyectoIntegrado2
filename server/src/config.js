@@ -20,3 +20,23 @@ export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 export const API_URL =
   process.env.API_URL ||
   (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`);
+
+// Igual que el chequeo de JWT_SECRET, pero para las 3 variables que hasta
+// ahora fallaban en SILENCIO: sin SENDGRID_API_KEY o EMAIL_USER, cada envío
+// de correo fallaba dentro de un try/catch que solo logueaba (el usuario veía
+// "revisa tu correo" sin que nada se hubiera enviado); sin FRONTEND_URL,
+// CORS quedaba restringido a localhost:3000 y el sitio real no podía hablar
+// con la API. Se limita a NODE_ENV=production o a estar corriendo en Railway
+// (RAILWAY_ENVIRONMENT) para no exigir estas variables en desarrollo local
+// ni en CI, donde los tests corren contra mocks.
+const enProduccion = process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+if (enProduccion) {
+  const faltantes = ['SENDGRID_API_KEY', 'EMAIL_USER', 'FRONTEND_URL'].filter((clave) => !process.env[clave]);
+  if (faltantes.length > 0) {
+    console.error(
+      `Falta configurar ${faltantes.join(', ')} en producción — el envío de correos y/o CORS ` +
+        'no van a funcionar. Define estas variables antes de arrancar el servidor. Ver .env.example.',
+    );
+    process.exit(1);
+  }
+}

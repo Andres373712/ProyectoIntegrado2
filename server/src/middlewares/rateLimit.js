@@ -20,3 +20,15 @@ export const registroLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Demasiados intentos. Intenta de nuevo en unos minutos.' },
 });
+
+// Para /contacto y /inscripcion: rutas públicas, sin auth, que disparan
+// envío de correo (contacto manda 2 por request) y crean filas en la base.
+// Instancia separada de registroLimiter para no compartir el mismo cupo por
+// IP con el flujo de registro/verificación — son abusos distintos.
+export const publicoLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiados intentos. Intenta de nuevo en unos minutos.' },
+});
