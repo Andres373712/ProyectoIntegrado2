@@ -22,15 +22,21 @@ const INSCRIPCION_RAW = {
   fechaInscripcion: "2026-01-01",
 };
 
+type InscripcionesResponse = Awaited<ReturnType<typeof cuentaService.getInscripciones>>;
+type PedidosResponse = Awaited<ReturnType<typeof cuentaService.getPedidos>>;
+type CancelarResponse = Awaited<ReturnType<typeof cuentaService.cancelar>>;
+
 beforeEach(() => {
-  vi.mocked(cuentaService.getInscripciones).mockResolvedValue({ data: [INSCRIPCION_RAW] } as any);
-  vi.mocked(cuentaService.getPedidos).mockResolvedValue({ data: [] } as any);
+  vi.mocked(cuentaService.getInscripciones).mockResolvedValue({
+    data: [INSCRIPCION_RAW],
+  } as InscripcionesResponse);
+  vi.mocked(cuentaService.getPedidos).mockResolvedValue({ data: [] } as PedidosResponse);
   vi.mocked(cuentaService.cancelar).mockReset();
 });
 
 describe("useMiCuenta.cancelarInscripcion", () => {
   it("llama al servicio con el id y saca la inscripción del estado local si tiene éxito", async () => {
-    vi.mocked(cuentaService.cancelar).mockResolvedValue({} as any);
+    vi.mocked(cuentaService.cancelar).mockResolvedValue({} as CancelarResponse);
     const { result } = renderHook(() => useMiCuenta());
 
     await waitFor(() => expect(result.current.inscripciones).toHaveLength(1));
@@ -62,7 +68,7 @@ describe("useMiCuenta.cancelarInscripcion", () => {
     let resolver!: () => void;
     vi.mocked(cuentaService.cancelar).mockReturnValue(
       new Promise((resolve) => {
-        resolver = () => resolve({} as any);
+        resolver = () => resolve({} as CancelarResponse);
       }),
     );
     const { result } = renderHook(() => useMiCuenta());

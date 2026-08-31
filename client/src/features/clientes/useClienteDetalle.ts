@@ -28,6 +28,9 @@ export function useClienteDetalle(id: string | number) {
   }, [id]);
 
   useEffect(() => {
+    // Carga de datos al montar/cambiar id: mismo patrón "fetch on mount" que
+    // useClientes.ts, no un cascading render evitable.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCargando(true);
     Promise.all([
       clientesService.getCliente(id),

@@ -46,7 +46,7 @@ const AdminPedidos = () => {
   if (error) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="flex items-center gap-3 rounded-md bg-red-100 p-4 text-red-800">
+        <div className="flex items-center gap-3 rounded-md bg-destructive/10 p-4 text-destructive">
           <AlertTriangle size={24} />
           {error}
         </div>

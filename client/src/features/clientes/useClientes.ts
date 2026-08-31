@@ -39,6 +39,10 @@ export function useClientes() {
   );
 
   useEffect(() => {
+    // Carga de datos al montar: setCargando(true) es sincrónico al inicio de
+    // fetchClientes, antes del await real — es el patrón normal de "fetch on
+    // mount", no un cascading render evitable.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchClientes();
   }, [fetchClientes]);
 

@@ -10,6 +10,5 @@ export interface InscripcionData {
 
 export const inscripcionService = {
   inscribir: (datos: InscripcionData) => apiClient.post("/api/inscripcion", datos),
-  // NOTA: GET /api/cancelar-inscripcion/:token todavía no existe en el backend.
   cancelar: (token: string) => apiClient.get(`/api/cancelar-inscripcion/${token}`),
 };

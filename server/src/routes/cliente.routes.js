@@ -4,12 +4,10 @@ import { protegerRutas, esCliente } from '../middlewares/auth.js';
 
 const router = Router();
 
-// NOTA: no se agrega GET /cliente/mis-pedidos — no existe ninguna
-// funcionalidad de pedidos en el backend hoy (la tabla "pedidos" está
-// declarada en el schema de Drizzle pero sin repositorio/servicio/ruta que la
-// use; el frontend ya documenta en pedidosService.ts que POST /api/pedido
-// "todavía no existe en el backend"). Agregar mis-pedidos ahora implicaría
-// inventar un sistema de pedidos completo, fuera del alcance de esta tarea.
+// NOTA: no se agrega GET /cliente/mis-pedidos — la funcionalidad de pedidos
+// ya existe (POST /api/pedido para checkout, GET /api/pedidos/todos del lado
+// admin en pedido.routes.js), pero todavía no hay un endpoint para que un
+// cliente autenticado liste sus propios pedidos.
 router.get('/cliente/mis-inscripciones', protegerRutas, esCliente, clienteController.getMisInscripciones);
 router.delete(
   '/cliente/mis-inscripciones/:id',

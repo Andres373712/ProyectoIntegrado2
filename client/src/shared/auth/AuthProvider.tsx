@@ -40,9 +40,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [listo, setListo] = useState(false);
 
   useEffect(() => {
+    // No se puede leer localStorage en un initializer perezoso de useState:
+    // este componente se renderiza primero en el servidor (sin storage) y el
+    // primer render del cliente debe coincidir con ese HTML para no romper
+    // la hidratación. Por eso la sesión se sincroniza acá, después del mount.
     const stored = localStorage.getItem("tmm_token");
     if (stored) {
       const payload = decodificarPayload(stored);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToken(stored);
       setRol(payload.rol ?? null);
       setEmail(payload.email ?? null);

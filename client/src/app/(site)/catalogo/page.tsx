@@ -118,7 +118,7 @@ async function Catalogo({ searchParams }: PageProps<"/catalogo">) {
                     {agotado ? (
                       <Button
                         disabled
-                        className="w-full cursor-not-allowed bg-gray-300 text-gray-500"
+                        className="w-full cursor-not-allowed bg-muted text-muted-foreground"
                       >
                         Sin Cupos
                       </Button>
