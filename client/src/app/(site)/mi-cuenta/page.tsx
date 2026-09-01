@@ -20,12 +20,12 @@ import { CalendarDays, MapPin, Package, User, LogOut } from "lucide-react";
 function estadoBadgeClass(estado: string) {
   const normalizado = (estado || "").toLowerCase();
   if (["confirmada", "confirmado", "pagado", "completado", "activa"].includes(normalizado)) {
-    return "bg-green-100 text-green-700";
+    return "bg-success/10 text-success";
   }
   if (["cancelada", "cancelado", "rechazado"].includes(normalizado)) {
-    return "bg-red-100 text-red-700";
+    return "bg-destructive/10 text-destructive";
   }
-  return "bg-yellow-100 text-yellow-700";
+  return "bg-warning/10 text-warning";
 }
 
 function MiCuentaContenido() {
@@ -79,13 +79,13 @@ function MiCuentaContenido() {
         </Card>
 
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-100 p-3 text-sm font-bold text-red-700">
+          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-bold text-destructive">
             {error}
           </div>
         )}
 
         {errorCancelacion && (
-          <div className="rounded-md border border-red-200 bg-red-100 p-3 text-sm font-bold text-red-700">
+          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-bold text-destructive">
             {errorCancelacion}
           </div>
         )}

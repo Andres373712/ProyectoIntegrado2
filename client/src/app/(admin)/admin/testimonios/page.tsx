@@ -160,7 +160,7 @@ function AdminTestimonios() {
       <div className="mx-auto max-w-4xl rounded-lg border bg-card p-8 shadow-md">
         <h2 className="mb-4 text-2xl font-bold">Testimonios Cargados</h2>
         {(listaMensaje || errorCarga) && (
-          <p className="mb-4 text-center text-red-500">
+          <p className="mb-4 text-center text-destructive">
             {listaMensaje || errorCarga}
           </p>
         )}

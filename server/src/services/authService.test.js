@@ -249,4 +249,30 @@ describe('authService.resetPassword', () => {
     await authService.resetPassword('token-valido', 'Nueva123!');
     expect(clientesRepository.actualizarPassword).toHaveBeenCalledWith(9, expect.any(String));
   });
+
+  // Regresión: una cuenta cuyo email de verificación nunca llegó (registro
+  // con SendGrid caído) quedaba en un callejón sin salida — el reset de
+  // contraseña la dejaba con credenciales válidas pero el login la seguía
+  // bloqueando con 403 "Verifica tu correo primero". Completar el reset por
+  // link de correo ya prueba control real de la casilla, así que ahora
+  // también marca la cuenta como verificada si todavía no lo estaba.
+  it('marca la cuenta como verificada si todavía no lo estaba', async () => {
+    clientesRepository.getByTokenRecuperacion.mockResolvedValue({
+      id: 9,
+      verificado: 0,
+      expiracion_recuperacion: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    await authService.resetPassword('token-valido', 'Nueva123!');
+    expect(clientesRepository.marcarVerificado).toHaveBeenCalledWith(9);
+  });
+
+  it('no vuelve a marcar verificada una cuenta que ya lo estaba', async () => {
+    clientesRepository.getByTokenRecuperacion.mockResolvedValue({
+      id: 9,
+      verificado: 1,
+      expiracion_recuperacion: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    await authService.resetPassword('token-valido', 'Nueva123!');
+    expect(clientesRepository.marcarVerificado).not.toHaveBeenCalled();
+  });
 });

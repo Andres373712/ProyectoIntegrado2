@@ -51,9 +51,13 @@ export function useAsyncData<T>(
   // `fetchFn` casi siempre es una arrow function nueva en cada render, así
   // que no puede ir directo en las deps de useCallback (dispararía un fetch
   // infinito). La guardamos en un ref y quien controla cuándo se vuelve a
-  // pedir son las `deps` explícitas que pasa quien llama al hook.
+  // pedir son las `deps` explícitas que pasa quien llama al hook. La
+  // actualización va en un efecto (no durante el render) para no mutar el
+  // ref mientras React todavía puede descartar este render.
   const fetchFnRef = useRef(fetchFn);
-  fetchFnRef.current = fetchFn;
+  useEffect(() => {
+    fetchFnRef.current = fetchFn;
+  });
 
   // Evita condiciones de carrera: si `deps` cambia y se dispara un fetch
   // nuevo antes de que termine el anterior, el resultado del fetch viejo
@@ -87,7 +91,10 @@ export function useAsyncData<T>(
       .finally(() => {
         if (fetchIdRef.current === id) setLoading(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `deps` es la lista que decide quien llama al hook (no se conoce en
+    // tiempo de análisis estático), así que no puede ser un array literal:
+    // es intrínseco al diseño genérico de este hook, no un olvido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
   }, [enabled, errorMessage, ...deps]);
 
   useEffect(() => {

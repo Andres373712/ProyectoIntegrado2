@@ -79,12 +79,69 @@ function agregarColumnaAceptaTerminosSiFalta() {
   }
 }
 
+/**
+ * Red de seguridad para filas de "talleres" guardadas antes del fix de
+ * tallerActualizarSchema: cualquier PUT hecho mientras "activo" no se
+ * coercionaba pudo dejar el string crudo "true"/"false" en una columna
+ * INTEGER, con lo que WHERE activo = 1 deja de matchear esa fila y el taller
+ * desaparece del catálogo público sin ningún error visible. Se corre en cada
+ * arranque, es idempotente (no toca filas que ya son INTEGER) y no depende
+ * de una migración de Drizzle porque no cambia el esquema, solo los datos.
+ */
+function normalizarActivoDeTalleres() {
+  const corregidas = sqlite
+    .prepare(
+      `UPDATE talleres
+       SET activo = CASE WHEN lower(trim(activo)) IN ('true', '1') THEN 1 ELSE 0 END
+       WHERE typeof(activo) != 'integer'`,
+    )
+    .run();
+  if (corregidas.changes > 0) {
+    console.log(
+      `Normalizadas ${corregidas.changes} fila(s) de 'talleres' con 'activo' guardado como texto.`,
+    );
+  }
+}
+
+/**
+ * Red de seguridad para filas escritas antes de que cada repositorio fijara
+ * su columna de fecha explícitamente (ver comentario en
+ * pedidosRepository.crear): el default de esas columnas en schema.js era la
+ * cadena literal 'CURRENT_TIMESTAMP', no la función SQL homónima, así que
+ * quedaron con ese texto en vez de una fecha real. No hay forma de recuperar
+ * la fecha original, así que se reemplaza por el momento de este fix — sigue
+ * siendo estrictamente mejor que un string no parseable como fecha. Se corre
+ * en cada arranque e idempotente (el WHERE solo agarra filas todavía rotas).
+ */
+function normalizarFechasLiterales() {
+  const ahora = new Date().toISOString();
+  const objetivos = [
+    { tabla: 'clientes', columna: 'fecha_registro' },
+    { tabla: 'inscripciones', columna: 'fecha_inscripcion' },
+    { tabla: 'mensajes_contacto', columna: 'fecha_creacion' },
+    { tabla: 'testimonios', columna: 'fecha_creacion' },
+  ];
+  for (const { tabla, columna } of objetivos) {
+    if (!tablaExiste(tabla)) continue;
+    const corregidas = sqlite
+      .prepare(`UPDATE "${tabla}" SET "${columna}" = ? WHERE "${columna}" = 'CURRENT_TIMESTAMP'`)
+      .run(ahora);
+    if (corregidas.changes > 0) {
+      console.log(`Normalizadas ${corregidas.changes} fila(s) de '${tabla}.${columna}' con fecha literal.`);
+    }
+  }
+}
+
 export function ejecutarMigraciones() {
   if (tablaExiste('talleres')) {
     baselinearMigracionInicialSiHaceFalta();
   }
   migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   agregarColumnaAceptaTerminosSiFalta();
+  if (tablaExiste('talleres')) {
+    normalizarActivoDeTalleres();
+  }
+  normalizarFechasLiterales();
 }
 
 export function cerrarConexion() {

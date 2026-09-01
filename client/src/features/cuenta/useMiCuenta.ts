@@ -25,15 +25,41 @@ export interface Pedido {
   productos: PedidoProducto[];
 }
 
+// Formas "crudas" tal como puede llegar el JSON del backend: todos los
+// campos opcionales a propósito, porque estas funciones existen justamente
+// para tolerar un contrato real más flojo que el tipo final de la UI (ver
+// comentarios de contrato debajo de cada una) sin recurrir a `any`.
+interface RawInscripcion {
+  id?: number;
+  taller?: string;
+  fecha?: string | null;
+  lugar?: string;
+  estado?: string;
+}
+
+interface RawPedidoProducto {
+  nombre?: string;
+  cantidad?: number;
+  precio?: number;
+}
+
+interface RawPedido {
+  id?: number;
+  total?: number;
+  estado?: string;
+  fecha?: string | null;
+  productos?: RawPedidoProducto[];
+}
+
 // --- ZONA DE MAPEO (único lugar a ajustar si cambian los nombres de campo del backend) ---
 // Contrato real de GET /api/cliente/mis-inscripciones (server/src/services/clienteService.js):
 //   [{ id, tallerId, taller, fecha, lugar, estado, fechaInscripcion }]
 // (el contrato que se asumió al construir esta pantalla usaba taller_nombre/taller_fecha/
 // taller_lugar en snake_case — el backend terminó devolviendo taller/fecha/lugar; se ajusta
 // acá, que es exactamente el único lugar pensado para este tipo de desajuste.)
-function mapInscripcion(raw: any): Inscripcion {
+function mapInscripcion(raw: RawInscripcion): Inscripcion {
   return {
-    id: raw?.id,
+    id: raw?.id ?? 0,
     tallerNombre: raw?.taller ?? "Taller",
     tallerFecha: raw?.fecha ?? null,
     tallerLugar: raw?.lugar ?? "",
@@ -43,14 +69,14 @@ function mapInscripcion(raw: any): Inscripcion {
 
 // Contrato actual esperado de GET /api/cliente/mis-pedidos:
 //   [{ id, total, estado, fecha, productos: [{ nombre, cantidad, precio }] }]
-function mapPedido(raw: any): Pedido {
+function mapPedido(raw: RawPedido): Pedido {
   return {
-    id: raw?.id,
+    id: raw?.id ?? 0,
     total: Number(raw?.total ?? 0),
     estado: raw?.estado ?? "pendiente",
     fecha: raw?.fecha ?? null,
     productos: Array.isArray(raw?.productos)
-      ? raw.productos.map((p: any) => ({
+      ? raw.productos.map((p: RawPedidoProducto) => ({
           nombre: p?.nombre ?? "Producto",
           cantidad: Number(p?.cantidad ?? 0),
           precio: Number(p?.precio ?? 0),

@@ -3,11 +3,13 @@ import { inscripcionController } from '../controllers/inscripcionController.js';
 import { validate } from '../middlewares/validate.js';
 import { inscripcionSchema } from '../validators/inscripcion.schema.js';
 import { usuarioOpcional } from '../middlewares/auth.js';
+import { publicoLimiter } from '../middlewares/rateLimit.js';
 
 const router = Router();
 
 router.post(
   '/inscripcion',
+  publicoLimiter,
   usuarioOpcional,
   validate(inscripcionSchema),
   inscripcionController.inscribir,

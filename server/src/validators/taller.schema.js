@@ -7,6 +7,23 @@ import { z } from 'zod';
 const numero = () => z.coerce.number({ invalid_type_error: 'Debe ser un número válido' });
 const entero = () => numero().transform((n) => Math.trunc(n));
 
+// El body llega como FormData (por la imagen adjunta), así que "activo" nunca
+// es un boolean real — es el string "true"/"false" que produce
+// String(taller.activo) en el formulario. z.coerce.number() sobre ese string
+// da NaN, no 1/0: sin esta normalización, SQLite guarda el texto crudo en una
+// columna INTEGER y el filtro `WHERE activo = 1` deja de matchear (el taller
+// desaparece del catálogo tras cualquier PUT, aunque no se toque el checkbox).
+const activoDesdeFormData = () =>
+  z
+    .any()
+    .optional()
+    .transform((valor) => {
+      if (valor === undefined) return undefined;
+      if (typeof valor === 'boolean') return valor ? 1 : 0;
+      const normalizado = String(valor).trim().toLowerCase();
+      return normalizado === 'true' || normalizado === '1' ? 1 : 0;
+    });
+
 export const tallerCrearSchema = z.object({
   nombre: z.string({ required_error: 'El nombre es obligatorio' }).trim().min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional().default(''),
@@ -23,9 +40,7 @@ export const tallerActualizarSchema = z.object({
   fecha: z.string().optional().default(''),
   tipo: z.string().optional().default('B2C'),
   precio: numero(),
-  // Se mantiene tal cual llega (string "true"/"false" desde FormData): el
-  // contrato actual lo guarda sin normalizar y no se toca ese comportamiento aquí.
-  activo: z.any().optional(),
+  activo: activoDesdeFormData(),
   lugar: z.string().optional().default(''),
   cupos_totales: entero(),
   imageUrlActual: z.string().optional(),

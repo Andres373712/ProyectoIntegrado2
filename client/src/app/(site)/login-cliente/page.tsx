@@ -27,8 +27,12 @@ function LoginClienteInner() {
   const { login } = useAuth();
 
   // --- DETECTAR SI VIENE DEL CORREO DE VERIFICACIÓN ---
+  // No es solo un valor derivado del render: handleLogin también limpia
+  // estos mismos estados al reintentar, así que se sincronizan con
+  // searchParams acá en vez de calcularse directo en el cuerpo del componente.
   useEffect(() => {
     if (searchParams.get("success") === "verificado") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuccessMessage(
         "¡Tu cuenta ha sido verificada exitosamente! Ya puedes ingresar.",
       );
